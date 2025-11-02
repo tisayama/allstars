@@ -3,7 +3,7 @@
  * Automatically connects to Firebase Emulator Suite when running locally
  */
 
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
@@ -26,7 +26,7 @@ if (isEmulator) {
     `[Firestore] Connected to emulator at ${process.env.FIRESTORE_EMULATOR_HOST}`
   );
 } else {
-  console.log('[Firestore] Connected to production database');
+  console.log("[Firestore] Connected to production database");
 }
 
 export { db, admin };

@@ -3,13 +3,13 @@
  * Tests role-based access control (Google vs Anonymous authentication)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 import {
   requireGoogleLogin,
   requireAnonymousLogin,
-} from '../../../src/middleware/roleGuard';
+} from "../../../src/middleware/roleGuard";
 
-describe('RoleGuard Middleware', () => {
+describe("RoleGuard Middleware", () => {
   let req: Partial<Request>;
   let res: Partial<Response>;
   let next: NextFunction;
@@ -27,12 +27,12 @@ describe('RoleGuard Middleware', () => {
     jest.clearAllMocks();
   });
 
-  describe('requireGoogleLogin', () => {
-    it('should allow requests with Google sign-in provider', () => {
+  describe("requireGoogleLogin", () => {
+    it("should allow requests with Google sign-in provider", () => {
       (req as any).user = {
-        uid: 'user-123',
-        email: 'admin@example.com',
-        signInProvider: 'google.com',
+        uid: "user-123",
+        email: "admin@example.com",
+        signInProvider: "google.com",
       };
 
       requireGoogleLogin(req as Request, res as Response, next);
@@ -41,10 +41,10 @@ describe('RoleGuard Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should reject requests with anonymous sign-in provider', () => {
+    it("should reject requests with anonymous sign-in provider", () => {
       (req as any).user = {
-        uid: 'anon-456',
-        signInProvider: 'anonymous',
+        uid: "anon-456",
+        signInProvider: "anonymous",
       };
 
       requireGoogleLogin(req as Request, res as Response, next);
@@ -52,32 +52,32 @@ describe('RoleGuard Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: 'FORBIDDEN',
-          message: expect.stringContaining('Google'),
+          code: "FORBIDDEN",
+          message: expect.stringContaining("Google"),
         })
       );
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject requests without user object', () => {
+    it("should reject requests without user object", () => {
       requireGoogleLogin(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: 'UNAUTHORIZED',
-          message: expect.stringContaining('authenticated'),
+          code: "UNAUTHORIZED",
+          message: expect.stringContaining("authenticated"),
         })
       );
       expect(next).not.toHaveBeenCalled();
     });
   });
 
-  describe('requireAnonymousLogin', () => {
-    it('should allow requests with anonymous sign-in provider', () => {
+  describe("requireAnonymousLogin", () => {
+    it("should allow requests with anonymous sign-in provider", () => {
       (req as any).user = {
-        uid: 'anon-789',
-        signInProvider: 'anonymous',
+        uid: "anon-789",
+        signInProvider: "anonymous",
       };
 
       requireAnonymousLogin(req as Request, res as Response, next);
@@ -86,11 +86,11 @@ describe('RoleGuard Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should reject requests with Google sign-in provider', () => {
+    it("should reject requests with Google sign-in provider", () => {
       (req as any).user = {
-        uid: 'user-123',
-        email: 'admin@example.com',
-        signInProvider: 'google.com',
+        uid: "user-123",
+        email: "admin@example.com",
+        signInProvider: "google.com",
       };
 
       requireAnonymousLogin(req as Request, res as Response, next);
@@ -98,21 +98,21 @@ describe('RoleGuard Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: 'FORBIDDEN',
-          message: 'Anonymous authentication required',
+          code: "FORBIDDEN",
+          message: "Anonymous authentication required",
         })
       );
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject requests without user object', () => {
+    it("should reject requests without user object", () => {
       requireAnonymousLogin(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: 'UNAUTHORIZED',
-          message: expect.stringContaining('authenticated'),
+          code: "UNAUTHORIZED",
+          message: expect.stringContaining("authenticated"),
         })
       );
       expect(next).not.toHaveBeenCalled();

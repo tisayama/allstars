@@ -3,13 +3,13 @@
  * Tests complete CRUD operations with Firestore
  */
 
-import request from 'supertest';
-import { app } from '../../src/index';
-import { db, admin } from '../../src/utils/firestore';
-import { COLLECTIONS } from '../../src/models/firestoreCollections';
+import request from "supertest";
+import { app } from "../../src/index";
+import { db, admin } from "../../src/utils/firestore";
+import { COLLECTIONS } from "../../src/models/firestoreCollections";
 
 // Mock Firebase Admin
-jest.mock('../../src/utils/firestore', () => {
+jest.mock("../../src/utils/firestore", () => {
   const mockFirestore = {
     collection: jest.fn(),
     settings: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('../../src/utils/firestore', () => {
   };
 });
 
-describe('Admin Quiz Management Integration Tests', () => {
+describe("Admin Quiz Management Integration Tests", () => {
   let mockVerifyIdToken: jest.Mock;
   let mockCollection: jest.Mock;
   let mockDoc: jest.Mock;
@@ -38,7 +38,7 @@ describe('Admin Quiz Management Integration Tests', () => {
   let mockOrderBy: jest.Mock;
   let mockLimit: jest.Mock;
 
-  const adminToken = 'admin-token-123';
+  const adminToken = "admin-token-123";
 
   beforeEach(() => {
     // Reset all mocks
@@ -46,10 +46,10 @@ describe('Admin Quiz Management Integration Tests', () => {
 
     // Mock authentication
     mockVerifyIdToken = jest.fn().mockResolvedValue({
-      uid: 'admin-123',
-      email: 'admin@example.com',
+      uid: "admin-123",
+      email: "admin@example.com",
       firebase: {
-        sign_in_provider: 'google.com',
+        sign_in_provider: "google.com",
       },
     });
 
@@ -88,24 +88,24 @@ describe('Admin Quiz Management Integration Tests', () => {
     (db.collection as jest.Mock) = mockCollection;
   });
 
-  describe('Admin Quiz CRUD Workflow', () => {
-    it('should complete full workflow: create → list → update → verify', async () => {
+  describe("Admin Quiz CRUD Workflow", () => {
+    it("should complete full workflow: create → list → update → verify", async () => {
       // Step 1: Create a question
       const newQuestion = {
-        period: 'first-half',
+        period: "first-half",
         questionNumber: 1,
-        type: 'multiple-choice',
-        text: 'What is 2 + 2?',
-        choices: ['3', '4', '5', '6'],
-        correctAnswer: '4',
+        type: "multiple-choice",
+        text: "What is 2 + 2?",
+        choices: ["3", "4", "5", "6"],
+        correctAnswer: "4",
         skipAttributes: [],
       };
 
-      mockAdd.mockResolvedValue({ id: 'question-1' });
+      mockAdd.mockResolvedValue({ id: "question-1" });
 
       const createResponse = await request(app)
-        .post('/admin/quizzes')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .post("/admin/quizzes")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send(newQuestion);
 
       expect(createResponse.status).toBe(404); // Route not implemented yet
@@ -118,15 +118,15 @@ describe('Admin Quiz Management Integration Tests', () => {
         empty: false,
         docs: [
           {
-            id: 'question-1',
+            id: "question-1",
             data: () => newQuestion,
           },
         ],
       });
 
       const listResponse = await request(app)
-        .get('/admin/quizzes')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .get("/admin/quizzes")
+        .set("Authorization", `Bearer ${adminToken}`);
 
       expect(listResponse.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -136,20 +136,20 @@ describe('Admin Quiz Management Integration Tests', () => {
 
       // Step 3: Update the question
       const updateData = {
-        text: 'What is 2 + 2? (Updated)',
+        text: "What is 2 + 2? (Updated)",
       };
 
       mockGet.mockResolvedValue({
         exists: true,
-        id: 'question-1',
+        id: "question-1",
         data: () => newQuestion,
       });
 
       mockUpdate.mockResolvedValue(undefined);
 
       const updateResponse = await request(app)
-        .put('/admin/quizzes/question-1')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .put("/admin/quizzes/question-1")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send(updateData);
 
       expect(updateResponse.status).toBe(404); // Route not implemented yet
@@ -159,12 +159,12 @@ describe('Admin Quiz Management Integration Tests', () => {
 
       // Step 4: Verify duplicate rejection
       const duplicateQuestion = {
-        period: 'first-half',
+        period: "first-half",
         questionNumber: 1, // Same as existing
-        type: 'multiple-choice',
-        text: 'Different question',
-        choices: ['A', 'B', 'C', 'D'],
-        correctAnswer: 'A',
+        type: "multiple-choice",
+        text: "Different question",
+        choices: ["A", "B", "C", "D"],
+        correctAnswer: "A",
         skipAttributes: [],
       };
 
@@ -172,15 +172,15 @@ describe('Admin Quiz Management Integration Tests', () => {
         empty: false, // Duplicate exists
         docs: [
           {
-            id: 'question-1',
+            id: "question-1",
             data: () => newQuestion,
           },
         ],
       });
 
       const duplicateResponse = await request(app)
-        .post('/admin/quizzes')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .post("/admin/quizzes")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send(duplicateQuestion);
 
       expect(duplicateResponse.status).toBe(404); // Route not implemented yet
@@ -189,15 +189,15 @@ describe('Admin Quiz Management Integration Tests', () => {
       // expect(duplicateResponse.body.code).toBe('DUPLICATE_ERROR');
     });
 
-    it('should reject duplicate period + questionNumber combination', async () => {
+    it("should reject duplicate period + questionNumber combination", async () => {
       // Mock existing question
       mockGet.mockResolvedValue({
         empty: false,
         docs: [
           {
-            id: 'existing-question',
+            id: "existing-question",
             data: () => ({
-              period: 'first-half',
+              period: "first-half",
               questionNumber: 1,
             }),
           },
@@ -205,18 +205,18 @@ describe('Admin Quiz Management Integration Tests', () => {
       });
 
       const duplicateQuestion = {
-        period: 'first-half',
+        period: "first-half",
         questionNumber: 1,
-        type: 'multiple-choice',
-        text: 'Duplicate question',
-        choices: ['A', 'B', 'C', 'D'],
-        correctAnswer: 'A',
+        type: "multiple-choice",
+        text: "Duplicate question",
+        choices: ["A", "B", "C", "D"],
+        correctAnswer: "A",
         skipAttributes: [],
       };
 
       const response = await request(app)
-        .post('/admin/quizzes')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .post("/admin/quizzes")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send(duplicateQuestion);
 
       expect(response.status).toBe(404); // Route not implemented yet
@@ -228,22 +228,22 @@ describe('Admin Quiz Management Integration Tests', () => {
     });
   });
 
-  describe('Guest List Retrieval', () => {
-    it('should retrieve all guests with correct structure', async () => {
+  describe("Guest List Retrieval", () => {
+    it("should retrieve all guests with correct structure", async () => {
       const mockGuests = [
         {
-          id: 'guest-1',
-          name: 'John Doe',
-          status: 'alive',
-          attributes: ['age-under-20'],
-          authMethod: 'anonymous',
+          id: "guest-1",
+          name: "John Doe",
+          status: "active",
+          attributes: ["age-under-20"],
+          authMethod: "anonymous",
         },
         {
-          id: 'guest-2',
-          name: 'Jane Smith',
-          status: 'eliminated',
-          attributes: ['gender-female'],
-          authMethod: 'anonymous',
+          id: "guest-2",
+          name: "Jane Smith",
+          status: "dropped",
+          attributes: ["gender-female"],
+          authMethod: "anonymous",
         },
       ];
 
@@ -256,8 +256,8 @@ describe('Admin Quiz Management Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get('/admin/guests')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .get("/admin/guests")
+        .set("Authorization", `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -267,15 +267,15 @@ describe('Admin Quiz Management Integration Tests', () => {
       // expect(response.body[1]).toMatchObject(mockGuests[1]);
     });
 
-    it('should return empty array when no guests exist', async () => {
+    it("should return empty array when no guests exist", async () => {
       mockGet.mockResolvedValue({
         empty: true,
         docs: [],
       });
 
       const response = await request(app)
-        .get('/admin/guests')
-        .set('Authorization', `Bearer ${adminToken}`);
+        .get("/admin/guests")
+        .set("Authorization", `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -284,17 +284,17 @@ describe('Admin Quiz Management Integration Tests', () => {
     });
   });
 
-  describe('Validation Errors', () => {
-    it('should return 400 for invalid question data', async () => {
+  describe("Validation Errors", () => {
+    it("should return 400 for invalid question data", async () => {
       const invalidQuestion = {
-        period: 'first-half',
+        period: "first-half",
         // Missing required fields
-        type: 'multiple-choice',
+        type: "multiple-choice",
       };
 
       const response = await request(app)
-        .post('/admin/quizzes')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .post("/admin/quizzes")
+        .set("Authorization", `Bearer ${adminToken}`)
         .send(invalidQuestion);
 
       expect(response.status).toBe(404); // Route not implemented yet
@@ -304,15 +304,15 @@ describe('Admin Quiz Management Integration Tests', () => {
       // expect(response.body.details).toBeDefined();
     });
 
-    it('should return 404 when updating non-existent question', async () => {
+    it("should return 404 when updating non-existent question", async () => {
       mockGet.mockResolvedValue({
         exists: false,
       });
 
       const response = await request(app)
-        .put('/admin/quizzes/non-existent')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ text: 'Updated text' });
+        .put("/admin/quizzes/non-existent")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ text: "Updated text" });
 
       expect(response.status).toBe(404);
     });

@@ -3,19 +3,19 @@
  * Formats all errors to RFC 7807-inspired JSON structure
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { ErrorResponse } from '@allstars/types';
-import { AppError, ServiceUnavailableError, ValidationError } from '../utils/errors';
-import { ZodError } from 'zod';
+import { Request, Response, NextFunction } from "express";
+import { ErrorResponse } from "@allstars/types";
+import { AppError, ServiceUnavailableError } from "../utils/errors";
+import { ZodError } from "zod";
 
 export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   // Log error for debugging (FR-033 requirement)
-  console.error('[Error]', {
+  console.error("[Error]", {
     name: err.name,
     message: err.message,
     stack: err.stack,
@@ -27,13 +27,13 @@ export function errorHandler(
   // Handle Zod validation errors (T041)
   if (err instanceof ZodError) {
     const details = err.errors.map((zodErr) => ({
-      field: zodErr.path.join('.'),
+      field: zodErr.path.join("."),
       message: zodErr.message,
     }));
 
     const errorResponse: ErrorResponse = {
-      code: 'VALIDATION_ERROR',
-      message: 'Validation failed',
+      code: "VALIDATION_ERROR",
+      message: "Validation failed",
       details,
     };
 
@@ -51,7 +51,7 @@ export function errorHandler(
 
     // Add Retry-After header for service unavailable errors (FR-031)
     if (err instanceof ServiceUnavailableError) {
-      res.setHeader('Retry-After', '60'); // Retry after 60 seconds
+      res.setHeader("Retry-After", "60"); // Retry after 60 seconds
     }
 
     res.status(err.statusCode).json(errorResponse);
@@ -60,29 +60,30 @@ export function errorHandler(
 
   // Handle Firestore/Firebase service errors (FR-031)
   if (
-    err.message.includes('Firestore') ||
-    err.message.includes('Firebase') ||
-    err.message.includes('UNAVAILABLE')
+    err.message.includes("Firestore") ||
+    err.message.includes("Firebase") ||
+    err.message.includes("UNAVAILABLE")
   ) {
     const errorResponse: ErrorResponse = {
-      code: 'SERVICE_UNAVAILABLE',
-      message: 'Service temporarily unavailable',
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service temporarily unavailable",
       details: [
         {
-          message: 'Database or authentication service is currently unavailable',
+          message:
+            "Database or authentication service is currently unavailable",
         },
       ],
     };
 
-    res.setHeader('Retry-After', '60');
+    res.setHeader("Retry-After", "60");
     res.status(503).json(errorResponse);
     return;
   }
 
   // Handle unknown errors (500 Internal Server Error)
   const errorResponse: ErrorResponse = {
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'An unexpected error occurred',
+    code: "INTERNAL_SERVER_ERROR",
+    message: "An unexpected error occurred",
     details: [],
   };
 
