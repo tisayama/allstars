@@ -15,6 +15,7 @@ async function seedData() {
   try {
     // Seed Questions
     console.log('Creating quiz questions...');
+    const now = admin.firestore.Timestamp.now();
     const questions = [
       {
         period: 'first-half',
@@ -24,6 +25,7 @@ async function seedData() {
         choices: ['London', 'Berlin', 'Paris', 'Madrid'],
         correctAnswer: 'Paris',
         skipAttributes: [],
+        deadline: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 60000)), // 1 minute from now
       },
       {
         period: 'first-half',
@@ -33,6 +35,7 @@ async function seedData() {
         choices: ['3', '4', '5', '6'],
         correctAnswer: '4',
         skipAttributes: [],
+        deadline: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 60000)),
       },
       {
         period: 'second-half',
@@ -42,6 +45,7 @@ async function seedData() {
         choices: ['Venus', 'Earth', 'Mercury', 'Mars'],
         correctAnswer: 'Mercury',
         skipAttributes: ['age-under-10'],
+        deadline: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 60000)),
       },
     ];
 
@@ -56,28 +60,28 @@ async function seedData() {
       {
         id: 'guest-alice',
         name: 'Alice',
-        status: 'alive',
+        status: 'active',
         attributes: ['age-20-30', 'gender-female'],
         authMethod: 'anonymous',
       },
       {
         id: 'guest-bob',
         name: 'Bob',
-        status: 'alive',
+        status: 'active',
         attributes: ['age-30-40', 'gender-male'],
         authMethod: 'anonymous',
       },
       {
         id: 'guest-charlie',
         name: 'Charlie',
-        status: 'eliminated',
+        status: 'dropped',
         attributes: ['age-40-50', 'gender-male'],
         authMethod: 'anonymous',
       },
       {
         id: 'guest-diana',
         name: 'Diana',
-        status: 'alive',
+        status: 'active',
         attributes: ['age-20-30', 'gender-female'],
         authMethod: 'anonymous',
       },
@@ -95,11 +99,12 @@ async function seedData() {
 
     // Initialize Game State
     console.log('Initializing game state...');
-    await db.collection('gameState').doc('current').set({
+    await db.collection('gameState').doc('live').set({
       phase: 'idle',
       activeQuestionId: null,
       isGongActive: false,
       results: null,
+      prizeCarryover: 0,
     });
     console.log('✅ Game state initialized\n');
 

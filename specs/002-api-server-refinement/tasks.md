@@ -78,12 +78,12 @@ This project uses monorepo structure:
 
 ### Implementation (TDD Green Phase)
 
-- [ ] T022 [US1] Refactor apps/api-server/src/services/gameStateService.ts to read/write gameState/live instead of gameState/current
-- [ ] T023 [P] [US1] Refactor apps/api-server/src/services/answerService.ts to use sub-collection path questions/{questionId}/answers/{guestId}
-- [ ] T024 [P] [US1] Refactor apps/api-server/src/services/guestService.ts to use status values active/dropped in all queries and updates
-- [ ] T025 [P] [US1] Update apps/api-server/src/services/questionService.ts to reference sub-collection paths for answer aggregation
-- [ ] T026 [US1] Update seed script apps/api-server/scripts/seed-data.ts to use new paths and field values
-- [ ] T027 [US1] Run test suite and verify all path-related tests pass (GREEN state achieved)
+- [X] T022 [US1] Refactor apps/api-server/src/services/gameStateService.ts to read/write gameState/live instead of gameState/current
+- [X] T023 [P] [US1] Refactor apps/api-server/src/services/answerService.ts to use sub-collection path questions/{questionId}/answers/{guestId}
+- [X] T024 [P] [US1] Refactor apps/api-server/src/services/guestService.ts to use status values active/dropped in all queries and updates
+- [X] T025 [P] [US1] Update apps/api-server/src/services/questionService.ts to reference sub-collection paths for answer aggregation
+- [X] T026 [US1] Update seed script apps/api-server/scripts/seed-data.ts to use new paths and field values
+- [X] T027 [US1] Run test suite and verify all path-related tests pass (GREEN state achieved)
 
 ### Verification
 

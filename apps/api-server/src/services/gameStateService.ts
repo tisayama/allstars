@@ -15,7 +15,7 @@ import {
 import { getGuestById } from './guestService';
 import { getQuestionById } from './questionService';
 
-const GAME_STATE_DOC_ID = 'current';
+const GAME_STATE_DOC_ID = 'live';
 
 /**
  * Advance game state based on host action
@@ -41,6 +41,7 @@ export async function advanceGame(
         activeQuestionId: null,
         isGongActive: false,
         results: null,
+        prizeCarryover: 0,
       };
     } else {
       currentState = {
@@ -62,6 +63,7 @@ export async function advanceGame(
       activeQuestionId: newState.activeQuestionId,
       isGongActive: newState.isGongActive,
       results: newState.results,
+      prizeCarryover: newState.prizeCarryover,
     });
 
     return newState;
@@ -255,20 +257,20 @@ async function handleShowResults(state: GameState): Promise<GameState> {
 }
 
 /**
- * REVIVE_ALL: Revive all eliminated guests
+ * REVIVE_ALL: Revive all dropped guests
  */
 async function handleReviveAll(state: GameState): Promise<GameState> {
-  // Get all eliminated guests
-  const eliminatedSnapshot = await db
+  // Get all dropped guests
+  const droppedSnapshot = await db
     .collection(COLLECTIONS.GUESTS)
-    .where('status', '==', 'eliminated')
+    .where('status', '==', 'dropped')
     .get();
 
-  if (!eliminatedSnapshot.empty) {
+  if (!droppedSnapshot.empty) {
     // Use batch update
     const batch = db.batch();
-    eliminatedSnapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, { status: 'alive' });
+    droppedSnapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, { status: 'active' });
     });
     await batch.commit();
   }
@@ -294,6 +296,7 @@ export async function getCurrentGameState(): Promise<GameState> {
       activeQuestionId: null,
       isGongActive: false,
       results: null,
+      prizeCarryover: 0,
     };
   }
 

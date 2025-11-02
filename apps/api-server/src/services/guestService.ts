@@ -51,13 +51,13 @@ export async function getGuestById(guestId: string): Promise<Guest | null> {
 }
 
 /**
- * Revive all eliminated guests
- * Sets all guests back to 'alive' status
+ * Revive all dropped guests
+ * Sets all guests back to 'active' status
  */
 export async function reviveAllGuests(): Promise<number> {
   const snapshot = await db
     .collection(COLLECTIONS.GUESTS)
-    .where('status', '==', 'eliminated')
+    .where('status', '==', 'dropped')
     .get();
 
   if (snapshot.empty) {
@@ -67,7 +67,7 @@ export async function reviveAllGuests(): Promise<number> {
   // Use batch update for efficiency
   const batch = db.batch();
   snapshot.docs.forEach((doc) => {
-    batch.update(doc.ref, { status: 'alive' });
+    batch.update(doc.ref, { status: 'active' });
   });
 
   await batch.commit();
@@ -88,7 +88,7 @@ export async function createGuest(data: {
 
   await guestRef.set({
     name: data.name,
-    status: 'alive',
+    status: 'active',
     attributes: data.attributes || [],
     authMethod: data.authMethod,
   });
@@ -96,7 +96,7 @@ export async function createGuest(data: {
   return {
     id: data.id,
     name: data.name,
-    status: 'alive',
+    status: 'active',
     attributes: data.attributes || [],
     authMethod: data.authMethod,
   };

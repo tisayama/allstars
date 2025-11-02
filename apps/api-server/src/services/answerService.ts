@@ -43,15 +43,16 @@ export async function submitAnswer(
   // Use transaction to check for duplicates and create answer atomically
   const result = await db.runTransaction(async (transaction) => {
     // Check for existing answer from this guest for this question
-    const existingAnswersRef = db
-      .collection(COLLECTIONS.ANSWERS)
-      .where('guestId', '==', guestId)
-      .where('questionId', '==', data.questionId)
-      .limit(1);
+    // Using sub-collection path: questions/{questionId}/answers/{guestId}
+    const answerRef = db
+      .collection(COLLECTIONS.QUESTIONS)
+      .doc(data.questionId)
+      .collection('answers')
+      .doc(guestId);
 
-    const existingAnswers = await transaction.get(existingAnswersRef);
+    const existingAnswer = await transaction.get(answerRef);
 
-    if (!existingAnswers.empty) {
+    if (existingAnswer.exists) {
       throw new DuplicateError(
         'You have already submitted an answer for this question',
         [
@@ -66,7 +67,7 @@ export async function submitAnswer(
     // Determine if the answer is correct
     const isCorrect = data.answer === question.correctAnswer;
 
-    // Create the answer document
+    // Create the answer document in sub-collection
     const answerData = {
       guestId,
       questionId: data.questionId,
@@ -76,7 +77,6 @@ export async function submitAnswer(
       submittedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const answerRef = db.collection(COLLECTIONS.ANSWERS).doc();
     transaction.set(answerRef, answerData);
 
     return {
@@ -92,13 +92,15 @@ export async function submitAnswer(
 /**
  * Get answers for a specific question
  * Used for leaderboard calculations
+ * Reads from sub-collection: questions/{questionId}/answers
  */
 export async function getAnswersByQuestion(
   questionId: string
 ): Promise<Answer[]> {
   const snapshot = await db
-    .collection(COLLECTIONS.ANSWERS)
-    .where('questionId', '==', questionId)
+    .collection(COLLECTIONS.QUESTIONS)
+    .doc(questionId)
+    .collection('answers')
     .get();
 
   if (snapshot.empty) {
@@ -121,13 +123,15 @@ export async function getAnswersByQuestion(
 
 /**
  * Get top 10 fastest correct answers for a question
+ * Reads from sub-collection: questions/{questionId}/answers
  */
 export async function getTop10CorrectAnswers(
   questionId: string
 ): Promise<Answer[]> {
   const snapshot = await db
-    .collection(COLLECTIONS.ANSWERS)
-    .where('questionId', '==', questionId)
+    .collection(COLLECTIONS.QUESTIONS)
+    .doc(questionId)
+    .collection('answers')
     .where('isCorrect', '==', true)
     .orderBy('responseTimeMs', 'asc')
     .limit(10)
@@ -145,13 +149,15 @@ export async function getTop10CorrectAnswers(
 
 /**
  * Get worst 10 slowest incorrect answers for a question
+ * Reads from sub-collection: questions/{questionId}/answers
  */
 export async function getWorst10IncorrectAnswers(
   questionId: string
 ): Promise<Answer[]> {
   const snapshot = await db
-    .collection(COLLECTIONS.ANSWERS)
-    .where('questionId', '==', questionId)
+    .collection(COLLECTIONS.QUESTIONS)
+    .doc(questionId)
+    .collection('answers')
     .where('isCorrect', '==', false)
     .orderBy('responseTimeMs', 'desc')
     .limit(10)

@@ -3,7 +3,7 @@
  * Business logic for quiz question management
  */
 
-import { db } from '../utils/firestore';
+import { db, admin } from '../utils/firestore';
 import { COLLECTIONS } from '../models/firestoreCollections';
 import {
   CreateQuestionInput,
@@ -53,7 +53,8 @@ export async function createQuestion(
     ]);
   }
 
-  // Create the question
+  // Create the question with deadline as Firestore Timestamp
+  const deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
   const questionRef = await db.collection(COLLECTIONS.QUESTIONS).add({
     period: data.period,
     questionNumber: data.questionNumber,
@@ -62,6 +63,7 @@ export async function createQuestion(
     choices: data.choices,
     correctAnswer: data.correctAnswer,
     skipAttributes: data.skipAttributes || [],
+    deadline,
   });
 
   // Return the created question
@@ -69,6 +71,7 @@ export async function createQuestion(
     id: questionRef.id,
     ...data,
     skipAttributes: data.skipAttributes || [],
+    deadline,
   };
 }
 
@@ -138,14 +141,20 @@ export async function updateQuestion(
   }
 
   // Update the question
-  await questionRef.update({
+  const updateData: any = {
     ...(data.text && { text: data.text }),
     ...(data.choices && { choices: data.choices }),
     ...(data.correctAnswer && { correctAnswer: data.correctAnswer }),
     ...(data.skipAttributes !== undefined && {
       skipAttributes: data.skipAttributes,
     }),
-  });
+  };
+
+  if (data.deadline) {
+    updateData.deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
+  }
+
+  await questionRef.update(updateData);
 
   // Return the updated question
   const updatedDoc = await questionRef.get();

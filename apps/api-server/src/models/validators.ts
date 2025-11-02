@@ -21,6 +21,7 @@ export const CreateQuestionSchema = z.object({
     .max(10, 'Maximum 10 choices allowed'),
   correctAnswer: z.string().min(1, 'Correct answer is required'),
   skipAttributes: z.array(z.string()).default([]),
+  deadline: z.string().datetime('Deadline must be a valid ISO 8601 datetime'),
 });
 
 export type CreateQuestionInput = z.infer<typeof CreateQuestionSchema>;
@@ -39,6 +40,7 @@ export const UpdateQuestionSchema = z
       .optional(),
     correctAnswer: z.string().min(1).optional(),
     skipAttributes: z.array(z.string()).optional(),
+    deadline: z.string().datetime('Deadline must be a valid ISO 8601 datetime').optional(),
   })
   .refine(
     (data) => {
