@@ -136,21 +136,21 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T044 [P] [US3] Contract test for GET /participant/time in apps/api-server/tests/contract/participant.contract.test.ts
-- [ ] T045 [P] [US3] Contract test for POST /participant/answer in apps/api-server/tests/contract/participant.contract.test.ts
-- [ ] T046 [P] [US3] Integration test for time synchronization in apps/api-server/tests/integration/participant.test.ts (verify <50ms variance target)
-- [ ] T047 [P] [US3] Integration test for answer submission workflow in apps/api-server/tests/integration/participant.test.ts (submit → verify correctness → duplicate rejection)
-- [ ] T048 [P] [US3] Unit test for duplicate answer detection in apps/api-server/tests/unit/services/answerService.test.ts
+- [x] T044 [P] [US3] Contract test for GET /participant/time in apps/api-server/tests/contract/participant.contract.test.ts
+- [x] T045 [P] [US3] Contract test for POST /participant/answer in apps/api-server/tests/contract/participant.contract.test.ts
+- [x] T046 [P] [US3] Integration test for time synchronization in apps/api-server/tests/integration/participant.test.ts (verify <50ms variance target)
+- [x] T047 [P] [US3] Integration test for answer submission workflow in apps/api-server/tests/integration/participant.test.ts (submit → verify correctness → duplicate rejection)
+- [x] T048 [P] [US3] Unit test for duplicate answer detection in apps/api-server/tests/unit/services/answerService.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T049 [P] [US3] Create apps/api-server/src/models/validators.ts SubmitAnswerSchema with Zod (questionId, answer, responseTimeMs validation)
-- [ ] T050 [US3] Implement apps/api-server/src/services/answerService.ts with submitAnswer function (transaction-based duplicate check, correctness validation, Firestore write)
-- [ ] T051 [US3] Implement apps/api-server/src/routes/participant.ts with GET /participant/time endpoint (Date.now() response)
-- [ ] T052 [US3] Implement apps/api-server/src/routes/participant.ts with POST /participant/answer endpoint (extract guestId from auth token)
-- [ ] T053 [US3] Add requireAnonymousLogin middleware to POST /participant/answer in apps/api-server/src/routes/participant.ts (GET /participant/time has no auth)
-- [ ] T054 [US3] Register participant routes in apps/api-server/src/index.ts Express app
-- [ ] T055 [US3] Add handling for invalid question ID and invalid answer choice errors in apps/api-server/src/services/answerService.ts
+- [x] T049 [P] [US3] Create apps/api-server/src/models/validators.ts SubmitAnswerSchema with Zod (questionId, answer, responseTimeMs validation)
+- [x] T050 [US3] Implement apps/api-server/src/services/answerService.ts with submitAnswer function (transaction-based duplicate check, correctness validation, Firestore write)
+- [x] T051 [US3] Implement apps/api-server/src/routes/participant.ts with GET /participant/time endpoint (Date.now() response)
+- [x] T052 [US3] Implement apps/api-server/src/routes/participant.ts with POST /participant/answer endpoint (extract guestId from auth token)
+- [x] T053 [US3] Add requireAnonymousLogin middleware to POST /participant/answer in apps/api-server/src/routes/participant.ts (GET /participant/time has no auth)
+- [x] T054 [US3] Register participant routes in apps/api-server/src/index.ts Express app
+- [x] T055 [US3] Add handling for invalid question ID and invalid answer choice errors in apps/api-server/src/services/answerService.ts
 
 **Checkpoint**: Participant answer submission complete. Time sync working. Duplicate prevention enforced. Correctness validation accurate.
 
