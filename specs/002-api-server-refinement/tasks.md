@@ -26,7 +26,7 @@ This project uses monorepo structure:
 
 **Tasks**:
 
-- [ ] T001 Checkout 001-api-server implementation to working directory (git worktree or merge from branch)
+- [X] T001 Checkout 001-api-server implementation to working directory (git worktree or merge from branch)
 - [ ] T002 [P] Install dependencies for apps/api-server using pnpm install
 - [ ] T003 [P] Copy OpenAPI spec from packages/openapi/api-server.yaml to working branch
 - [ ] T004 [P] Verify Firebase emulator configuration in apps/api-server/
