@@ -3,6 +3,8 @@
  * Represents a single question in the quiz game
  */
 
+import { Timestamp } from 'firebase-admin/firestore';
+
 export type QuestionType = 'multiple-choice';
 
 export interface Question {
@@ -29,4 +31,7 @@ export interface Question {
 
   /** Attributes to skip when displaying this question (e.g., ['age-under-20']) */
   skipAttributes: string[];
+
+  /** Deadline for answering this question (Firestore Timestamp) */
+  deadline: Timestamp;
 }

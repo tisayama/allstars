@@ -5,7 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { admin } from '../utils/firestore';
-import { UnauthorizedError } from '../utils/errors';
+import { UnauthorizedError, ForbiddenError } from '../utils/errors';
 
 // Extend Express Request type to include user
 declare global {
@@ -100,4 +100,59 @@ export async function auth(
     });
     return;
   }
+}
+
+/**
+ * Authorization middleware factory for role-based access control
+ * Checks if authenticated user has required authentication method
+ *
+ * @param requiredProvider - Required authentication provider ('google.com' or 'anonymous')
+ * @returns Express middleware function
+ *
+ * @example
+ * ```typescript
+ * // Require Google authentication (for host/admin)
+ * router.post('/admin/action', auth, authorize('google.com'), handler);
+ *
+ * // Require anonymous authentication (for guests)
+ * router.post('/guest/action', auth, authorize('anonymous'), handler);
+ * ```
+ */
+export function authorize(requiredProvider: 'google.com' | 'anonymous') {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    // Ensure user is authenticated
+    if (!req.user) {
+      const error = new UnauthorizedError('User not authenticated', [
+        { message: 'Authentication required before authorization' },
+      ]);
+      res.status(error.statusCode).json({
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+      return;
+    }
+
+    // Check if user has required provider
+    if (req.user.signInProvider !== requiredProvider) {
+      const providerName =
+        requiredProvider === 'google.com' ? 'Google' : 'Anonymous';
+      const error = new ForbiddenError(
+        `${providerName} authentication required`,
+        [
+          {
+            message: `This endpoint requires ${providerName} authentication`,
+          },
+        ]
+      );
+      res.status(error.statusCode).json({
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+      return;
+    }
+
+    next();
+  };
 }

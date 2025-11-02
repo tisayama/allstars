@@ -44,16 +44,16 @@ This project uses monorepo structure:
 
 **Tasks**:
 
-- [ ] T006 Update packages/types/src/GameState.ts to add prizeCarryover field and new phases (all_incorrect, all_revived)
-- [ ] T007 [P] Update packages/types/src/Guest.ts to change status enum from alive/eliminated to active/dropped
-- [ ] T008 [P] Update packages/types/src/Question.ts to add deadline field (Timestamp)
-- [ ] T009 [P] Update packages/types/src/Answer.ts documentation to reflect sub-collection storage location
-- [ ] T010 Create apps/api-server/src/services/firestoreRetry.ts implementing retry wrapper with p-retry library
-- [ ] T011 [P] Create apps/api-server/src/utils/performance.ts for response time tracking middleware
-- [ ] T012 [P] Update apps/api-server/package.json to add p-retry dependency (^6.1.0)
-- [ ] T013 Build packages/types to generate updated type definitions for api-server
-- [ ] T014 Update OpenAPI spec packages/openapi/api-server.yaml to v1.1.0 with schema changes (already done in contracts/)
-- [ ] T015 [P] Update apps/api-server/src/middleware/auth.ts to add authorize() function for role-based access control
+- [X] T006 Update packages/types/src/GameState.ts to add prizeCarryover field and new phases (all_incorrect, all_revived)
+- [X] T007 [P] Update packages/types/src/Guest.ts to change status enum from alive/eliminated to active/dropped
+- [X] T008 [P] Update packages/types/src/Question.ts to add deadline field (Timestamp)
+- [X] T009 [P] Update packages/types/src/Answer.ts documentation to reflect sub-collection storage location
+- [X] T010 Create apps/api-server/src/services/firestoreRetry.ts implementing retry wrapper with p-retry library
+- [X] T011 [P] Create apps/api-server/src/utils/performance.ts for response time tracking middleware
+- [X] T012 [P] Update apps/api-server/package.json to add p-retry dependency (^6.1.0)
+- [X] T013 Build packages/types to generate updated type definitions for api-server
+- [X] T014 Update OpenAPI spec packages/openapi/api-server.yaml to v1.1.0 with schema changes (already done in contracts/)
+- [X] T015 [P] Update apps/api-server/src/middleware/auth.ts to add authorize() function for role-based access control
 
 **Checkpoint**: Foundation ready - types updated, retry logic available, auth enhanced
 

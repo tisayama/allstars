@@ -8,7 +8,9 @@ export type GamePhase =
   | 'accepting_answers'
   | 'showing_distribution'
   | 'showing_correct_answer'
-  | 'showing_results';
+  | 'showing_results'
+  | 'all_incorrect'
+  | 'all_revived';
 
 export interface GameResults {
   /** Top 10 fastest correct answers */
@@ -41,4 +43,7 @@ export interface GameState {
 
   /** Denormalized results for current question (calculated during SHOW_RESULTS) */
   results: GameResults | null;
+
+  /** Accumulated prize money from questions where all guests answered incorrectly */
+  prizeCarryover: number;
 }

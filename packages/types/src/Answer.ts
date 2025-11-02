@@ -1,6 +1,9 @@
 /**
  * Answer submission entity
  * Represents a participant's answer to a specific question
+ *
+ * Firestore location: questions/{questionId}/answers/{answerId}
+ * (Stored as sub-collection under each question document)
  */
 
 export interface Answer {
