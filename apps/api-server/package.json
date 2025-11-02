@@ -8,14 +8,15 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint src/**/*.ts tests/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts tests/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit"
+    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit",
+    "seed": "ts-node scripts/seed-data.ts"
   },
   "dependencies": {
     "express": "^4.18.2",

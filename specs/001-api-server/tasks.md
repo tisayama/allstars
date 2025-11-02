@@ -197,35 +197,35 @@
 
 ### End-to-End Integration Tests
 
-- [ ] T073 [P] Integration test for complete game workflow in apps/api-server/tests/integration/e2e.test.ts (admin creates question → host starts question → participants answer → host shows results)
-- [ ] T074 [P] Integration test for Firestore unavailability handling in apps/api-server/tests/integration/firestore-failure.test.ts (verify 503 with Retry-After header per FR-031)
-- [ ] T075 [P] Integration test for concurrent answer submissions in apps/api-server/tests/integration/concurrency.test.ts (verify 500 simultaneous submissions per SC-007)
-- [ ] T076 [P] Integration test for concurrent host actions in apps/api-server/tests/integration/concurrency.test.ts (verify transaction-based race condition prevention per FR-013)
+- [x] T073 [P] Integration test for complete game workflow in apps/api-server/tests/integration/e2e.test.ts (admin creates question → host starts question → participants answer → host shows results)
+- [x] T074 [P] Integration test for Firestore unavailability handling in apps/api-server/tests/integration/firestore-failure.test.ts (verify 503 with Retry-After header per FR-031)
+- [x] T075 [P] Integration test for concurrent answer submissions in apps/api-server/tests/integration/concurrency.test.ts (verify 500 simultaneous submissions per SC-007)
+- [x] T076 [P] Integration test for concurrent host actions in apps/api-server/tests/integration/concurrency.test.ts (verify transaction-based race condition prevention per FR-013)
 
 ### Error Handling & Edge Cases
 
-- [ ] T077 [P] Add validation for invalid question ID in participant answer submission (return 404 with FR-029 error format)
-- [ ] T078 [P] Add validation for invalid answer choice in apps/api-server/src/services/answerService.ts (e.g., choice "E" for four-choice question)
-- [ ] T079 [P] Add validation for negative/excessive responseTimeMs in apps/api-server/src/models/validators.ts SubmitAnswerSchema
-- [ ] T080 [P] Add Firestore unavailability detection and 503 response in apps/api-server/src/middleware/errorHandler.ts (FR-031 Retry-After header)
-- [ ] T081 [P] Add Firebase Auth service failure handling with FR-033 logging in apps/api-server/src/middleware/auth.ts
+- [x] T077 [P] Add validation for invalid question ID in participant answer submission (return 404 with FR-029 error format)
+- [x] T078 [P] Add validation for invalid answer choice in apps/api-server/src/services/answerService.ts (e.g., choice "E" for four-choice question)
+- [x] T079 [P] Add validation for negative/excessive responseTimeMs in apps/api-server/src/models/validators.ts SubmitAnswerSchema
+- [x] T080 [P] Add Firestore unavailability detection and 503 response in apps/api-server/src/middleware/errorHandler.ts (FR-031 Retry-After header)
+- [x] T081 [P] Add Firebase Auth service failure handling with FR-033 logging in apps/api-server/src/middleware/auth.ts
 
 ### Documentation & Configuration
 
-- [ ] T082 [P] Create apps/api-server/README.md with setup instructions, development workflow, and deployment guide
-- [ ] T083 [P] Create apps/api-server/scripts/seed-data.ts for Firebase Emulator test data seeding (questions, guests, answers)
-- [ ] T084 [P] Create apps/api-server/.gitignore for node_modules, lib/, .env, emulator-data
-- [ ] T085 [P] Add package.json scripts for build (tsc), test (jest), lint (eslint), format (prettier), emulator (firebase emulators:start)
-- [ ] T086 [P] Create apps/api-server/CHANGELOG.md documenting implementation decisions from research.md
+- [x] T082 [P] Create apps/api-server/README.md with setup instructions, development workflow, and deployment guide
+- [x] T083 [P] Create apps/api-server/scripts/seed-data.ts for Firebase Emulator test data seeding (questions, guests, answers)
+- [x] T084 [P] Create apps/api-server/.gitignore for node_modules, lib/, .env, emulator-data
+- [x] T085 [P] Add package.json scripts for build (tsc), test (jest), lint (eslint), format (prettier), emulator (firebase emulators:start)
+- [x] T086 [P] Create apps/api-server/CHANGELOG.md documenting implementation decisions from research.md
 
 ### Performance & Quality
 
-- [ ] T087 [P] Add performance logging for game state updates to verify <2s target (SC-004)
-- [ ] T088 [P] Add performance logging for server time endpoint to verify <50ms variance (SC-005)
-- [ ] T089 [P] Run ESLint and Prettier on all source files and fix violations
-- [ ] T090 [P] Run Jest with coverage report and verify >80% coverage threshold
-- [ ] T091 Validate OpenAPI contract with swagger-cli validate packages/openapi/api-server.yaml
-- [ ] T092 Initialize gameState collection with singleton document (phase: idle, activeQuestionId: null) using Firebase Emulator
+- [x] T087 [P] Add performance logging for game state updates to verify <2s target (SC-004)
+- [x] T088 [P] Add performance logging for server time endpoint to verify <50ms variance (SC-005)
+- [x] T089 [P] Run ESLint and Prettier on all source files and fix violations
+- [x] T090 [P] Run Jest with coverage report and verify >80% coverage threshold
+- [x] T091 Validate OpenAPI contract with swagger-cli validate packages/openapi/api-server.yaml
+- [x] T092 Initialize gameState collection with singleton document (phase: idle, activeQuestionId: null) using Firebase Emulator
 
 ---
 
