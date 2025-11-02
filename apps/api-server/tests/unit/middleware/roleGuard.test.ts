@@ -99,7 +99,7 @@ describe('RoleGuard Middleware', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           code: 'FORBIDDEN',
-          message: expect.stringContaining('anonymous'),
+          message: 'Anonymous authentication required',
         })
       );
       expect(next).not.toHaveBeenCalled();

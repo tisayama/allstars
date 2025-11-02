@@ -6,9 +6,6 @@
 import request from 'supertest';
 import { app } from '../../src/index';
 import { admin } from '../../src/utils/firestore';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import * as path from 'path';
 
 // Mock Firebase Admin
 jest.mock('../../src/utils/firestore', () => ({
@@ -58,7 +55,7 @@ describe('Admin Endpoints Contract Tests', () => {
       orderBy: jest.fn(),
     };
 
-    (admin.firestore as jest.Mock).mockReturnValue(mockFirestore);
+    (admin.firestore as unknown as jest.Mock).mockReturnValue(mockFirestore);
   });
 
   afterEach(() => {

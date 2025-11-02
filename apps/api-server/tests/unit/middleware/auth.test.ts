@@ -64,7 +64,7 @@ describe('Auth Middleware', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           code: 'UNAUTHORIZED',
-          message: expect.stringContaining('Bearer'),
+          message: 'Invalid authorization format',
         })
       );
       expect(next).not.toHaveBeenCalled();

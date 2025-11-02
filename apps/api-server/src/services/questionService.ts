@@ -149,11 +149,11 @@ export async function updateQuestion(
 
   // Return the updated question
   const updatedDoc = await questionRef.get();
-  const updatedData = updatedDoc.data() as Question;
+  const updatedData = updatedDoc.data();
 
   return {
-    id: questionId,
     ...updatedData,
+    id: questionId,
   } as Question;
 }
 
