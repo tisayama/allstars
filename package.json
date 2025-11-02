@@ -1,0 +1,20 @@
+{
+  "name": "allstars",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AllStars wedding quiz game platform monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit"
+  },
+  "devDependencies": {
+    "firebase-tools": "^12.9.1"
+  },
+  "packageManager": "pnpm@8.0.0"
+}
