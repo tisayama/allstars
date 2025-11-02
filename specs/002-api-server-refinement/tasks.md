@@ -220,11 +220,11 @@ This project uses monorepo structure:
 
 ### Implementation (TDD Green Phase)
 
-- [ ] T080 [US5] Implement reviveAll() method in apps/api-server/src/services/guestService.ts using Firestore batch write
-- [ ] T081 [P] [US5] Update gameStateService.ts to set phase=all_revived after REVIVE_ALL action
-- [ ] T082 [P] [US5] Add REVIVE_ALL action to apps/api-server/src/routes/host.ts or admin.ts endpoint
-- [ ] T083 [P] [US5] Add authorization check to REVIVE_ALL endpoint (host role only)
-- [ ] T084 [US5] Run tests and verify REVIVE_ALL logic passes (GREEN state)
+- [X] T080 [US5] Implement reviveAll() method in apps/api-server/src/services/guestService.ts using Firestore batch write
+- [X] T081 [P] [US5] Update gameStateService.ts to set phase=all_revived after REVIVE_ALL action
+- [X] T082 [P] [US5] Add REVIVE_ALL action to apps/api-server/src/routes/host.ts or admin.ts endpoint
+- [X] T083 [P] [US5] Add authorization check to REVIVE_ALL endpoint (host role only)
+- [X] T084 [US5] Run tests and verify REVIVE_ALL logic passes (GREEN state)
 
 ### Integration Testing
 

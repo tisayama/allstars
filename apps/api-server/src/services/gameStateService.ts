@@ -318,6 +318,7 @@ async function handleShowResults(state: GameState): Promise<GameState> {
 
 /**
  * REVIVE_ALL: Revive all dropped guests
+ * US5: Sets all dropped guests to active and transitions phase to all_revived
  */
 async function handleReviveAll(state: GameState): Promise<GameState> {
   // Get all dropped guests
@@ -335,8 +336,11 @@ async function handleReviveAll(state: GameState): Promise<GameState> {
     await batch.commit();
   }
 
-  // State doesn't change, just return current state
-  return state;
+  // US5: Transition to all_revived phase
+  return {
+    ...state,
+    phase: 'all_revived',
+  };
 }
 
 /**
