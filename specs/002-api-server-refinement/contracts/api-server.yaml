@@ -1,0 +1,825 @@
+openapi: 3.0.3
+info:
+  title: AllStars Quiz Game API Server
+  description: |
+    RESTful API server for the AllStars wedding quiz game platform.
+
+    This API serves three primary user roles:
+    - **Admin**: Quiz master who creates and manages quiz questions
+    - **Host**: Newly-weds who control game flow during the live event
+    - **Participant**: Wedding guests who submit answers via their smartphones
+
+    All endpoints require Firebase Authentication tokens in the Authorization header.
+  version: 1.1.0
+  contact:
+    name: AllStars Development Team
+servers:
+  - url: https://us-central1-{projectId}.cloudfunctions.net
+    description: Firebase Cloud Functions production endpoint
+    variables:
+      projectId:
+        default: allstars-prod
+        description: Firebase project ID
+  - url: http://localhost:5001/{projectId}/us-central1
+    description: Firebase Emulator Suite local development
+    variables:
+      projectId:
+        default: demo-allstars
+        description: Firebase Emulator project ID
+
+security:
+  - FirebaseAuth: []
+
+tags:
+  - name: Admin
+    description: Quiz management and guest administration endpoints (requires Google Login)
+  - name: Host
+    description: Game flow control endpoints (requires Google Login)
+  - name: Participant
+    description: Answer submission and time sync endpoints (requires Anonymous Login)
+
+paths:
+  # ============================================================
+  # ADMIN ENDPOINTS
+  # ============================================================
+
+  /admin/quizzes:
+    post:
+      tags: [Admin]
+      summary: Create a new quiz question
+      description: |
+        Creates a new quiz question with validation for uniqueness on (period, questionNumber) combination.
+        Requires Google Login authentication.
+      operationId: createQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+            examples:
+              fourChoice:
+                summary: Four-choice question
+                value:
+                  period: 1
+                  questionNumber: 5
+                  type: four_choice
+                  text: "What is the groom's favorite food?"
+                  choices: ["Pizza", "Sushi", "Tacos", "Pasta"]
+                  correctAnswer: "Sushi"
+                  skipAttributes: ["groom_family"]
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Duplicate period/question number combination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: DUPLICATE_PERIOD_QUESTION
+                message: Question with period 1 and question number 5 already exists
+                details:
+                  - field: period
+                    message: Combination (period=1, questionNumber=5) must be unique
+                    value: 1
+                  - field: questionNumber
+                    message: Combination (period=1, questionNumber=5) must be unique
+                    value: 5
+
+    get:
+      tags: [Admin]
+      summary: Retrieve all quiz questions
+      description: |
+        Returns a list of all quiz questions ordered by period and question number.
+        Requires Google Login authentication.
+      operationId: listQuestions
+      responses:
+        '200':
+          description: List of questions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/quizzes/{questionId}:
+    put:
+      tags: [Admin]
+      summary: Update an existing quiz question
+      description: |
+        Updates an existing quiz question by ID. Partial updates are supported.
+        Requires Google Login authentication.
+      operationId: updateQuestion
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Firestore document ID of the question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestionRequest'
+            examples:
+              updateText:
+                summary: Update question text only
+                value:
+                  text: "What is the bride's favorite food?"
+      responses:
+        '200':
+          description: Question updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: QUESTION_NOT_FOUND
+                message: Question with ID q_abc123 not found
+                details: []
+
+  /admin/guests:
+    get:
+      tags: [Admin]
+      summary: Retrieve all registered guests
+      description: |
+        Returns a list of all registered guests for QR code management.
+        Requires Google Login authentication.
+      operationId: listGuests
+      responses:
+        '200':
+          description: List of guests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ============================================================
+  # HOST ENDPOINTS
+  # ============================================================
+
+  /host/game/advance:
+    post:
+      tags: [Host]
+      summary: Advance game state
+      description: |
+        Main endpoint for progressing the game through different phases.
+        Uses Firestore transactions to prevent race conditions from concurrent requests.
+        Requires Google Login authentication.
+
+        **Action Types:**
+        - `START_QUESTION`: Begin accepting answers for specified question
+        - `TRIGGER_GONG`: Activate gong sound/animation
+        - `SHOW_DISTRIBUTION`: Display answer distribution to audience
+        - `SHOW_CORRECT_ANSWER`: Reveal the correct answer
+        - `SHOW_RESULTS`: Calculate and display worst/top 10 performers
+        - `REVIVE_ALL`: Reset all eliminated guests to active status
+      operationId: advanceGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameActionRequest'
+            examples:
+              startQuestion:
+                summary: Start a new question
+                value:
+                  action: START_QUESTION
+                  payload:
+                    questionId: q_abc123
+              triggerGong:
+                summary: Trigger gong
+                value:
+                  action: TRIGGER_GONG
+                  payload: null
+              showResults:
+                summary: Calculate and show results
+                value:
+                  action: SHOW_RESULTS
+                  payload: null
+      responses:
+        '200':
+          description: Game state updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Invalid game state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_GAME_STATE
+                message: Cannot show distribution while in phase 'idle'
+                details:
+                  - field: action
+                    message: SHOW_DISTRIBUTION requires phase 'accepting_answers'
+                    value: SHOW_DISTRIBUTION
+
+  # ============================================================
+  # PARTICIPANT ENDPOINTS
+  # ============================================================
+
+  /participant/time:
+    get:
+      tags: [Participant]
+      summary: Get server time for clock synchronization
+      description: |
+        Returns current server time as Unix timestamp in milliseconds.
+        Used by clients to calculate time offset for accurate response time measurement.
+        No authentication required to support pre-login synchronization.
+      operationId: getServerTime
+      security: []
+      responses:
+        '200':
+          description: Server time retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerTimeResponse'
+              example:
+                serverTime: 1678886400000
+
+  /participant/answer:
+    post:
+      tags: [Participant]
+      summary: Submit answer to current question
+      description: |
+        Submits a participant's answer for the currently active question.
+        Validates that question is active, prevents duplicate submissions,
+        and stores answer with correctness flag and response time.
+        Requires Anonymous Login authentication.
+      operationId: submitAnswer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAnswerRequest'
+            examples:
+              validAnswer:
+                summary: Valid answer submission
+                value:
+                  questionId: q_abc123
+                  answer: "Sushi"
+                  responseTimeMs: 2345
+      responses:
+        '201':
+          description: Answer submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitAnswerResponse'
+              example:
+                success: true
+                isCorrect: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Duplicate answer or question not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicate:
+                  summary: Duplicate answer submission
+                  value:
+                    code: DUPLICATE_ANSWER
+                    message: Answer already submitted for this question
+                    details:
+                      - field: questionId
+                        message: Guest has already answered question q_abc123
+                        value: q_abc123
+                questionNotActive:
+                  summary: Question not currently active
+                  value:
+                    code: QUESTION_NOT_ACTIVE
+                    message: Question q_abc123 is not currently accepting answers
+                    details:
+                      - field: questionId
+                        message: Active question is q_def456, not q_abc123
+                        value: q_abc123
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+
+components:
+  securitySchemes:
+    FirebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Firebase ID token obtained from Firebase Authentication.
+
+        **Admin/Host endpoints**: Require Google Login token
+        **Participant endpoints**: Require Anonymous Login token
+
+        Example: `Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6...`
+
+  schemas:
+    # ============================================================
+    # REQUEST SCHEMAS
+    # ============================================================
+
+    CreateQuestionRequest:
+      type: object
+      required:
+        - period
+        - questionNumber
+        - type
+        - text
+        - choices
+        - correctAnswer
+      properties:
+        period:
+          type: integer
+          minimum: 1
+          description: Game phase number
+          example: 1
+        questionNumber:
+          type: integer
+          minimum: 1
+          description: Question number within period
+          example: 5
+        type:
+          type: string
+          enum: [four_choice, true_false]
+          description: Question type
+          example: four_choice
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Question text
+          example: "What is the groom's favorite food?"
+        choices:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 5
+          description: Array of answer choices
+          example: ["Pizza", "Sushi", "Tacos", "Pasta"]
+        correctAnswer:
+          type: string
+          description: Correct answer (must match one of choices)
+          example: "Sushi"
+        skipAttributes:
+          type: array
+          items:
+            type: string
+          description: Guest attributes to exclude from this question
+          example: ["groom_family"]
+
+    UpdateQuestionRequest:
+      type: object
+      properties:
+        period:
+          type: integer
+          minimum: 1
+        questionNumber:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum: [four_choice, true_false]
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        choices:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 5
+        correctAnswer:
+          type: string
+        skipAttributes:
+          type: array
+          items:
+            type: string
+      minProperties: 1
+      description: At least one field must be provided for update
+
+    GameActionRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - START_QUESTION
+            - TRIGGER_GONG
+            - SHOW_DISTRIBUTION
+            - SHOW_CORRECT_ANSWER
+            - SHOW_RESULTS
+            - REVIVE_ALL
+          description: Game action to execute
+          example: START_QUESTION
+        payload:
+          oneOf:
+            - $ref: '#/components/schemas/StartQuestionPayload'
+            - type: 'null'
+          description: Action-specific payload (null for actions without payload)
+
+    StartQuestionPayload:
+      type: object
+      required:
+        - questionId
+      properties:
+        questionId:
+          type: string
+          description: Firestore document ID of question to activate
+          example: q_abc123
+
+    SubmitAnswerRequest:
+      type: object
+      required:
+        - questionId
+        - answer
+        - responseTimeMs
+      properties:
+        questionId:
+          type: string
+          description: Firestore document ID of the question being answered
+          example: q_abc123
+        answer:
+          type: string
+          description: Selected answer choice
+          example: "Sushi"
+        responseTimeMs:
+          type: integer
+          minimum: 0
+          description: Client-measured response time in milliseconds
+          example: 2345
+
+    # ============================================================
+    # RESPONSE SCHEMAS
+    # ============================================================
+
+    Question:
+      type: object
+      required:
+        - id
+        - period
+        - questionNumber
+        - type
+        - text
+        - choices
+        - correctAnswer
+        - skipAttributes
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Firestore document ID
+          example: q_abc123
+        period:
+          type: integer
+          minimum: 1
+          example: 1
+        questionNumber:
+          type: integer
+          minimum: 1
+          example: 5
+        type:
+          type: string
+          enum: [four_choice, true_false]
+          example: four_choice
+        text:
+          type: string
+          example: "What is the groom's favorite food?"
+        choices:
+          type: array
+          items:
+            type: string
+          example: ["Pizza", "Sushi", "Tacos", "Pasta"]
+        correctAnswer:
+          type: string
+          example: "Sushi"
+        deadline:
+          type: string
+          format: date-time
+          description: Answer submission deadline timestamp (new in v1.1)
+          example: "2025-11-02T10:01:00Z"
+        skipAttributes:
+          type: array
+          items:
+            type: string
+          example: ["groom_family"]
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+          example: "2025-11-02T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+          example: "2025-11-02T10:00:00Z"
+
+    Guest:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - attributes
+        - authMethod
+        - createdAt
+        - lastActiveAt
+      properties:
+        id:
+          type: string
+          description: Firestore document ID
+          example: guest_xyz789
+        name:
+          type: string
+          example: "John Smith"
+        status:
+          type: string
+          enum: [active, dropped]
+          example: active
+          description: Guest participation status (changed from 'eliminated' to 'dropped' in v1.1)
+        attributes:
+          type: array
+          items:
+            type: string
+          example: ["bride_family", "table_3"]
+        authMethod:
+          type: string
+          enum: [google, anonymous]
+          example: anonymous
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-11-02T09:00:00Z"
+        lastActiveAt:
+          type: string
+          format: date-time
+          example: "2025-11-02T10:30:00Z"
+
+    GameState:
+      type: object
+      required:
+        - currentQuestionId
+        - phase
+        - isGongActive
+        - prizeCarryover
+        - questionsAsked
+        - updatedAt
+      properties:
+        currentQuestionId:
+          type: string
+          nullable: true
+          description: Currently active question ID (null if none active)
+          example: q_abc123
+        phase:
+          type: string
+          enum:
+            - accepting_answers
+            - showing_distribution
+            - showing_correct_answer
+            - showing_results
+            - all_incorrect
+            - all_revived
+          example: accepting_answers
+          description: Current game phase (added all_incorrect and all_revived in v1.1)
+        isGongActive:
+          type: boolean
+          description: Whether gong can be triggered by guests
+          example: true
+        prizeCarryover:
+          type: number
+          format: int32
+          minimum: 0
+          description: Accumulated prize from all-incorrect questions (new in v1.1)
+          example: 20000
+        questionsAsked:
+          type: number
+          format: int32
+          minimum: 0
+          description: Count of questions asked in current game
+          example: 5
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-11-02T10:15:00Z"
+
+    GameResults:
+      type: object
+      required:
+        - top10
+        - worst10
+      properties:
+        top10:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceEntry'
+          maxItems: 10
+          description: Top 10 performers (correct answers, fastest times)
+        worst10:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceEntry'
+          maxItems: 10
+          description: Worst 10 performers (incorrect answers, slowest times)
+
+    PerformanceEntry:
+      type: object
+      required:
+        - guestId
+        - guestName
+        - answer
+        - responseTimeMs
+        - isCorrect
+      properties:
+        guestId:
+          type: string
+          example: guest_xyz789
+        guestName:
+          type: string
+          example: "John Smith"
+        answer:
+          type: string
+          example: "Sushi"
+        responseTimeMs:
+          type: integer
+          example: 2345
+        isCorrect:
+          type: boolean
+          example: true
+
+    ServerTimeResponse:
+      type: object
+      required:
+        - serverTime
+      properties:
+        serverTime:
+          type: integer
+          format: int64
+          description: Server timestamp in milliseconds since Unix epoch
+          example: 1678886400000
+
+    SubmitAnswerResponse:
+      type: object
+      required:
+        - success
+        - isCorrect
+      properties:
+        success:
+          type: boolean
+          description: Whether submission was successful
+          example: true
+        isCorrect:
+          type: boolean
+          description: Whether the submitted answer was correct
+          example: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - details
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error description
+          example: Request validation failed
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          description: Additional error context
+
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Field name that caused the error
+          example: period
+        message:
+          type: string
+          description: Detailed explanation of the error
+          example: Expected positive integer, received -1
+        value:
+          description: Actual value that caused the error
+          example: -1
+
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: VALIDATION_ERROR
+            message: Request validation failed
+            details:
+              - field: period
+                message: Expected positive integer, received -1
+                value: -1
+
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: Missing or invalid authentication token
+            details: []
+
+    Forbidden:
+      description: Insufficient permissions for this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: FORBIDDEN
+            message: This endpoint requires Google Login authentication
+            details:
+              - message: Anonymous users cannot access admin endpoints
+
+    ServiceUnavailable:
+      description: Service temporarily unavailable (Firestore connection issues)
+      headers:
+        Retry-After:
+          description: Suggested retry delay in seconds
+          schema:
+            type: integer
+            example: 60
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: SERVICE_UNAVAILABLE
+            message: Service temporarily unavailable. Please try again.
+            details:
+              - resource: Firestore
+                reason: unavailable
+                originalError: "UNAVAILABLE: The service is currently unavailable"
