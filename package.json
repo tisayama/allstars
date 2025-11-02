@@ -3,10 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "AllStars wedding quiz game platform monorepo",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
