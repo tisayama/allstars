@@ -78,7 +78,7 @@ describe('Host Endpoints Contract Tests', () => {
       {
         action: 'REVIVE_ALL',
         payload: {},
-        description: 'Revive all eliminated guests',
+        description: 'Revive all dropped guests',
       },
     ];
 

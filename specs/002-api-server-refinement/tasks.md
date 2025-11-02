@@ -69,12 +69,12 @@ This project uses monorepo structure:
 
 ### Tests (TDD Red Phase)
 
-- [ ] T016 [US1] Update test in apps/api-server/tests/unit/services/gameStateService.test.ts to expect gameState/live document path
-- [ ] T017 [P] [US1] Update test in apps/api-server/tests/unit/services/answerService.test.ts to expect questions/{id}/answers/{guestId} sub-collection path
-- [ ] T018 [P] [US1] Update test in apps/api-server/tests/unit/services/guestService.test.ts to expect status values active/dropped
-- [ ] T019 [P] [US1] Update test mocks in apps/api-server/tests/integration/ to use new document paths
-- [ ] T020 [P] [US1] Update test fixtures in apps/api-server/tests/contract/ to use new field names and paths
-- [ ] T021 [US1] Run test suite and verify all path-related tests fail (RED state confirmed)
+- [X] T016 [US1] Update test in apps/api-server/tests/unit/services/gameStateService.test.ts to expect gameState/live document path
+- [X] T017 [P] [US1] Update test in apps/api-server/tests/unit/services/answerService.test.ts to expect questions/{id}/answers/{guestId} sub-collection path
+- [X] T018 [P] [US1] Update test in apps/api-server/tests/unit/services/guestService.test.ts to expect status values active/dropped
+- [X] T019 [P] [US1] Update test mocks in apps/api-server/tests/integration/ to use new document paths
+- [X] T020 [P] [US1] Update test fixtures in apps/api-server/tests/contract/ to use new field names and paths
+- [X] T021 [US1] Run test suite and verify all path-related tests fail (RED state confirmed)
 
 ### Implementation (TDD Green Phase)
 

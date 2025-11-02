@@ -4,6 +4,10 @@
  */
 
 import { db } from '../../../src/utils/firestore';
+import {
+  advanceGame,
+  getCurrentGameState,
+} from '../../../src/services/gameStateService';
 
 // Mock Firestore
 jest.mock('../../../src/utils/firestore', () => ({
@@ -20,13 +24,49 @@ jest.mock('../../../src/utils/firestore', () => ({
   },
 }));
 
+// Mock dependencies
+jest.mock('../../../src/services/questionService');
+jest.mock('../../../src/services/guestService');
+jest.mock('../../../src/services/answerService');
+
 describe('Game State Service', () => {
+  let mockCollection: jest.Mock;
+  let mockDoc: jest.Mock;
+  let mockGet: jest.Mock;
   let mockRunTransaction: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockGet = jest.fn();
+    mockDoc = jest.fn(() => ({ get: mockGet }));
+    mockCollection = jest.fn(() => ({ doc: mockDoc }));
     mockRunTransaction = jest.fn();
+
+    (db.collection as jest.Mock) = mockCollection;
     (db.runTransaction as jest.Mock) = mockRunTransaction;
+  });
+
+  describe('Document Path Validation', () => {
+    it('should use gameState/live document path', async () => {
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => ({
+          phase: 'idle',
+          activeQuestionId: null,
+          isGongActive: false,
+          results: null,
+          prizeCarryover: 0,
+        }),
+      });
+
+      await getCurrentGameState();
+
+      // Verify correct collection and document ID
+      expect(mockCollection).toHaveBeenCalledWith('gameState');
+      expect(mockDoc).toHaveBeenCalledWith('live');
+    });
   });
 
   describe('Transaction-based State Updates', () => {

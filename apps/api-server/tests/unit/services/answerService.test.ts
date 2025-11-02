@@ -22,6 +22,13 @@ jest.mock('../../../src/utils/firestore', () => ({
   },
 }));
 
+// Mock dependencies
+jest.mock('../../../src/services/questionService', () => ({
+  getQuestionById: jest.fn(),
+}));
+
+import { getQuestionById } from '../../../src/services/questionService';
+
 describe('Answer Service', () => {
   let mockCollection: jest.Mock;
   let mockDoc: jest.Mock;
@@ -43,17 +50,74 @@ describe('Answer Service', () => {
     mockWhere.mockReturnThis();
     mockLimit.mockReturnValue({ get: mockGet });
 
+    // Setup chained mock for sub-collection path
+    mockDoc.mockReturnValue({
+      get: mockGet,
+      collection: jest.fn().mockReturnValue({
+        doc: mockDoc,
+      }),
+    });
+
     mockCollection.mockReturnValue({
       where: mockWhere,
       doc: mockDoc,
     });
 
-    mockDoc.mockReturnValue({
-      get: mockGet,
-    });
-
     (db.collection as jest.Mock) = mockCollection;
     (db.runTransaction as jest.Mock) = mockRunTransaction;
+
+    // Mock question service
+    (getQuestionById as jest.Mock).mockResolvedValue({
+      id: 'question-1',
+      text: 'Test question?',
+      choices: ['A', 'B', 'C', 'D'],
+      correctAnswer: 'A',
+    });
+  });
+
+  describe('Sub-collection Path Validation', () => {
+    it('should use questions/{questionId}/answers/{guestId} sub-collection path', async () => {
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({ empty: true }),
+          set: jest.fn(),
+        };
+
+        // Mock sub-collection query
+        const mockSubCollection = {
+          doc: jest.fn().mockReturnThis(),
+        };
+
+        // Expect collection to be called for questions/{questionId}/answers
+        mockCollection.mockImplementation((collectionName) => {
+          if (collectionName === 'questions') {
+            return {
+              doc: jest.fn((questionId) => ({
+                collection: jest.fn((subCollectionName) => {
+                  // Verify sub-collection name is 'answers'
+                  expect(subCollectionName).toBe('answers');
+                  return mockSubCollection;
+                }),
+              })),
+            };
+          }
+          return { where: mockWhere, doc: mockDoc };
+        });
+
+        return callback(mockTransaction);
+      });
+
+      const answerData = {
+        questionId: 'question-1',
+        answer: 'A',
+        responseTimeMs: 1500,
+      };
+
+      await submitAnswer('guest-1', answerData);
+
+      // Verify questions collection was accessed
+      expect(mockCollection).toHaveBeenCalledWith('questions');
+    });
   });
 
   describe('Duplicate Detection', () => {

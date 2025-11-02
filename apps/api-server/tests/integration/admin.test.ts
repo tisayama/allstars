@@ -234,14 +234,14 @@ describe('Admin Quiz Management Integration Tests', () => {
         {
           id: 'guest-1',
           name: 'John Doe',
-          status: 'alive',
+          status: 'active',
           attributes: ['age-under-20'],
           authMethod: 'anonymous',
         },
         {
           id: 'guest-2',
           name: 'Jane Smith',
-          status: 'eliminated',
+          status: 'dropped',
           attributes: ['gender-female'],
           authMethod: 'anonymous',
         },

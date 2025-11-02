@@ -124,7 +124,7 @@ describe('Host Game Control Integration Tests', () => {
   });
 
   describe('REVIVE_ALL Action', () => {
-    it('should revive all eliminated guests', async () => {
+    it('should revive all dropped guests', async () => {
       // Mock batch update
       const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
       const mockBatchUpdate = jest.fn();
@@ -142,7 +142,7 @@ describe('Host Game Control Integration Tests', () => {
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
       // expect(response.status).toBe(200);
-      // Verify batch update was called for eliminated guests
+      // Verify batch update was called for dropped guests
     });
   });
 
