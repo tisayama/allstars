@@ -121,9 +121,9 @@ This project uses monorepo structure:
 
 ### Integration Testing
 
-- [ ] T041 [US2] Write integration test in apps/api-server/tests/integration/routes/guest.integration.test.ts for dropped guest rejection
-- [ ] T042 [P] [US2] Write integration test for phase validation
-- [ ] T043 [US2] Run integration tests with Firebase emulator and verify 403/400 errors returned correctly
+- [X] T041 [US2] Write integration test in apps/api-server/tests/integration/routes/guest.integration.test.ts for dropped guest rejection
+- [X] T042 [P] [US2] Write integration test for phase validation
+- [X] T043 [US2] Run integration tests with Firebase emulator and verify 403/400 errors returned correctly
 
 **Story Completion**: Dropped guests cannot submit answers, phase validation enforced (SC-004, FR-005, FR-006)
 
