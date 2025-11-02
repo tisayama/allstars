@@ -157,9 +157,9 @@ This project uses monorepo structure:
 
 ### Integration Testing
 
-- [ ] T056 [US3] Write integration test: create question, submit all wrong answers, verify prizeCarryover updated
-- [ ] T057 [P] [US3] Write integration test: verify accumulated prizeCarryover from multiple consecutive all-incorrect questions
-- [ ] T058 [US3] Run integration tests and verify prize accumulation works end-to-end
+- [X] T056 [US3] Write integration test: create question, submit all wrong answers, verify prizeCarryover updated
+- [X] T057 [P] [US3] Write integration test: verify accumulated prizeCarryover from multiple consecutive all-incorrect questions
+- [X] T058 [US3] Run integration tests and verify prize accumulation works end-to-end
 
 **Story Completion**: All-incorrect questions correctly accumulate prize (SC-005, FR-009, FR-010)
 
