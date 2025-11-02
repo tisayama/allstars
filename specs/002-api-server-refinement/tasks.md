@@ -27,10 +27,10 @@ This project uses monorepo structure:
 **Tasks**:
 
 - [X] T001 Checkout 001-api-server implementation to working directory (git worktree or merge from branch)
-- [ ] T002 [P] Install dependencies for apps/api-server using pnpm install
-- [ ] T003 [P] Copy OpenAPI spec from packages/openapi/api-server.yaml to working branch
-- [ ] T004 [P] Verify Firebase emulator configuration in apps/api-server/
-- [ ] T005 Run existing test suite to establish baseline (expected: some tests may fail, document current state)
+- [X] T002 [P] Install dependencies for apps/api-server using pnpm install
+- [X] T003 [P] Copy OpenAPI spec from packages/openapi/api-server.yaml to working branch
+- [X] T004 [P] Verify Firebase emulator configuration in apps/api-server/
+- [X] T005 Run existing test suite to establish baseline (expected: some tests may fail, document current state)
 
 **Checkpoint**: Existing 001-api-server code available and ready for refactoring
 

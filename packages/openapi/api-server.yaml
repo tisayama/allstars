@@ -10,7 +10,7 @@ info:
     - **Participant**: Wedding guests who submit answers via their smartphones
 
     All endpoints require Firebase Authentication tokens in the Authorization header.
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: AllStars Development Team
 servers:
@@ -551,6 +551,11 @@ components:
         correctAnswer:
           type: string
           example: "Sushi"
+        deadline:
+          type: string
+          format: date-time
+          description: Answer submission deadline timestamp (new in v1.1)
+          example: "2025-11-02T10:01:00Z"
         skipAttributes:
           type: array
           items:
@@ -587,8 +592,9 @@ components:
           example: "John Smith"
         status:
           type: string
-          enum: [active, eliminated]
+          enum: [active, dropped]
           example: active
+          description: Guest participation status (changed from 'eliminated' to 'dropped' in v1.1)
         attributes:
           type: array
           items:
@@ -610,13 +616,14 @@ components:
     GameState:
       type: object
       required:
-        - activeQuestionId
+        - currentQuestionId
         - phase
         - isGongActive
-        - results
+        - prizeCarryover
+        - questionsAsked
         - updatedAt
       properties:
-        activeQuestionId:
+        currentQuestionId:
           type: string
           nullable: true
           description: Currently active question ID (null if none active)
@@ -624,21 +631,30 @@ components:
         phase:
           type: string
           enum:
-            - idle
             - accepting_answers
             - showing_distribution
             - showing_correct_answer
             - showing_results
+            - all_incorrect
+            - all_revived
           example: accepting_answers
+          description: Current game phase (added all_incorrect and all_revived in v1.1)
         isGongActive:
           type: boolean
-          description: Whether gong sound/animation is active
-          example: false
-        results:
-          nullable: true
-          oneOf:
-            - $ref: '#/components/schemas/GameResults'
-            - type: 'null'
+          description: Whether gong can be triggered by guests
+          example: true
+        prizeCarryover:
+          type: number
+          format: int32
+          minimum: 0
+          description: Accumulated prize from all-incorrect questions (new in v1.1)
+          example: 20000
+        questionsAsked:
+          type: number
+          format: int32
+          minimum: 0
+          description: Count of questions asked in current game
+          example: 5
         updatedAt:
           type: string
           format: date-time
@@ -787,3 +803,23 @@ components:
             message: This endpoint requires Google Login authentication
             details:
               - message: Anonymous users cannot access admin endpoints
+
+    ServiceUnavailable:
+      description: Service temporarily unavailable (Firestore connection issues)
+      headers:
+        Retry-After:
+          description: Suggested retry delay in seconds
+          schema:
+            type: integer
+            example: 60
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: SERVICE_UNAVAILABLE
+            message: Service temporarily unavailable. Please try again.
+            details:
+              - resource: Firestore
+                reason: unavailable
+                originalError: "UNAVAILABLE: The service is currently unavailable"
