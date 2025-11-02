@@ -87,9 +87,9 @@ This project uses monorepo structure:
 
 ### Verification
 
-- [ ] T028 [US1] Start Firebase emulator and verify seeded data appears in gameState/live document
-- [ ] T029 [US1] Test answer submission via API and verify it writes to sub-collection in Firestore UI
-- [ ] T030 [US1] Query guests collection and verify status field contains active or dropped values
+- [X] T028 [US1] Start Firebase emulator and verify seeded data appears in gameState/live document
+- [X] T029 [US1] Test answer submission via API and verify it writes to sub-collection in Firestore UI
+- [X] T030 [US1] Query guests collection and verify status field contains active or dropped values
 
 **Story Completion**: All Firestore operations use correct paths and field names (SC-001, SC-002, SC-003)
 
