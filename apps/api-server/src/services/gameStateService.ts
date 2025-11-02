@@ -138,8 +138,20 @@ async function handleStartQuestion(
 
 /**
  * TRIGGER_GONG: Activate gong sound effect
+ * US4: Validates that gong is still active/available
  */
 function handleTriggerGong(state: GameState): GameState {
+  // US4: Validate gong is still active (not already consumed/deactivated)
+  if (!state.isGongActive) {
+    throw new ValidationError('Gong is no longer active', [
+      {
+        field: 'isGongActive',
+        message: 'Gong has been deactivated and cannot be triggered',
+      },
+    ]);
+  }
+
+  // Gong is active, keep it active (idempotent trigger for sound effect)
   return {
     ...state,
     isGongActive: true,
@@ -194,6 +206,7 @@ function handleShowCorrectAnswer(state: GameState): GameState {
 /**
  * SHOW_RESULTS: Calculate and show top/worst 10 with guest names
  * US3: Handles prize carryover when all guests answer incorrectly
+ * US4: Handles gong trigger elimination of worst performer(s)
  */
 async function handleShowResults(state: GameState): Promise<GameState> {
   if (state.phase !== 'showing_correct_answer') {
@@ -224,6 +237,8 @@ async function handleShowResults(state: GameState): Promise<GameState> {
 
   // US3: Check if all guests answered incorrectly
   const allIncorrect = top10Answers.length === 0;
+  const allCorrect = worst10Answers.length === 0;
+  const mixedAnswers = !allIncorrect && !allCorrect;
 
   // Base prize for each question
   const BASE_PRIZE = 10000;
@@ -240,6 +255,25 @@ async function handleShowResults(state: GameState): Promise<GameState> {
     // US3: At least one correct - reset carryover to 0
     newPrizeCarryover = 0;
     newPhase = 'showing_results';
+  }
+
+  // US4: Handle gong elimination
+  if (state.isGongActive && mixedAnswers && worst10Answers.length > 0) {
+    // Find the worst performer(s) - highest responseTimeMs among incorrect answers
+    const worstTime = worst10Answers[0].responseTimeMs; // worst10 is sorted desc
+    const worstPerformers = worst10Answers.filter(
+      (answer) => answer.responseTimeMs === worstTime
+    );
+
+    // Drop worst performer(s) using batch update
+    if (worstPerformers.length > 0) {
+      const batch = db.batch();
+      worstPerformers.forEach((answer) => {
+        const guestRef = db.collection(COLLECTIONS.GUESTS).doc(answer.guestId);
+        batch.update(guestRef, { status: 'dropped' });
+      });
+      await batch.commit();
+    }
   }
 
   // Hydrate with guest names
@@ -270,11 +304,15 @@ async function handleShowResults(state: GameState): Promise<GameState> {
     worst10,
   };
 
+  // US4: Deactivate gong after showing results (if it was active)
+  const newIsGongActive = state.isGongActive ? false : state.isGongActive;
+
   return {
     ...state,
     phase: newPhase,
     results,
     prizeCarryover: newPrizeCarryover,
+    isGongActive: newIsGongActive,
   };
 }
 

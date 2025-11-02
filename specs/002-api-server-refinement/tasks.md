@@ -185,12 +185,12 @@ This project uses monorepo structure:
 
 ### Implementation (TDD Green Phase)
 
-- [ ] T066 [US4] Implement worst performer calculation in apps/api-server/src/services/questionService.ts for gong-triggered questions
-- [ ] T067 [P] [US4] Add logic to identify guests with incorrect answers (worst performers) when gong is active
-- [ ] T068 [P] [US4] Update guestService.ts to support batch dropping of multiple guests (for tie scenarios)
-- [ ] T069 [P] [US4] Update gameStateService.ts to set isGongActive=false after gong is triggered
-- [ ] T070 [P] [US4] Add gong validation to apps/api-server/src/routes/admin.ts or host.ts TRIGGER_GONG endpoint
-- [ ] T071 [US4] Run tests and verify gong trigger logic passes (GREEN state)
+- [X] T066 [US4] Implement worst performer calculation in apps/api-server/src/services/questionService.ts for gong-triggered questions
+- [X] T067 [P] [US4] Add logic to identify guests with incorrect answers (worst performers) when gong is active
+- [X] T068 [P] [US4] Update guestService.ts to support batch dropping of multiple guests (for tie scenarios)
+- [X] T069 [P] [US4] Update gameStateService.ts to set isGongActive=false after gong is triggered
+- [X] T070 [P] [US4] Add gong validation to apps/api-server/src/routes/admin.ts or host.ts TRIGGER_GONG endpoint
+- [X] T071 [US4] Run tests and verify gong trigger logic passes (GREEN state)
 
 ### Integration Testing
 
