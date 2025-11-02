@@ -148,12 +148,12 @@ This project uses monorepo structure:
 
 ### Implementation (TDD Green Phase)
 
-- [ ] T050 [US3] Implement all-incorrect detection in apps/api-server/src/services/questionService.ts calculateResults() method
-- [ ] T051 [P] [US3] Update gameStateService.ts to add prize to prizeCarryover when all incorrect
-- [ ] T052 [P] [US3] Update gameStateService.ts to set phase=all_incorrect after all-incorrect results
-- [ ] T053 [P] [US3] Update questionService.ts to calculate total prize as basePrize + gameState.prizeCarryover when starting new question
-- [ ] T054 [P] [US3] Update questionService.ts to reset prizeCarryover=0 after results with any correct answers
-- [ ] T055 [US3] Run tests and verify prize carryover logic passes (GREEN state)
+- [X] T050 [US3] Implement all-incorrect detection in apps/api-server/src/services/questionService.ts calculateResults() method
+- [X] T051 [P] [US3] Update gameStateService.ts to add prize to prizeCarryover when all incorrect
+- [X] T052 [P] [US3] Update gameStateService.ts to set phase=all_incorrect after all-incorrect results
+- [X] T053 [P] [US3] Update questionService.ts to calculate total prize as basePrize + gameState.prizeCarryover when starting new question
+- [X] T054 [P] [US3] Update questionService.ts to reset prizeCarryover=0 after results with any correct answers
+- [X] T055 [US3] Run tests and verify prize carryover logic passes (GREEN state)
 
 ### Integration Testing
 

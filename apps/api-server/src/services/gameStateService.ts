@@ -193,6 +193,7 @@ function handleShowCorrectAnswer(state: GameState): GameState {
 
 /**
  * SHOW_RESULTS: Calculate and show top/worst 10 with guest names
+ * US3: Handles prize carryover when all guests answer incorrectly
  */
 async function handleShowResults(state: GameState): Promise<GameState> {
   if (state.phase !== 'showing_correct_answer') {
@@ -220,6 +221,26 @@ async function handleShowResults(state: GameState): Promise<GameState> {
   const worst10Answers = await getWorst10IncorrectAnswers(
     state.activeQuestionId
   );
+
+  // US3: Check if all guests answered incorrectly
+  const allIncorrect = top10Answers.length === 0;
+
+  // Base prize for each question
+  const BASE_PRIZE = 10000;
+
+  // US3: Calculate new prizeCarryover
+  let newPrizeCarryover: number;
+  let newPhase: GamePhase;
+
+  if (allIncorrect) {
+    // US3: All incorrect - add prize to carryover and set special phase
+    newPrizeCarryover = state.prizeCarryover + BASE_PRIZE;
+    newPhase = 'all_incorrect';
+  } else {
+    // US3: At least one correct - reset carryover to 0
+    newPrizeCarryover = 0;
+    newPhase = 'showing_results';
+  }
 
   // Hydrate with guest names
   const top10 = await Promise.all(
@@ -251,8 +272,9 @@ async function handleShowResults(state: GameState): Promise<GameState> {
 
   return {
     ...state,
-    phase: 'showing_results',
+    phase: newPhase,
     results,
+    prizeCarryover: newPrizeCarryover,
   };
 }
 
