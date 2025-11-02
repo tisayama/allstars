@@ -105,11 +105,11 @@ This project uses monorepo structure:
 
 ### Tests (TDD Red Phase)
 
-- [ ] T031 [US2] Write test in apps/api-server/tests/unit/services/answerService.test.ts: active guest + accepting_answers phase → accept answer
-- [ ] T032 [P] [US2] Write test: dropped guest + accepting_answers phase → reject with 403 "Guest is no longer active"
-- [ ] T033 [P] [US2] Write test: active guest + showing_results phase → reject with 400 "Not accepting answers in current phase"
-- [ ] T034 [P] [US2] Write test: answer submission after deadline → reject with 400 "Answer deadline has passed"
-- [ ] T035 [US2] Run tests and verify all validation tests fail (RED state)
+- [X] T031 [US2] Write test in apps/api-server/tests/unit/services/answerService.test.ts: active guest + accepting_answers phase → accept answer
+- [X] T032 [P] [US2] Write test: dropped guest + accepting_answers phase → reject with 403 "Guest is no longer active"
+- [X] T033 [P] [US2] Write test: active guest + showing_results phase → reject with 400 "Not accepting answers in current phase"
+- [X] T034 [P] [US2] Write test: answer submission after deadline → reject with 400 "Answer deadline has passed"
+- [X] T035 [US2] Run tests and verify all validation tests fail (RED state)
 
 ### Implementation (TDD Green Phase)
 

@@ -26,6 +26,12 @@ jest.mock('../../../src/utils/firestore', () => ({
 jest.mock('../../../src/services/questionService', () => ({
   getQuestionById: jest.fn(),
 }));
+jest.mock('../../../src/services/guestService', () => ({
+  getGuestById: jest.fn(),
+}));
+jest.mock('../../../src/services/gameStateService', () => ({
+  getCurrentGameState: jest.fn(),
+}));
 
 import { getQuestionById } from '../../../src/services/questionService';
 
@@ -193,6 +199,158 @@ describe('Answer Service', () => {
 
       // Once implemented, should throw NotFoundError
       expect(true).toBe(true);
+    });
+  });
+
+  describe('Guest Status Validation (US2)', () => {
+    it('should accept answer from active guest during accepting_answers phase', async () => {
+      // Mock guest service to return active guest
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Test Guest',
+        status: 'active',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      // Mock game state service to return accepting_answers phase
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      // Mock question with future deadline
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        id: 'question-1',
+        text: 'Test question?',
+        choices: ['A', 'B', 'C', 'D'],
+        correctAnswer: 'A',
+        deadline: { toDate: () => new Date(Date.now() + 60000) },
+      });
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({ exists: false }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const answerData = {
+        questionId: 'question-1',
+        answer: 'A',
+        responseTimeMs: 1500,
+      };
+
+      await expect(submitAnswer('guest-1', answerData)).resolves.toBeDefined();
+    });
+
+    it('should reject answer from dropped guest with 403 error', async () => {
+      // Mock guest service to return dropped guest
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Dropped Guest',
+        status: 'dropped',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      // Mock game state
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      const answerData = {
+        questionId: 'question-1',
+        answer: 'A',
+        responseTimeMs: 1500,
+      };
+
+      await expect(submitAnswer('guest-1', answerData)).rejects.toThrow('Guest is no longer active');
+    });
+
+    it('should reject answer when game is not in accepting_answers phase', async () => {
+      // Mock active guest
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Test Guest',
+        status: 'active',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      // Mock game state in wrong phase
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'showing_results',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      const answerData = {
+        questionId: 'question-1',
+        answer: 'A',
+        responseTimeMs: 1500,
+      };
+
+      await expect(submitAnswer('guest-1', answerData)).rejects.toThrow('Not accepting answers in current phase');
+    });
+
+    it('should reject answer submitted after deadline', async () => {
+      // Mock active guest
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Test Guest',
+        status: 'active',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      // Mock game state
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      // Mock question with past deadline
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        id: 'question-1',
+        text: 'Test question?',
+        choices: ['A', 'B', 'C', 'D'],
+        correctAnswer: 'A',
+        deadline: { toDate: () => new Date(Date.now() - 1000) }, // 1 second ago
+      });
+
+      const answerData = {
+        questionId: 'question-1',
+        answer: 'A',
+        responseTimeMs: 1500,
+      };
+
+      await expect(submitAnswer('guest-1', answerData)).rejects.toThrow('Answer deadline has passed');
     });
   });
 });
