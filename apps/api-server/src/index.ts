@@ -7,6 +7,7 @@ import express from 'express';
 import { errorHandler } from './middleware/errorHandler';
 import adminRoutes from './routes/admin';
 import participantRoutes from './routes/participant';
+import hostRoutes from './routes/host';
 
 const app = express();
 
@@ -21,8 +22,7 @@ app.get('/health', (req, res) => {
 // Register route handlers
 app.use('/admin', adminRoutes);
 app.use('/participant', participantRoutes);
-// TODO: Register host routes as they are implemented
-// app.use('/host', hostRoutes);
+app.use('/host', hostRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

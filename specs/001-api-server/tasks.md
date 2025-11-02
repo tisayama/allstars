@@ -166,26 +166,26 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T056 [P] [US2] Contract test for POST /host/game/advance in apps/api-server/tests/contract/host.contract.test.ts (all 6 action types)
-- [ ] T057 [P] [US2] Integration test for game state transitions in apps/api-server/tests/integration/host.test.ts (START_QUESTION → SHOW_DISTRIBUTION → SHOW_CORRECT_ANSWER → SHOW_RESULTS flow)
-- [ ] T058 [P] [US2] Integration test for TRIGGER_GONG action in apps/api-server/tests/integration/host.test.ts
-- [ ] T059 [P] [US2] Integration test for REVIVE_ALL action in apps/api-server/tests/integration/host.test.ts
-- [ ] T060 [P] [US2] Integration test for top/worst 10 calculation in apps/api-server/tests/integration/host.test.ts (verify sorting by isCorrect then responseTimeMs)
-- [ ] T061 [P] [US2] Unit test for Firestore transaction logic in apps/api-server/tests/unit/services/gameStateService.test.ts (concurrent update handling)
+- [x] T056 [P] [US2] Contract test for POST /host/game/advance in apps/api-server/tests/contract/host.contract.test.ts (all 6 action types)
+- [x] T057 [P] [US2] Integration test for game state transitions in apps/api-server/tests/integration/host.test.ts (START_QUESTION → SHOW_DISTRIBUTION → SHOW_CORRECT_ANSWER → SHOW_RESULTS flow)
+- [x] T058 [P] [US2] Integration test for TRIGGER_GONG action in apps/api-server/tests/integration/host.test.ts
+- [x] T059 [P] [US2] Integration test for REVIVE_ALL action in apps/api-server/tests/integration/host.test.ts
+- [x] T060 [P] [US2] Integration test for top/worst 10 calculation in apps/api-server/tests/integration/host.test.ts (verify sorting by isCorrect then responseTimeMs)
+- [x] T061 [P] [US2] Unit test for Firestore transaction logic in apps/api-server/tests/unit/services/gameStateService.test.ts (concurrent update handling)
 
 ### Implementation for User Story 2
 
-- [ ] T062 [P] [US2] Create apps/api-server/src/models/validators.ts GameActionRequestSchema with Zod (action enum, payload validation per action type)
-- [ ] T063 [US2] Implement apps/api-server/src/services/gameStateService.ts with advanceGame function using Firestore transactions (FR-013 requirement)
-- [ ] T064 [US2] Implement state transition logic in apps/api-server/src/services/gameStateService.ts for all 6 actions (START_QUESTION, TRIGGER_GONG, SHOW_DISTRIBUTION, SHOW_CORRECT_ANSWER, SHOW_RESULTS, REVIVE_ALL)
-- [ ] T065 [US2] Implement top/worst 10 calculation in apps/api-server/src/services/gameStateService.ts using Firestore queries with composite indexes (data-model.md pattern)
-- [ ] T066 [US2] Implement guest name hydration for results denormalization in apps/api-server/src/services/gameStateService.ts
-- [ ] T067 [US2] Implement apps/api-server/src/services/guestService.ts reviveAll function with Firestore batch update
-- [ ] T068 [US2] Implement apps/api-server/src/routes/host.ts with POST /host/game/advance endpoint
-- [ ] T069 [US2] Add requireGoogleLogin middleware to host routes in apps/api-server/src/routes/host.ts
-- [ ] T070 [US2] Register host routes in apps/api-server/src/index.ts Express app
-- [ ] T071 [US2] Add state transition validation in apps/api-server/src/services/gameStateService.ts (e.g., cannot SHOW_DISTRIBUTION from idle phase)
-- [ ] T072 [US2] Add empty results handling for SHOW_RESULTS when no answers submitted (edge case from spec.md)
+- [x] T062 [P] [US2] Create apps/api-server/src/models/validators.ts GameActionRequestSchema with Zod (action enum, payload validation per action type)
+- [x] T063 [US2] Implement apps/api-server/src/services/gameStateService.ts with advanceGame function using Firestore transactions (FR-013 requirement)
+- [x] T064 [US2] Implement state transition logic in apps/api-server/src/services/gameStateService.ts for all 6 actions (START_QUESTION, TRIGGER_GONG, SHOW_DISTRIBUTION, SHOW_CORRECT_ANSWER, SHOW_RESULTS, REVIVE_ALL)
+- [x] T065 [US2] Implement top/worst 10 calculation in apps/api-server/src/services/gameStateService.ts using Firestore queries with composite indexes (data-model.md pattern)
+- [x] T066 [US2] Implement guest name hydration for results denormalization in apps/api-server/src/services/gameStateService.ts
+- [x] T067 [US2] Implement apps/api-server/src/services/guestService.ts reviveAll function with Firestore batch update
+- [x] T068 [US2] Implement apps/api-server/src/routes/host.ts with POST /host/game/advance endpoint
+- [x] T069 [US2] Add requireGoogleLogin middleware to host routes in apps/api-server/src/routes/host.ts
+- [x] T070 [US2] Register host routes in apps/api-server/src/index.ts Express app
+- [x] T071 [US2] Add state transition validation in apps/api-server/src/services/gameStateService.ts (e.g., cannot SHOW_DISTRIBUTION from idle phase)
+- [x] T072 [US2] Add empty results handling for SHOW_RESULTS when no answers submitted (edge case from spec.md)
 
 **Checkpoint**: Host game control complete. All 6 actions working. State transitions validated. Top/worst 10 calculation accurate. Guest revival functional.
 
