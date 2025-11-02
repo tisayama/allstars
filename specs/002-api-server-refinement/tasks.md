@@ -139,12 +139,12 @@ This project uses monorepo structure:
 
 ### Tests (TDD Red Phase)
 
-- [ ] T044 [US3] Write test in apps/api-server/tests/unit/services/questionService.test.ts: all guests answer incorrectly → prizeCarryover increases by question prize
-- [ ] T045 [P] [US3] Write test: all guests remain status=active when all incorrect
-- [ ] T046 [P] [US3] Write test: phase transitions to all_incorrect after all-incorrect result calculation
-- [ ] T047 [P] [US3] Write test: next question prize = basePrize + prizeCarryover
-- [ ] T048 [P] [US3] Write test: prizeCarryover resets to 0 after question with any correct answers
-- [ ] T049 [US3] Run tests and verify prize carryover tests fail (RED state)
+- [X] T044 [US3] Write test in apps/api-server/tests/unit/services/prizeCarryover.test.ts: all guests answer incorrectly → prizeCarryover increases by question prize
+- [X] T045 [P] [US3] Write test: all guests remain status=active when all incorrect
+- [X] T046 [P] [US3] Write test: phase transitions to all_incorrect after all-incorrect result calculation
+- [X] T047 [P] [US3] Write test: next question prize = basePrize + prizeCarryover
+- [X] T048 [P] [US3] Write test: prizeCarryover resets to 0 after question with any correct answers
+- [X] T049 [US3] Run tests and verify prize carryover tests fail (RED state)
 
 ### Implementation (TDD Green Phase)
 
