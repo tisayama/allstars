@@ -175,13 +175,13 @@ This project uses monorepo structure:
 
 ### Tests (TDD Red Phase)
 
-- [ ] T059 [US4] Write test in apps/api-server/tests/unit/services/questionService.test.ts: gong active + mixed answers → worst performer(s) get status=dropped
-- [ ] T060 [P] [US4] Write test: gong trigger sets isGongActive=false
-- [ ] T061 [P] [US4] Write test: gong inactive → reject TRIGGER_GONG with 400 "Gong is no longer active"
-- [ ] T062 [P] [US4] Write test: all guests correct with gong → nobody eliminated (based on clarification Q3)
-- [ ] T063 [P] [US4] Write test: all guests incorrect with gong → nobody eliminated (based on clarification Q3)
-- [ ] T064 [P] [US4] Write test: multiple guests tied for worst → all eliminated
-- [ ] T065 [US4] Run tests and verify gong behavior tests fail (RED state)
+- [X] T059 [US4] Write test in apps/api-server/tests/unit/services/gameStateService.test.ts: gong active + mixed answers → worst performer(s) get status=dropped
+- [X] T060 [P] [US4] Write test: gong trigger sets isGongActive=false
+- [X] T061 [P] [US4] Write test: gong inactive → reject TRIGGER_GONG with 400 "Gong is no longer active"
+- [X] T062 [P] [US4] Write test: all guests correct with gong → nobody eliminated (based on clarification Q3)
+- [X] T063 [P] [US4] Write test: all guests incorrect with gong → nobody eliminated (based on clarification Q3)
+- [X] T064 [P] [US4] Write test: multiple guests tied for worst → all eliminated
+- [X] T065 [US4] Run tests and verify gong behavior tests fail (RED state)
 
 ### Implementation (TDD Green Phase)
 

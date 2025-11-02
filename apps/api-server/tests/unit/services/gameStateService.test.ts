@@ -129,4 +129,369 @@ describe('Game State Service', () => {
       expect(true).toBe(true);
     });
   });
+
+  describe('Gong Trigger Behavior (US4)', () => {
+    beforeEach(() => {
+      // Import mocked dependencies
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      const { getGuestById } = require('../../../src/services/guestService');
+
+      // Reset mocks
+      (getTop10CorrectAnswers as jest.Mock).mockReset();
+      (getWorst10IncorrectAnswers as jest.Mock).mockReset();
+      (getGuestById as jest.Mock).mockReset();
+    });
+
+    it('should drop worst performer(s) when gong is active with mixed answers', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_correct_answer',
+        activeQuestionId: 'question-1',
+        isGongActive: true, // Gong is active
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => currentState,
+      });
+
+      // Mock mixed answers: some correct, some incorrect
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-1', isCorrect: true, responseTimeMs: 1500 },
+        { guestId: 'guest-2', isCorrect: true, responseTimeMs: 2000 },
+      ]);
+      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-3', isCorrect: false, responseTimeMs: 5000 }, // Worst performer
+        { guestId: 'guest-4', isCorrect: false, responseTimeMs: 3000 },
+      ]);
+
+      // Mock guest data
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockImplementation((guestId) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: 'active',
+          attributes: [],
+          authMethod: 'anonymous',
+        })
+      );
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      // Mock batch for updating guest status
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'SHOW_RESULTS' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Should drop worst performer (guest-3 with 5000ms)
+      expect(mockBatchUpdate).toHaveBeenCalled();
+      expect(result.isGongActive).toBe(false); // Gong should be deactivated
+    });
+
+    it('should set isGongActive to false after showing results with gong', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_correct_answer',
+        activeQuestionId: 'question-1',
+        isGongActive: true,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => currentState,
+      });
+
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-1', isCorrect: true, responseTimeMs: 1500 },
+      ]);
+      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-2', isCorrect: false, responseTimeMs: 3000 },
+      ]);
+
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockImplementation((guestId) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: 'active',
+          attributes: [],
+          authMethod: 'anonymous',
+        })
+      );
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'SHOW_RESULTS' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      expect(result.isGongActive).toBe(false);
+    });
+
+    it('should reject TRIGGER_GONG when gong is already inactive', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false, // Already inactive
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const action = {
+        action: 'TRIGGER_GONG' as const,
+        payload: {},
+      };
+
+      await expect(advanceGame(action)).rejects.toThrow('Gong is no longer active');
+    });
+
+    it('should not eliminate anyone when all guests answer correctly with gong active', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_correct_answer',
+        activeQuestionId: 'question-1',
+        isGongActive: true,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => currentState,
+      });
+
+      // All correct answers
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-1', isCorrect: true, responseTimeMs: 1500 },
+        { guestId: 'guest-2', isCorrect: true, responseTimeMs: 2000 },
+        { guestId: 'guest-3', isCorrect: true, responseTimeMs: 2500 },
+      ]);
+      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([]);
+
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockImplementation((guestId) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: 'active',
+          attributes: [],
+          authMethod: 'anonymous',
+        })
+      );
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: jest.fn().mockResolvedValue(undefined),
+      }));
+
+      const action = {
+        action: 'SHOW_RESULTS' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Should not call batch update (no one to drop)
+      expect(db.batch).not.toHaveBeenCalled();
+      expect(result.isGongActive).toBe(false);
+    });
+
+    it('should not eliminate anyone when all guests answer incorrectly with gong active', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_correct_answer',
+        activeQuestionId: 'question-1',
+        isGongActive: true,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => currentState,
+      });
+
+      // All incorrect answers
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
+      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-1', isCorrect: false, responseTimeMs: 2000 },
+        { guestId: 'guest-2', isCorrect: false, responseTimeMs: 2500 },
+        { guestId: 'guest-3', isCorrect: false, responseTimeMs: 3000 },
+      ]);
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: jest.fn().mockResolvedValue(undefined),
+      }));
+
+      const action = {
+        action: 'SHOW_RESULTS' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Should not call batch update (all incorrect = nobody dropped)
+      expect(db.batch).not.toHaveBeenCalled();
+      expect(result.isGongActive).toBe(false);
+    });
+
+    it('should eliminate all guests tied for worst when gong is active', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_correct_answer',
+        activeQuestionId: 'question-1',
+        isGongActive: true,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockGet.mockResolvedValue({
+        exists: true,
+        id: 'live',
+        data: () => currentState,
+      });
+
+      // Mixed answers with two guests tied for worst
+      const { getTop10CorrectAnswers, getWorst10IncorrectAnswers } = require('../../../src/services/answerService');
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-1', isCorrect: true, responseTimeMs: 1500 },
+      ]);
+      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: 'guest-2', isCorrect: false, responseTimeMs: 5000 }, // Tied for worst
+        { guestId: 'guest-3', isCorrect: false, responseTimeMs: 5000 }, // Tied for worst
+        { guestId: 'guest-4', isCorrect: false, responseTimeMs: 3000 },
+      ]);
+
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockImplementation((guestId) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: 'active',
+          attributes: [],
+          authMethod: 'anonymous',
+        })
+      );
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'SHOW_RESULTS' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Should drop both guests with 5000ms
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
+      expect(result.isGongActive).toBe(false);
+    });
+  });
 });
