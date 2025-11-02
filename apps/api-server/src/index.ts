@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { errorHandler } from './middleware/errorHandler';
+import adminRoutes from './routes/admin';
 
 const app = express();
 
@@ -16,8 +17,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// TODO: Register route handlers here as they are implemented
-// app.use('/admin', adminRoutes);
+// Register route handlers
+app.use('/admin', adminRoutes);
+// TODO: Register additional routes as they are implemented
 // app.use('/host', hostRoutes);
 // app.use('/participant', participantRoutes);
 

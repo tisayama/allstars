@@ -105,22 +105,22 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T031 [P] [US1] Contract test for POST /admin/quizzes in apps/api-server/tests/contract/admin.contract.test.ts (validate against OpenAPI spec)
-- [ ] T032 [P] [US1] Contract test for GET /admin/quizzes in apps/api-server/tests/contract/admin.contract.test.ts
-- [ ] T033 [P] [US1] Contract test for PUT /admin/quizzes/{questionId} in apps/api-server/tests/contract/admin.contract.test.ts
-- [ ] T034 [P] [US1] Contract test for GET /admin/guests in apps/api-server/tests/contract/admin.contract.test.ts
-- [ ] T035 [P] [US1] Integration test for admin quiz CRUD workflow in apps/api-server/tests/integration/admin.test.ts (create → list → update → verify duplicate rejection)
-- [ ] T036 [P] [US1] Integration test for guest list retrieval in apps/api-server/tests/integration/admin.test.ts
+- [x] T031 [P] [US1] Contract test for POST /admin/quizzes in apps/api-server/tests/contract/admin.contract.test.ts (validate against OpenAPI spec)
+- [x] T032 [P] [US1] Contract test for GET /admin/quizzes in apps/api-server/tests/contract/admin.contract.test.ts
+- [x] T033 [P] [US1] Contract test for PUT /admin/quizzes/{questionId} in apps/api-server/tests/contract/admin.contract.test.ts
+- [x] T034 [P] [US1] Contract test for GET /admin/guests in apps/api-server/tests/contract/admin.contract.test.ts
+- [x] T035 [P] [US1] Integration test for admin quiz CRUD workflow in apps/api-server/tests/integration/admin.test.ts (create → list → update → verify duplicate rejection)
+- [x] T036 [P] [US1] Integration test for guest list retrieval in apps/api-server/tests/integration/admin.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T037 [P] [US1] Create apps/api-server/src/models/validators.ts with Zod schemas (CreateQuestionSchema, UpdateQuestionSchema)
-- [ ] T038 [US1] Implement apps/api-server/src/services/questionService.ts with createQuestion (period+questionNumber uniqueness check), listQuestions, updateQuestion functions
-- [ ] T039 [US1] Implement apps/api-server/src/services/guestService.ts with listGuests function
-- [ ] T040 [US1] Implement apps/api-server/src/routes/admin.ts with POST /admin/quizzes, GET /admin/quizzes, PUT /admin/quizzes/:questionId, GET /admin/guests
-- [ ] T041 [US1] Add Zod validation error transformation to FR-029 error format in apps/api-server/src/middleware/errorHandler.ts
-- [ ] T042 [US1] Add requireGoogleLogin middleware to all admin routes in apps/api-server/src/routes/admin.ts
-- [ ] T043 [US1] Register admin routes in apps/api-server/src/index.ts Express app
+- [x] T037 [P] [US1] Create apps/api-server/src/models/validators.ts with Zod schemas (CreateQuestionSchema, UpdateQuestionSchema)
+- [x] T038 [US1] Implement apps/api-server/src/services/questionService.ts with createQuestion (period+questionNumber uniqueness check), listQuestions, updateQuestion functions
+- [x] T039 [US1] Implement apps/api-server/src/services/guestService.ts with listGuests function
+- [x] T040 [US1] Implement apps/api-server/src/routes/admin.ts with POST /admin/quizzes, GET /admin/quizzes, PUT /admin/quizzes/:questionId, GET /admin/guests
+- [x] T041 [US1] Add Zod validation error transformation to FR-029 error format in apps/api-server/src/middleware/errorHandler.ts
+- [x] T042 [US1] Add requireGoogleLogin middleware to all admin routes in apps/api-server/src/routes/admin.ts
+- [x] T043 [US1] Register admin routes in apps/api-server/src/index.ts Express app
 
 **Checkpoint**: Admin quiz management complete. Can create, view, update questions. Duplicate prevention working. Guest list accessible.
 

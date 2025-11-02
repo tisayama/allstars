@@ -5,7 +5,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { ErrorResponse } from '@allstars/types';
-import { AppError, ServiceUnavailableError } from '../utils/errors';
+import { AppError, ServiceUnavailableError, ValidationError } from '../utils/errors';
+import { ZodError } from 'zod';
 
 export function errorHandler(
   err: Error,
@@ -22,6 +23,23 @@ export function errorHandler(
     method: req.method,
     timestamp: new Date().toISOString(),
   });
+
+  // Handle Zod validation errors (T041)
+  if (err instanceof ZodError) {
+    const details = err.errors.map((zodErr) => ({
+      field: zodErr.path.join('.'),
+      message: zodErr.message,
+    }));
+
+    const errorResponse: ErrorResponse = {
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details,
+    };
+
+    res.status(400).json(errorResponse);
+    return;
+  }
 
   // Handle known AppError instances
   if (err instanceof AppError) {
