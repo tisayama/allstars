@@ -3,27 +3,25 @@
  * Business logic for host game control and state management
  */
 
-import { db, admin } from '../utils/firestore';
-import { COLLECTIONS } from '../models/firestoreCollections';
-import { GameActionInput } from '../models/validators';
-import { GameState, GamePhase, GameResults } from '@allstars/types';
-import { ValidationError, NotFoundError } from '../utils/errors';
+import { db, admin } from "../utils/firestore";
+import { COLLECTIONS } from "../models/firestoreCollections";
+import { GameActionInput } from "../models/validators";
+import { GameState, GamePhase, GameResults } from "@allstars/types";
+import { ValidationError, NotFoundError } from "../utils/errors";
 import {
   getTop10CorrectAnswers,
   getWorst10IncorrectAnswers,
-} from './answerService';
-import { getGuestById } from './guestService';
-import { getQuestionById } from './questionService';
+} from "./answerService";
+import { getGuestById } from "./guestService";
+import { getQuestionById } from "./questionService";
 
-const GAME_STATE_DOC_ID = 'live';
+const GAME_STATE_DOC_ID = "live";
 
 /**
  * Advance game state based on host action
  * Uses Firestore transaction to prevent race conditions
  */
-export async function advanceGame(
-  action: GameActionInput
-): Promise<GameState> {
+export async function advanceGame(action: GameActionInput): Promise<GameState> {
   const result = await db.runTransaction(async (transaction) => {
     // Get current game state
     const gameStateRef = db
@@ -37,7 +35,7 @@ export async function advanceGame(
       // Initialize game state if it doesn't exist
       currentState = {
         id: GAME_STATE_DOC_ID,
-        phase: 'idle',
+        phase: "idle",
         activeQuestionId: null,
         isGongActive: false,
         results: null,
@@ -51,11 +49,7 @@ export async function advanceGame(
     }
 
     // Process action and calculate new state
-    const newState = await processAction(
-      currentState,
-      action,
-      transaction
-    );
+    const newState = await processAction(currentState, action, transaction);
 
     // Update game state in transaction
     transaction.set(gameStateRef, {
@@ -81,22 +75,22 @@ async function processAction(
   transaction: FirebaseFirestore.Transaction
 ): Promise<GameState> {
   switch (action.action) {
-    case 'START_QUESTION':
+    case "START_QUESTION":
       return handleStartQuestion(currentState, action);
 
-    case 'TRIGGER_GONG':
+    case "TRIGGER_GONG":
       return handleTriggerGong(currentState);
 
-    case 'SHOW_DISTRIBUTION':
+    case "SHOW_DISTRIBUTION":
       return handleShowDistribution(currentState);
 
-    case 'SHOW_CORRECT_ANSWER':
+    case "SHOW_CORRECT_ANSWER":
       return handleShowCorrectAnswer(currentState);
 
-    case 'SHOW_RESULTS':
+    case "SHOW_RESULTS":
       return await handleShowResults(currentState);
 
-    case 'REVIVE_ALL':
+    case "REVIVE_ALL":
       return await handleReviveAll(currentState);
 
     default:
@@ -114,22 +108,25 @@ async function handleStartQuestion(
   const questionId = action.payload?.questionId;
 
   if (!questionId) {
-    throw new ValidationError('questionId is required in payload', [
-      { field: 'payload.questionId', message: 'Question ID is required' },
+    throw new ValidationError("questionId is required in payload", [
+      { field: "payload.questionId", message: "Question ID is required" },
     ]);
   }
 
   // Verify question exists
   const question = await getQuestionById(questionId);
   if (!question) {
-    throw new NotFoundError('Question not found', [
-      { field: 'questionId', message: `No question found with ID "${questionId}"` },
+    throw new NotFoundError("Question not found", [
+      {
+        field: "questionId",
+        message: `No question found with ID "${questionId}"`,
+      },
     ]);
   }
 
   return {
     ...state,
-    phase: 'accepting_answers',
+    phase: "accepting_answers",
     activeQuestionId: questionId,
     isGongActive: false,
     results: null,
@@ -143,10 +140,10 @@ async function handleStartQuestion(
 function handleTriggerGong(state: GameState): GameState {
   // US4: Validate gong is still active (not already consumed/deactivated)
   if (!state.isGongActive) {
-    throw new ValidationError('Gong is no longer active', [
+    throw new ValidationError("Gong is no longer active", [
       {
-        field: 'isGongActive',
-        message: 'Gong has been deactivated and cannot be triggered',
+        field: "isGongActive",
+        message: "Gong has been deactivated and cannot be triggered",
       },
     ]);
   }
@@ -162,21 +159,18 @@ function handleTriggerGong(state: GameState): GameState {
  * SHOW_DISTRIBUTION: Show answer distribution
  */
 function handleShowDistribution(state: GameState): GameState {
-  if (state.phase !== 'accepting_answers') {
-    throw new ValidationError(
-      'Cannot show distribution - no active question',
-      [
-        {
-          field: 'phase',
-          message: 'Must be in accepting_answers phase to show distribution',
-        },
-      ]
-    );
+  if (state.phase !== "accepting_answers") {
+    throw new ValidationError("Cannot show distribution - no active question", [
+      {
+        field: "phase",
+        message: "Must be in accepting_answers phase to show distribution",
+      },
+    ]);
   }
 
   return {
     ...state,
-    phase: 'showing_distribution',
+    phase: "showing_distribution",
     isGongActive: false,
   };
 }
@@ -185,13 +179,14 @@ function handleShowDistribution(state: GameState): GameState {
  * SHOW_CORRECT_ANSWER: Reveal the correct answer
  */
 function handleShowCorrectAnswer(state: GameState): GameState {
-  if (state.phase !== 'showing_distribution') {
+  if (state.phase !== "showing_distribution") {
     throw new ValidationError(
-      'Cannot show correct answer - must show distribution first',
+      "Cannot show correct answer - must show distribution first",
       [
         {
-          field: 'phase',
-          message: 'Must be in showing_distribution phase to show correct answer',
+          field: "phase",
+          message:
+            "Must be in showing_distribution phase to show correct answer",
         },
       ]
     );
@@ -199,7 +194,7 @@ function handleShowCorrectAnswer(state: GameState): GameState {
 
   return {
     ...state,
-    phase: 'showing_correct_answer',
+    phase: "showing_correct_answer",
   };
 }
 
@@ -209,21 +204,21 @@ function handleShowCorrectAnswer(state: GameState): GameState {
  * US4: Handles gong trigger elimination of worst performer(s)
  */
 async function handleShowResults(state: GameState): Promise<GameState> {
-  if (state.phase !== 'showing_correct_answer') {
+  if (state.phase !== "showing_correct_answer") {
     throw new ValidationError(
-      'Cannot show results - must show correct answer first',
+      "Cannot show results - must show correct answer first",
       [
         {
-          field: 'phase',
-          message: 'Must be in showing_correct_answer phase to show results',
+          field: "phase",
+          message: "Must be in showing_correct_answer phase to show results",
         },
       ]
     );
   }
 
   if (!state.activeQuestionId) {
-    throw new ValidationError('No active question', [
-      { field: 'activeQuestionId', message: 'Active question ID is null' },
+    throw new ValidationError("No active question", [
+      { field: "activeQuestionId", message: "Active question ID is null" },
     ]);
   }
 
@@ -250,11 +245,11 @@ async function handleShowResults(state: GameState): Promise<GameState> {
   if (allIncorrect) {
     // US3: All incorrect - add prize to carryover and set special phase
     newPrizeCarryover = state.prizeCarryover + BASE_PRIZE;
-    newPhase = 'all_incorrect';
+    newPhase = "all_incorrect";
   } else {
     // US3: At least one correct - reset carryover to 0
     newPrizeCarryover = 0;
-    newPhase = 'showing_results';
+    newPhase = "showing_results";
   }
 
   // US4: Handle gong elimination
@@ -270,7 +265,7 @@ async function handleShowResults(state: GameState): Promise<GameState> {
       const batch = db.batch();
       worstPerformers.forEach((answer) => {
         const guestRef = db.collection(COLLECTIONS.GUESTS).doc(answer.guestId);
-        batch.update(guestRef, { status: 'dropped' });
+        batch.update(guestRef, { status: "dropped" });
       });
       await batch.commit();
     }
@@ -282,7 +277,7 @@ async function handleShowResults(state: GameState): Promise<GameState> {
       const guest = await getGuestById(answer.guestId);
       return {
         guestId: answer.guestId,
-        guestName: guest?.name || 'Unknown',
+        guestName: guest?.name || "Unknown",
         responseTimeMs: answer.responseTimeMs,
       };
     })
@@ -293,7 +288,7 @@ async function handleShowResults(state: GameState): Promise<GameState> {
       const guest = await getGuestById(answer.guestId);
       return {
         guestId: answer.guestId,
-        guestName: guest?.name || 'Unknown',
+        guestName: guest?.name || "Unknown",
         responseTimeMs: answer.responseTimeMs,
       };
     })
@@ -324,14 +319,14 @@ async function handleReviveAll(state: GameState): Promise<GameState> {
   // Get all dropped guests
   const droppedSnapshot = await db
     .collection(COLLECTIONS.GUESTS)
-    .where('status', '==', 'dropped')
+    .where("status", "==", "dropped")
     .get();
 
   if (!droppedSnapshot.empty) {
     // Use batch update
     const batch = db.batch();
     droppedSnapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, { status: 'active' });
+      batch.update(doc.ref, { status: "active" });
     });
     await batch.commit();
   }
@@ -339,7 +334,7 @@ async function handleReviveAll(state: GameState): Promise<GameState> {
   // US5: Transition to all_revived phase
   return {
     ...state,
-    phase: 'all_revived',
+    phase: "all_revived",
   };
 }
 
@@ -356,7 +351,7 @@ export async function getCurrentGameState(): Promise<GameState> {
     // Return default initial state
     return {
       id: GAME_STATE_DOC_ID,
-      phase: 'idle',
+      phase: "idle",
       activeQuestionId: null,
       isGongActive: false,
       results: null,

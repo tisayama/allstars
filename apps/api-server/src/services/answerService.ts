@@ -3,14 +3,19 @@
  * Business logic for participant answer submission
  */
 
-import { db, admin } from '../utils/firestore';
-import { COLLECTIONS } from '../models/firestoreCollections';
-import { SubmitAnswerInput } from '../models/validators';
-import { Answer } from '@allstars/types';
-import { DuplicateError, NotFoundError, ValidationError, ForbiddenError } from '../utils/errors';
-import { getQuestionById } from './questionService';
-import { getGuestById } from './guestService';
-import { getCurrentGameState } from './gameStateService';
+import { db, admin } from "../utils/firestore";
+import { COLLECTIONS } from "../models/firestoreCollections";
+import { SubmitAnswerInput } from "../models/validators";
+import { Answer } from "@allstars/types";
+import {
+  DuplicateError,
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from "../utils/errors";
+import { getQuestionById } from "./questionService";
+import { getGuestById } from "./guestService";
+import { getCurrentGameState } from "./gameStateService";
 
 /**
  * Submit an answer to a question
@@ -24,9 +29,9 @@ export async function submitAnswer(
   const question = await getQuestionById(data.questionId);
 
   if (!question) {
-    throw new NotFoundError('Question not found', [
+    throw new NotFoundError("Question not found", [
       {
-        field: 'questionId',
+        field: "questionId",
         message: `No question found with ID "${data.questionId}"`,
       },
     ]);
@@ -34,10 +39,10 @@ export async function submitAnswer(
 
   // Validate that the answer is one of the valid choices
   if (!question.choices.includes(data.answer)) {
-    throw new ValidationError('Invalid answer choice', [
+    throw new ValidationError("Invalid answer choice", [
       {
-        field: 'answer',
-        message: `"${data.answer}" is not a valid choice. Valid choices are: ${question.choices.join(', ')}`,
+        field: "answer",
+        message: `"${data.answer}" is not a valid choice. Valid choices are: ${question.choices.join(", ")}`,
       },
     ]);
   }
@@ -45,29 +50,29 @@ export async function submitAnswer(
   // US2: Validate guest status (must be active)
   const guest = await getGuestById(guestId);
   if (!guest) {
-    throw new NotFoundError('Guest not found', [
+    throw new NotFoundError("Guest not found", [
       {
-        field: 'guestId',
+        field: "guestId",
         message: `No guest found with ID "${guestId}"`,
       },
     ]);
   }
 
-  if (guest.status !== 'active') {
-    throw new ForbiddenError('Guest is no longer active', [
+  if (guest.status !== "active") {
+    throw new ForbiddenError("Guest is no longer active", [
       {
-        field: 'guestId',
-        message: 'Only active guests can submit answers',
+        field: "guestId",
+        message: "Only active guests can submit answers",
       },
     ]);
   }
 
   // US2: Validate game phase (must be accepting_answers)
   const gameState = await getCurrentGameState();
-  if (gameState.phase !== 'accepting_answers') {
-    throw new ValidationError('Not accepting answers in current phase', [
+  if (gameState.phase !== "accepting_answers") {
+    throw new ValidationError("Not accepting answers in current phase", [
       {
-        field: 'phase',
+        field: "phase",
         message: `Current game phase is "${gameState.phase}". Answers can only be submitted during "accepting_answers" phase.`,
       },
     ]);
@@ -77,9 +82,9 @@ export async function submitAnswer(
   const now = new Date();
   const deadline = question.deadline.toDate();
   if (now > deadline) {
-    throw new ValidationError('Answer deadline has passed', [
+    throw new ValidationError("Answer deadline has passed", [
       {
-        field: 'deadline',
+        field: "deadline",
         message: `Deadline was ${deadline.toISOString()}. Current time is ${now.toISOString()}.`,
       },
     ]);
@@ -92,17 +97,17 @@ export async function submitAnswer(
     const answerRef = db
       .collection(COLLECTIONS.QUESTIONS)
       .doc(data.questionId)
-      .collection('answers')
+      .collection("answers")
       .doc(guestId);
 
     const existingAnswer = await transaction.get(answerRef);
 
     if (existingAnswer.exists) {
       throw new DuplicateError(
-        'You have already submitted an answer for this question',
+        "You have already submitted an answer for this question",
         [
           {
-            field: 'questionId',
+            field: "questionId",
             message: `Answer already exists for question "${data.questionId}"`,
           },
         ]
@@ -145,7 +150,7 @@ export async function getAnswersByQuestion(
   const snapshot = await db
     .collection(COLLECTIONS.QUESTIONS)
     .doc(questionId)
-    .collection('answers')
+    .collection("answers")
     .get();
 
   if (snapshot.empty) {
@@ -176,9 +181,9 @@ export async function getTop10CorrectAnswers(
   const snapshot = await db
     .collection(COLLECTIONS.QUESTIONS)
     .doc(questionId)
-    .collection('answers')
-    .where('isCorrect', '==', true)
-    .orderBy('responseTimeMs', 'asc')
+    .collection("answers")
+    .where("isCorrect", "==", true)
+    .orderBy("responseTimeMs", "asc")
     .limit(10)
     .get();
 
@@ -202,9 +207,9 @@ export async function getWorst10IncorrectAnswers(
   const snapshot = await db
     .collection(COLLECTIONS.QUESTIONS)
     .doc(questionId)
-    .collection('answers')
-    .where('isCorrect', '==', false)
-    .orderBy('responseTimeMs', 'desc')
+    .collection("answers")
+    .where("isCorrect", "==", false)
+    .orderBy("responseTimeMs", "desc")
     .limit(10)
     .get();
 
