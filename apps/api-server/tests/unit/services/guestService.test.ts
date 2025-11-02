@@ -182,4 +182,88 @@ describe('Guest Service', () => {
       expect(guests[1].status).toBe('dropped');
     });
   });
+
+  describe('Revive All Guests (US5)', () => {
+    it('should use Firestore batch write for reviving guests', async () => {
+      // Setup: 2 dropped guests
+      mockGet.mockResolvedValue({
+        empty: false,
+        size: 2,
+        docs: [
+          {
+            id: 'guest-1',
+            ref: { path: 'guests/guest-1' },
+            data: () => ({
+              name: 'Guest 1',
+              status: 'dropped',
+              attributes: [],
+              authMethod: 'anonymous',
+            }),
+          },
+          {
+            id: 'guest-2',
+            ref: { path: 'guests/guest-2' },
+            data: () => ({
+              name: 'Guest 2',
+              status: 'dropped',
+              attributes: [],
+              authMethod: 'anonymous',
+            }),
+          },
+        ],
+      });
+
+      mockBatchCommit.mockResolvedValue(undefined);
+
+      await reviveAllGuests();
+
+      // Verify batch was used (not individual updates)
+      expect(db.batch).toHaveBeenCalledTimes(1);
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it('should be idempotent when all guests are already active', async () => {
+      // Setup: No dropped guests
+      mockGet.mockResolvedValue({
+        empty: true,
+        size: 0,
+        docs: [],
+      });
+
+      const count = await reviveAllGuests();
+
+      // Should not create batch or commit when no guests to revive
+      expect(mockBatchUpdate).not.toHaveBeenCalled();
+      expect(mockBatchCommit).not.toHaveBeenCalled();
+      expect(count).toBe(0);
+    });
+
+    it('should return count of revived guests', async () => {
+      // Setup: 5 dropped guests
+      const droppedGuests = Array.from({ length: 5 }, (_, i) => ({
+        id: `guest-${i}`,
+        ref: { path: `guests/guest-${i}` },
+        data: () => ({
+          name: `Guest ${i}`,
+          status: 'dropped',
+          attributes: [],
+          authMethod: 'anonymous',
+        }),
+      }));
+
+      mockGet.mockResolvedValue({
+        empty: false,
+        size: 5,
+        docs: droppedGuests,
+      });
+
+      mockBatchCommit.mockResolvedValue(undefined);
+
+      const count = await reviveAllGuests();
+
+      expect(count).toBe(5);
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(5);
+    });
+  });
 });

@@ -494,4 +494,185 @@ describe('Game State Service', () => {
       expect(result.isGongActive).toBe(false);
     });
   });
+
+  describe('Revive All Guests (US5)', () => {
+    it('should transition phase to all_revived after REVIVE_ALL action', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_results',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      // Mock batch for guest updates
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      const mockWhere = jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          empty: false,
+          docs: [
+            {
+              ref: { path: 'guests/guest-1' },
+              data: () => ({ status: 'dropped' }),
+            },
+          ],
+        }),
+      });
+
+      mockCollection.mockReturnValue({
+        where: mockWhere,
+        doc: mockDoc,
+      });
+
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'REVIVE_ALL' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      expect(result.phase).toBe('all_revived');
+    });
+
+    it('should revive all dropped guests when REVIVE_ALL is called', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_results',
+        activeQuestionId: null,
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      // Mock dropped guests
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      const mockWhere = jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          empty: false,
+          docs: [
+            {
+              ref: { path: 'guests/guest-1' },
+              data: () => ({ status: 'dropped' }),
+            },
+            {
+              ref: { path: 'guests/guest-2' },
+              data: () => ({ status: 'dropped' }),
+            },
+            {
+              ref: { path: 'guests/guest-3' },
+              data: () => ({ status: 'dropped' }),
+            },
+          ],
+        }),
+      });
+
+      mockCollection.mockReturnValue({
+        where: mockWhere,
+        doc: mockDoc,
+      });
+
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'REVIVE_ALL' as const,
+        payload: {},
+      };
+
+      await advanceGame(action);
+
+      // Verify batch update was called for each dropped guest
+      expect(mockBatchUpdate).toHaveBeenCalledTimes(3);
+      expect(mockBatchCommit).toHaveBeenCalled();
+    });
+
+    it('should be idempotent when no guests are dropped', async () => {
+      const currentState = {
+        id: 'live',
+        phase: 'showing_results',
+        activeQuestionId: null,
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: 'live',
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      // Mock no dropped guests
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      const mockWhere = jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          empty: true,
+          docs: [],
+        }),
+      });
+
+      mockCollection.mockReturnValue({
+        where: mockWhere,
+        doc: mockDoc,
+      });
+
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      }));
+
+      const action = {
+        action: 'REVIVE_ALL' as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Should still transition to all_revived phase
+      expect(result.phase).toBe('all_revived');
+      // But should not call batch update
+      expect(mockBatchUpdate).not.toHaveBeenCalled();
+    });
+  });
 });

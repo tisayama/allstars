@@ -212,11 +212,11 @@ This project uses monorepo structure:
 
 ### Tests (TDD Red Phase)
 
-- [ ] T075 [US5] Write test in apps/api-server/tests/unit/services/guestService.test.ts: reviveAll() sets all guests to status=active
-- [ ] T076 [P] [US5] Write test: reviveAll() uses Firestore batch write (not individual updates)
-- [ ] T077 [P] [US5] Write test: reviveAll() is idempotent (no-op if all already active)
-- [ ] T078 [P] [US5] Write test: gameState phase transitions to all_revived after REVIVE_ALL
-- [ ] T079 [US5] Run tests and verify REVIVE_ALL tests fail (RED state)
+- [X] T075 [US5] Write test in apps/api-server/tests/unit/services/guestService.test.ts: reviveAll() sets all guests to status=active
+- [X] T076 [P] [US5] Write test: reviveAll() uses Firestore batch write (not individual updates)
+- [X] T077 [P] [US5] Write test: reviveAll() is idempotent (no-op if all already active)
+- [X] T078 [P] [US5] Write test: gameState phase transitions to all_revived after REVIVE_ALL
+- [X] T079 [US5] Run tests and verify REVIVE_ALL tests fail (RED state)
 
 ### Implementation (TDD Green Phase)
 
