@@ -3,7 +3,7 @@
  * Wraps Firestore operations with automatic retry logic using p-retry
  */
 
-import pRetry, { AbortError } from 'p-retry';
+import pRetry, { AbortError } from "p-retry";
 
 /**
  * Retry configuration options
@@ -37,17 +37,17 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
 function isRetryableError(error: any): boolean {
   // Firestore contention errors (transaction conflicts)
   if (error.code === 10) return true; // ABORTED
-  if (error.code === 'ABORTED') return true;
+  if (error.code === "ABORTED") return true;
 
   // Transient network/infrastructure errors
   if (error.code === 14) return true; // UNAVAILABLE
-  if (error.code === 'UNAVAILABLE') return true;
+  if (error.code === "UNAVAILABLE") return true;
   if (error.code === 4) return true; // DEADLINE_EXCEEDED
-  if (error.code === 'DEADLINE_EXCEEDED') return true;
+  if (error.code === "DEADLINE_EXCEEDED") return true;
 
   // Resource exhaustion (rate limiting)
   if (error.code === 8) return true; // RESOURCE_EXHAUSTED
-  if (error.code === 'RESOURCE_EXHAUSTED') return true;
+  if (error.code === "RESOURCE_EXHAUSTED") return true;
 
   return false;
 }

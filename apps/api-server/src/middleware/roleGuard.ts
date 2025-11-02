@@ -3,8 +3,8 @@
  * Enforces authentication method requirements (Google vs Anonymous)
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { UnauthorizedError, ForbiddenError } from '../utils/errors';
+import { Request, Response, NextFunction } from "express";
+import { UnauthorizedError, ForbiddenError } from "../utils/errors";
 
 /**
  * Middleware to require Google login (admin/host endpoints)
@@ -17,8 +17,8 @@ export function requireGoogleLogin(
 ): void {
   // Check if user is authenticated
   if (!req.user) {
-    const error = new UnauthorizedError('User not authenticated', [
-      { message: 'Authentication required - please log in' },
+    const error = new UnauthorizedError("User not authenticated", [
+      { message: "Authentication required - please log in" },
     ]);
     res.status(error.statusCode).json({
       code: error.code,
@@ -29,16 +29,12 @@ export function requireGoogleLogin(
   }
 
   // Check if user signed in with Google
-  if (req.user.signInProvider !== 'google.com') {
-    const error = new ForbiddenError(
-      'Google authentication required',
-      [
-        {
-          message:
-            'This endpoint requires Google login (admin/host access only)',
-        },
-      ]
-    );
+  if (req.user.signInProvider !== "google.com") {
+    const error = new ForbiddenError("Google authentication required", [
+      {
+        message: "This endpoint requires Google login (admin/host access only)",
+      },
+    ]);
     res.status(error.statusCode).json({
       code: error.code,
       message: error.message,
@@ -61,8 +57,8 @@ export function requireAnonymousLogin(
 ): void {
   // Check if user is authenticated
   if (!req.user) {
-    const error = new UnauthorizedError('User not authenticated', [
-      { message: 'Authentication required - please log in anonymously' },
+    const error = new UnauthorizedError("User not authenticated", [
+      { message: "Authentication required - please log in anonymously" },
     ]);
     res.status(error.statusCode).json({
       code: error.code,
@@ -73,15 +69,13 @@ export function requireAnonymousLogin(
   }
 
   // Check if user signed in anonymously
-  if (req.user.signInProvider !== 'anonymous') {
-    const error = new ForbiddenError(
-      'Anonymous authentication required',
-      [
-        {
-          message: 'This endpoint requires anonymous login (participant access only)',
-        },
-      ]
-    );
+  if (req.user.signInProvider !== "anonymous") {
+    const error = new ForbiddenError("Anonymous authentication required", [
+      {
+        message:
+          "This endpoint requires anonymous login (participant access only)",
+      },
+    ]);
     res.status(error.statusCode).json({
       code: error.code,
       message: error.message,

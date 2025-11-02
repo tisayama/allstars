@@ -3,14 +3,11 @@
  * Business logic for quiz question management
  */
 
-import { db, admin } from '../utils/firestore';
-import { COLLECTIONS } from '../models/firestoreCollections';
-import {
-  CreateQuestionInput,
-  UpdateQuestionInput,
-} from '../models/validators';
-import { Question } from '@allstars/types';
-import { DuplicateError, NotFoundError } from '../utils/errors';
+import { db, admin } from "../utils/firestore";
+import { COLLECTIONS } from "../models/firestoreCollections";
+import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
+import { Question } from "@allstars/types";
+import { DuplicateError, NotFoundError } from "../utils/errors";
 
 /**
  * Create a new quiz question
@@ -22,21 +19,21 @@ export async function createQuestion(
   // Check for duplicate period + questionNumber
   const existingQuery = await db
     .collection(COLLECTIONS.QUESTIONS)
-    .where('period', '==', data.period)
-    .where('questionNumber', '==', data.questionNumber)
+    .where("period", "==", data.period)
+    .where("questionNumber", "==", data.questionNumber)
     .limit(1)
     .get();
 
   if (!existingQuery.empty) {
     throw new DuplicateError(
-      'Question with this period and question number already exists',
+      "Question with this period and question number already exists",
       [
         {
-          field: 'period',
+          field: "period",
           message: `Question ${data.questionNumber} already exists in period "${data.period}"`,
         },
         {
-          field: 'questionNumber',
+          field: "questionNumber",
           message: `Question number ${data.questionNumber} is already used in this period`,
         },
       ]
@@ -45,9 +42,9 @@ export async function createQuestion(
 
   // Validate that correctAnswer is one of the choices
   if (!data.choices.includes(data.correctAnswer)) {
-    throw new DuplicateError('Correct answer must be one of the choices', [
+    throw new DuplicateError("Correct answer must be one of the choices", [
       {
-        field: 'correctAnswer',
+        field: "correctAnswer",
         message: `"${data.correctAnswer}" is not in the choices list`,
       },
     ]);
@@ -82,8 +79,8 @@ export async function createQuestion(
 export async function listQuestions(): Promise<Question[]> {
   const snapshot = await db
     .collection(COLLECTIONS.QUESTIONS)
-    .orderBy('period')
-    .orderBy('questionNumber')
+    .orderBy("period")
+    .orderBy("questionNumber")
     .get();
 
   if (snapshot.empty) {
@@ -117,9 +114,9 @@ export async function updateQuestion(
   const questionDoc = await questionRef.get();
 
   if (!questionDoc.exists) {
-    throw new NotFoundError('Question not found', [
+    throw new NotFoundError("Question not found", [
       {
-        field: 'questionId',
+        field: "questionId",
         message: `No question found with ID "${questionId}"`,
       },
     ]);
@@ -132,9 +129,9 @@ export async function updateQuestion(
   const updatedCorrectAnswer = data.correctAnswer || currentData.correctAnswer;
 
   if (!updatedChoices.includes(updatedCorrectAnswer)) {
-    throw new DuplicateError('Correct answer must be one of the choices', [
+    throw new DuplicateError("Correct answer must be one of the choices", [
       {
-        field: 'correctAnswer',
+        field: "correctAnswer",
         message: `"${updatedCorrectAnswer}" is not in the choices list`,
       },
     ]);
@@ -151,7 +148,9 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
+    updateData.deadline = admin.firestore.Timestamp.fromDate(
+      new Date(data.deadline)
+    );
   }
 
   await questionRef.update(updateData);

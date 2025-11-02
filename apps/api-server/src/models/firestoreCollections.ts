@@ -4,11 +4,11 @@
  */
 
 export const COLLECTIONS = {
-  QUESTIONS: 'questions',
-  GUESTS: 'guests',
-  ANSWERS: 'answers',
-  GAME_STATE: 'gameState',
+  QUESTIONS: "questions",
+  GUESTS: "guests",
+  ANSWERS: "answers",
+  GAME_STATE: "gameState",
 } as const;
 
 // Type for collection names
-export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS];
+export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

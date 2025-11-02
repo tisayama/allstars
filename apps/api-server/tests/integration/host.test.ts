@@ -3,12 +3,12 @@
  * Tests game state transitions, top/worst 10 calculations, and revive functionality
  */
 
-import request from 'supertest';
-import { app } from '../../src/index';
-import { db, admin } from '../../src/utils/firestore';
+import request from "supertest";
+import { app } from "../../src/index";
+import { db, admin } from "../../src/utils/firestore";
 
 // Mock Firebase Admin
-jest.mock('../../src/utils/firestore', () => {
+jest.mock("../../src/utils/firestore", () => {
   const mockFirestore = {
     collection: jest.fn(),
     settings: jest.fn(),
@@ -28,22 +28,22 @@ jest.mock('../../src/utils/firestore', () => {
   };
 });
 
-describe('Host Game Control Integration Tests', () => {
+describe("Host Game Control Integration Tests", () => {
   let mockVerifyIdToken: jest.Mock;
   let mockRunTransaction: jest.Mock;
   let mockBatch: jest.Mock;
 
-  const hostToken = 'host-token-123';
+  const hostToken = "host-token-123";
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Mock host authentication
     mockVerifyIdToken = jest.fn().mockResolvedValue({
-      uid: 'host-123',
-      email: 'host@example.com',
+      uid: "host-123",
+      email: "host@example.com",
       firebase: {
-        sign_in_provider: 'google.com',
+        sign_in_provider: "google.com",
       },
     });
 
@@ -58,15 +58,15 @@ describe('Host Game Control Integration Tests', () => {
     (db.batch as jest.Mock) = mockBatch;
   });
 
-  describe('Game State Transitions', () => {
-    it('should complete full workflow: START_QUESTION → SHOW_DISTRIBUTION → SHOW_CORRECT_ANSWER → SHOW_RESULTS', async () => {
-      const questionId = 'question-1';
+  describe("Game State Transitions", () => {
+    it("should complete full workflow: START_QUESTION → SHOW_DISTRIBUTION → SHOW_CORRECT_ANSWER → SHOW_RESULTS", async () => {
+      const questionId = "question-1";
 
       // Step 1: START_QUESTION
       const startResponse = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'START_QUESTION', payload: { questionId } });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "START_QUESTION", payload: { questionId } });
 
       expect(startResponse.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -76,9 +76,9 @@ describe('Host Game Control Integration Tests', () => {
 
       // Step 2: SHOW_DISTRIBUTION
       const distResponse = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_DISTRIBUTION', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_DISTRIBUTION", payload: {} });
 
       expect(distResponse.status).toBe(404);
       // Once implemented:
@@ -86,9 +86,9 @@ describe('Host Game Control Integration Tests', () => {
 
       // Step 3: SHOW_CORRECT_ANSWER
       const answerResponse = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_CORRECT_ANSWER', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_CORRECT_ANSWER", payload: {} });
 
       expect(answerResponse.status).toBe(404);
       // Once implemented:
@@ -96,9 +96,9 @@ describe('Host Game Control Integration Tests', () => {
 
       // Step 4: SHOW_RESULTS
       const resultsResponse = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(resultsResponse.status).toBe(404);
       // Once implemented:
@@ -109,12 +109,12 @@ describe('Host Game Control Integration Tests', () => {
     });
   });
 
-  describe('TRIGGER_GONG Action', () => {
-    it('should activate gong sound effect', async () => {
+  describe("TRIGGER_GONG Action", () => {
+    it("should activate gong sound effect", async () => {
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'TRIGGER_GONG', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "TRIGGER_GONG", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -123,8 +123,8 @@ describe('Host Game Control Integration Tests', () => {
     });
   });
 
-  describe('REVIVE_ALL Action', () => {
-    it('should revive all dropped guests', async () => {
+  describe("REVIVE_ALL Action", () => {
+    it("should revive all dropped guests", async () => {
       // Mock batch update
       const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
       const mockBatchUpdate = jest.fn();
@@ -135,9 +135,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'REVIVE_ALL', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "REVIVE_ALL", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -146,25 +146,25 @@ describe('Host Game Control Integration Tests', () => {
     });
   });
 
-  describe('Top/Worst 10 Calculation', () => {
-    it('should calculate top 10 fastest correct answers with guest names', async () => {
+  describe("Top/Worst 10 Calculation", () => {
+    it("should calculate top 10 fastest correct answers with guest names", async () => {
       // Mock answers and guests for leaderboard
       const mockAnswers = [
-        { guestId: 'g1', isCorrect: true, responseTimeMs: 1000 },
-        { guestId: 'g2', isCorrect: true, responseTimeMs: 1500 },
-        { guestId: 'g3', isCorrect: true, responseTimeMs: 2000 },
+        { guestId: "g1", isCorrect: true, responseTimeMs: 1000 },
+        { guestId: "g2", isCorrect: true, responseTimeMs: 1500 },
+        { guestId: "g3", isCorrect: true, responseTimeMs: 2000 },
       ];
 
       const mockGuests = [
-        { id: 'g1', name: 'Alice' },
-        { id: 'g2', name: 'Bob' },
-        { id: 'g3', name: 'Charlie' },
+        { id: "g1", name: "Alice" },
+        { id: "g2", name: "Bob" },
+        { id: "g3", name: "Charlie" },
       ];
 
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -174,11 +174,11 @@ describe('Host Game Control Integration Tests', () => {
       // Verify sorted by responseTimeMs ascending
     });
 
-    it('should calculate worst 10 slowest incorrect answers', async () => {
+    it("should calculate worst 10 slowest incorrect answers", async () => {
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -186,11 +186,11 @@ describe('Host Game Control Integration Tests', () => {
       // Verify sorted by responseTimeMs descending for incorrect answers
     });
 
-    it('should handle empty results when no answers submitted', async () => {
+    it("should handle empty results when no answers submitted", async () => {
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -199,14 +199,14 @@ describe('Host Game Control Integration Tests', () => {
     });
   });
 
-  describe('Firestore Transaction Logic', () => {
-    it('should use transactions for concurrent update handling', async () => {
+  describe("Firestore Transaction Logic", () => {
+    it("should use transactions for concurrent update handling", async () => {
       mockRunTransaction.mockImplementation(async (callback) => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
             data: () => ({
-              phase: 'idle',
+              phase: "idle",
               activeQuestionId: null,
               isGongActive: false,
               results: null,
@@ -218,23 +218,23 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'TRIGGER_GONG', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "TRIGGER_GONG", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented, verify transaction was used
     });
   });
 
-  describe('State Transition Validation', () => {
-    it('should reject invalid state transitions', async () => {
+  describe("State Transition Validation", () => {
+    it("should reject invalid state transitions", async () => {
       // Mock game state in idle phase
       mockRunTransaction.mockImplementation(async (callback) => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            data: () => ({ phase: 'idle' }),
+            data: () => ({ phase: "idle" }),
           }),
         };
         return callback(transaction);
@@ -242,9 +242,9 @@ describe('Host Game Control Integration Tests', () => {
 
       // Try to SHOW_DISTRIBUTION from idle (invalid)
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_DISTRIBUTION', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_DISTRIBUTION", payload: {} });
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -253,18 +253,18 @@ describe('Host Game Control Integration Tests', () => {
     });
   });
 
-  describe('Prize Carryover (US3)', () => {
-    it('should increase prizeCarryover when all guests answer incorrectly', async () => {
+  describe("Prize Carryover (US3)", () => {
+    it("should increase prizeCarryover when all guests answer incorrectly", async () => {
       // Setup: Question with all incorrect answers
       // Mock transaction to simulate all-incorrect scenario
       mockRunTransaction.mockImplementation(async (callback) => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            id: 'live',
+            id: "live",
             data: () => ({
-              phase: 'showing_correct_answer',
-              activeQuestionId: 'question-1',
+              phase: "showing_correct_answer",
+              activeQuestionId: "question-1",
               isGongActive: false,
               results: null,
               prizeCarryover: 1000,
@@ -276,9 +276,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response.status).toBe(500); // Incomplete mocking - TODO: fix integration test setup
       // Once mocking is complete:
@@ -287,17 +287,17 @@ describe('Host Game Control Integration Tests', () => {
       // expect(response.body.prizeCarryover).toBe(11000); // 1000 + 10000 base prize
     });
 
-    it('should accumulate prizeCarryover across multiple consecutive all-incorrect questions', async () => {
+    it("should accumulate prizeCarryover across multiple consecutive all-incorrect questions", async () => {
       // Test scenario: 3 questions, all answered incorrectly
       // Question 1: prizeCarryover goes from 0 → 10000
       mockRunTransaction.mockImplementationOnce(async (callback) => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            id: 'live',
+            id: "live",
             data: () => ({
-              phase: 'showing_correct_answer',
-              activeQuestionId: 'question-1',
+              phase: "showing_correct_answer",
+              activeQuestionId: "question-1",
               prizeCarryover: 0,
             }),
           }),
@@ -307,9 +307,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response1 = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response1.status).toBe(500); // Incomplete mocking - TODO: fix integration test setup
       // Once mocking is complete:
@@ -320,10 +320,10 @@ describe('Host Game Control Integration Tests', () => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            id: 'live',
+            id: "live",
             data: () => ({
-              phase: 'showing_correct_answer',
-              activeQuestionId: 'question-2',
+              phase: "showing_correct_answer",
+              activeQuestionId: "question-2",
               prizeCarryover: 10000,
             }),
           }),
@@ -333,9 +333,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response2 = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response2.status).toBe(500); // Incomplete mocking - TODO: fix integration test setup
       // Once mocking is complete:
@@ -346,10 +346,10 @@ describe('Host Game Control Integration Tests', () => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            id: 'live',
+            id: "live",
             data: () => ({
-              phase: 'showing_correct_answer',
-              activeQuestionId: 'question-3',
+              phase: "showing_correct_answer",
+              activeQuestionId: "question-3",
               prizeCarryover: 20000,
             }),
           }),
@@ -359,9 +359,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response3 = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response3.status).toBe(500); // Incomplete mocking - TODO: fix integration test setup
       // Once mocking is complete:
@@ -369,16 +369,16 @@ describe('Host Game Control Integration Tests', () => {
       // expect(response3.body.phase).toBe('all_incorrect');
     });
 
-    it('should reset prizeCarryover to 0 after question with correct answers', async () => {
+    it("should reset prizeCarryover to 0 after question with correct answers", async () => {
       // Setup: Question with some correct answers after accumulated carryover
       mockRunTransaction.mockImplementation(async (callback) => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             exists: true,
-            id: 'live',
+            id: "live",
             data: () => ({
-              phase: 'showing_correct_answer',
-              activeQuestionId: 'question-1',
+              phase: "showing_correct_answer",
+              activeQuestionId: "question-1",
               isGongActive: false,
               results: null,
               prizeCarryover: 5000, // Has accumulated carryover
@@ -390,9 +390,9 @@ describe('Host Game Control Integration Tests', () => {
       });
 
       const response = await request(app)
-        .post('/host/game/advance')
-        .set('Authorization', `Bearer ${hostToken}`)
-        .send({ action: 'SHOW_RESULTS', payload: {} });
+        .post("/host/game/advance")
+        .set("Authorization", `Bearer ${hostToken}`)
+        .send({ action: "SHOW_RESULTS", payload: {} });
 
       expect(response.status).toBe(500); // Incomplete mocking - TODO: fix integration test setup
       // Once implemented with at least one correct answer:

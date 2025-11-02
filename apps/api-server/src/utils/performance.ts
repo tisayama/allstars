@@ -3,7 +3,7 @@
  * Tracks response time for API requests
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
 /**
  * Express middleware to track response time for each request
@@ -22,11 +22,11 @@ export function performanceMiddleware(
   const startTime = Date.now();
 
   // Capture when response is finished
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = Date.now() - startTime;
 
     // Add response time header
-    res.setHeader('X-Response-Time', `${duration}ms`);
+    res.setHeader("X-Response-Time", `${duration}ms`);
 
     // Log performance metrics
     console.log(

@@ -3,12 +3,12 @@
  * Tests time sync, answer submission, duplicate prevention, and correctness validation
  */
 
-import request from 'supertest';
-import { app } from '../../src/index';
-import { db, admin } from '../../src/utils/firestore';
+import request from "supertest";
+import { app } from "../../src/index";
+import { db, admin } from "../../src/utils/firestore";
 
 // Mock Firebase Admin
-jest.mock('../../src/utils/firestore', () => {
+jest.mock("../../src/utils/firestore", () => {
   const mockFirestore = {
     collection: jest.fn(),
     settings: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('../../src/utils/firestore', () => {
   };
 });
 
-describe('Participant Answer Submission Integration Tests', () => {
+describe("Participant Answer Submission Integration Tests", () => {
   let mockVerifyIdToken: jest.Mock;
   let mockCollection: jest.Mock;
   let mockDoc: jest.Mock;
@@ -37,8 +37,8 @@ describe('Participant Answer Submission Integration Tests', () => {
   let mockLimit: jest.Mock;
   let mockRunTransaction: jest.Mock;
 
-  const anonToken = 'anon-token-123';
-  const guestId = 'guest-123';
+  const anonToken = "anon-token-123";
+  const guestId = "guest-123";
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -47,7 +47,7 @@ describe('Participant Answer Submission Integration Tests', () => {
     mockVerifyIdToken = jest.fn().mockResolvedValue({
       uid: guestId,
       firebase: {
-        sign_in_provider: 'anonymous',
+        sign_in_provider: "anonymous",
       },
     });
 
@@ -82,10 +82,10 @@ describe('Participant Answer Submission Integration Tests', () => {
     (db.runTransaction as jest.Mock) = mockRunTransaction;
   });
 
-  describe('Time Synchronization', () => {
-    it('should return server timestamp with <50ms variance target (SC-005)', async () => {
+  describe("Time Synchronization", () => {
+    it("should return server timestamp with <50ms variance target (SC-005)", async () => {
       const clientStart = Date.now();
-      const response = await request(app).get('/participant/time');
+      const response = await request(app).get("/participant/time");
       const clientEnd = Date.now();
       const roundTripTime = clientEnd - clientStart;
 
@@ -97,30 +97,30 @@ describe('Participant Answer Submission Integration Tests', () => {
       // expect(roundTripTime).toBeLessThan(50); // SC-005 target
     });
 
-    it('should be accessible without authentication', async () => {
-      const response = await request(app).get('/participant/time');
+    it("should be accessible without authentication", async () => {
+      const response = await request(app).get("/participant/time");
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Should work without Bearer token
     });
   });
 
-  describe('Answer Submission Workflow', () => {
-    it('should complete workflow: sync time → submit answer → verify correctness', async () => {
+  describe("Answer Submission Workflow", () => {
+    it("should complete workflow: sync time → submit answer → verify correctness", async () => {
       // Step 1: Sync time
-      const timeResponse = await request(app).get('/participant/time');
+      const timeResponse = await request(app).get("/participant/time");
       expect(timeResponse.status).toBe(404); // Route not implemented yet
       // const serverTime = timeResponse.body.timestamp;
 
       // Step 2: Submit answer
       const mockQuestion = {
-        id: 'question-1',
-        period: 'first-half',
+        id: "question-1",
+        period: "first-half",
         questionNumber: 1,
-        type: 'multiple-choice',
-        text: 'What is 2 + 2?',
-        choices: ['2', '3', '4', '5'],
-        correctAnswer: '4',
+        type: "multiple-choice",
+        text: "What is 2 + 2?",
+        choices: ["2", "3", "4", "5"],
+        correctAnswer: "4",
         skipAttributes: [],
       };
 
@@ -137,17 +137,17 @@ describe('Participant Answer Submission Integration Tests', () => {
       });
 
       // Mock answer creation
-      mockAdd.mockResolvedValue({ id: 'answer-1' });
+      mockAdd.mockResolvedValue({ id: "answer-1" });
 
       const answerData = {
         questionId: mockQuestion.id,
-        answer: '4',
+        answer: "4",
         responseTimeMs: 2500,
       };
 
       const answerResponse = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(answerData);
 
       expect(answerResponse.status).toBe(404); // Route not implemented yet
@@ -158,8 +158,8 @@ describe('Participant Answer Submission Integration Tests', () => {
 
       // Step 3: Verify duplicate rejection
       const duplicateResponse = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(answerData);
 
       expect(duplicateResponse.status).toBe(404); // Route not implemented yet
@@ -168,11 +168,11 @@ describe('Participant Answer Submission Integration Tests', () => {
       // expect(duplicateResponse.body.code).toBe('DUPLICATE_ERROR');
     });
 
-    it('should validate answer correctness', async () => {
+    it("should validate answer correctness", async () => {
       const mockQuestion = {
-        id: 'question-2',
-        choices: ['A', 'B', 'C', 'D'],
-        correctAnswer: 'B',
+        id: "question-2",
+        choices: ["A", "B", "C", "D"],
+        correctAnswer: "B",
       };
 
       mockGet.mockResolvedValue({
@@ -185,18 +185,18 @@ describe('Participant Answer Submission Integration Tests', () => {
         empty: true, // No duplicate
       });
 
-      mockAdd.mockResolvedValue({ id: 'answer-2' });
+      mockAdd.mockResolvedValue({ id: "answer-2" });
 
       // Submit wrong answer
       const wrongAnswer = {
         questionId: mockQuestion.id,
-        answer: 'A', // Wrong!
+        answer: "A", // Wrong!
         responseTimeMs: 3000,
       };
 
       const response = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(wrongAnswer);
 
       expect(response.status).toBe(404); // Route not implemented yet
@@ -206,11 +206,11 @@ describe('Participant Answer Submission Integration Tests', () => {
     });
   });
 
-  describe('Duplicate Answer Detection', () => {
-    it('should prevent duplicate answers using Firestore transaction', async () => {
+  describe("Duplicate Answer Detection", () => {
+    it("should prevent duplicate answers using Firestore transaction", async () => {
       const mockQuestion = {
-        id: 'question-3',
-        correctAnswer: 'A',
+        id: "question-3",
+        correctAnswer: "A",
       };
 
       // Mock transaction behavior
@@ -219,7 +219,7 @@ describe('Participant Answer Submission Integration Tests', () => {
         const transaction = {
           get: jest.fn().mockResolvedValue({
             empty: false, // Duplicate found
-            docs: [{ id: 'existing-answer' }],
+            docs: [{ id: "existing-answer" }],
           }),
         };
         return callback(transaction);
@@ -227,13 +227,13 @@ describe('Participant Answer Submission Integration Tests', () => {
 
       const answerData = {
         questionId: mockQuestion.id,
-        answer: 'A',
+        answer: "A",
         responseTimeMs: 1500,
       };
 
       const response = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(answerData);
 
       expect(response.status).toBe(404); // Route not implemented yet
@@ -244,31 +244,31 @@ describe('Participant Answer Submission Integration Tests', () => {
     });
   });
 
-  describe('Edge Cases and Validation', () => {
-    it('should return 404 for invalid question ID', async () => {
+  describe("Edge Cases and Validation", () => {
+    it("should return 404 for invalid question ID", async () => {
       mockGet.mockResolvedValue({
         exists: false,
       });
 
       const answerData = {
-        questionId: 'non-existent',
-        answer: 'A',
+        questionId: "non-existent",
+        answer: "A",
         responseTimeMs: 1000,
       };
 
       const response = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(answerData);
 
       expect(response.status).toBe(404);
     });
 
-    it('should return 400 for invalid answer choice', async () => {
+    it("should return 400 for invalid answer choice", async () => {
       const mockQuestion = {
-        id: 'question-4',
-        choices: ['A', 'B', 'C', 'D'],
-        correctAnswer: 'A',
+        id: "question-4",
+        choices: ["A", "B", "C", "D"],
+        correctAnswer: "A",
       };
 
       mockGet.mockResolvedValue({
@@ -279,13 +279,13 @@ describe('Participant Answer Submission Integration Tests', () => {
 
       const invalidAnswer = {
         questionId: mockQuestion.id,
-        answer: 'E', // Not in choices!
+        answer: "E", // Not in choices!
         responseTimeMs: 1000,
       };
 
       const response = await request(app)
-        .post('/participant/answer')
-        .set('Authorization', `Bearer ${anonToken}`)
+        .post("/participant/answer")
+        .set("Authorization", `Bearer ${anonToken}`)
         .send(invalidAnswer);
 
       expect(response.status).toBe(404); // Route not implemented yet

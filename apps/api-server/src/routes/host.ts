@@ -3,13 +3,13 @@
  * Endpoints for game host to control game flow
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
-import { auth } from '../middleware/auth';
-import { requireGoogleLogin } from '../middleware/roleGuard';
-import { GameActionSchema } from '../models/validators';
-import { advanceGame } from '../services/gameStateService';
-import { ValidationError } from '../utils/errors';
-import { ZodError } from 'zod';
+import { Router, Request, Response, NextFunction } from "express";
+import { auth } from "../middleware/auth";
+import { requireGoogleLogin } from "../middleware/roleGuard";
+import { GameActionSchema } from "../models/validators";
+import { advanceGame } from "../services/gameStateService";
+import { ValidationError } from "../utils/errors";
+import { ZodError } from "zod";
 
 const router = Router();
 
@@ -22,7 +22,7 @@ router.use(requireGoogleLogin);
  * Advance game state based on host action
  */
 router.post(
-  '/game/advance',
+  "/game/advance",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Validate request body
@@ -37,11 +37,11 @@ router.post(
       if (error instanceof ZodError) {
         // Transform Zod validation error to our error format
         const details = error.errors.map((err) => ({
-          field: err.path.join('.'),
+          field: err.path.join("."),
           message: err.message,
         }));
 
-        next(new ValidationError('Invalid game action', details));
+        next(new ValidationError("Invalid game action", details));
       } else {
         next(error);
       }

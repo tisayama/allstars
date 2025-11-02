@@ -3,9 +3,9 @@
  * Business logic for guest/participant management
  */
 
-import { db } from '../utils/firestore';
-import { COLLECTIONS } from '../models/firestoreCollections';
-import { Guest } from '@allstars/types';
+import { db } from "../utils/firestore";
+import { COLLECTIONS } from "../models/firestoreCollections";
+import { Guest } from "@allstars/types";
 
 /**
  * List all guests
@@ -57,7 +57,7 @@ export async function getGuestById(guestId: string): Promise<Guest | null> {
 export async function reviveAllGuests(): Promise<number> {
   const snapshot = await db
     .collection(COLLECTIONS.GUESTS)
-    .where('status', '==', 'dropped')
+    .where("status", "==", "dropped")
     .get();
 
   if (snapshot.empty) {
@@ -67,7 +67,7 @@ export async function reviveAllGuests(): Promise<number> {
   // Use batch update for efficiency
   const batch = db.batch();
   snapshot.docs.forEach((doc) => {
-    batch.update(doc.ref, { status: 'active' });
+    batch.update(doc.ref, { status: "active" });
   });
 
   await batch.commit();
@@ -82,13 +82,13 @@ export async function createGuest(data: {
   id: string;
   name: string;
   attributes?: string[];
-  authMethod: 'google' | 'anonymous';
+  authMethod: "google" | "anonymous";
 }): Promise<Guest> {
   const guestRef = db.collection(COLLECTIONS.GUESTS).doc(data.id);
 
   await guestRef.set({
     name: data.name,
-    status: 'active',
+    status: "active",
     attributes: data.attributes || [],
     authMethod: data.authMethod,
   });
@@ -96,7 +96,7 @@ export async function createGuest(data: {
   return {
     id: data.id,
     name: data.name,
-    status: 'active',
+    status: "active",
     attributes: data.attributes || [],
     authMethod: data.authMethod,
   };

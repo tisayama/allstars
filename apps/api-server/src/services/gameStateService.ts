@@ -3,7 +3,7 @@
  * Business logic for host game control and state management
  */
 
-import { db, admin } from "../utils/firestore";
+import { db } from "../utils/firestore";
 import { COLLECTIONS } from "../models/firestoreCollections";
 import { GameActionInput } from "../models/validators";
 import { GameState, GamePhase, GameResults } from "@allstars/types";
@@ -72,7 +72,7 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
 async function processAction(
   currentState: GameState,
   action: GameActionInput,
-  transaction: FirebaseFirestore.Transaction
+  _transaction: FirebaseFirestore.Transaction
 ): Promise<GameState> {
   switch (action.action) {
     case "START_QUESTION":
