@@ -113,11 +113,11 @@ This project uses monorepo structure:
 
 ### Implementation (TDD Green Phase)
 
-- [ ] T036 [US2] Add guest status validation to apps/api-server/src/services/answerService.ts submitAnswer() method
-- [ ] T037 [P] [US2] Add game phase validation to answerService.ts submitAnswer() method
-- [ ] T038 [P] [US2] Add deadline validation to answerService.ts submitAnswer() method using Question.deadline field
-- [ ] T039 [P] [US2] Update apps/api-server/src/routes/guest.ts POST /answer endpoint to return appropriate HTTP status codes
-- [ ] T040 [US2] Run tests and verify all validation tests pass (GREEN state)
+- [X] T036 [US2] Add guest status validation to apps/api-server/src/services/answerService.ts submitAnswer() method
+- [X] T037 [P] [US2] Add game phase validation to answerService.ts submitAnswer() method
+- [X] T038 [P] [US2] Add deadline validation to answerService.ts submitAnswer() method using Question.deadline field
+- [X] T039 [P] [US2] Update apps/api-server/src/routes/guest.ts POST /answer endpoint to return appropriate HTTP status codes
+- [X] T040 [US2] Run tests and verify all validation tests pass (GREEN state)
 
 ### Integration Testing
 

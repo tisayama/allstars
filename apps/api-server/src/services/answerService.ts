@@ -7,8 +7,10 @@ import { db, admin } from '../utils/firestore';
 import { COLLECTIONS } from '../models/firestoreCollections';
 import { SubmitAnswerInput } from '../models/validators';
 import { Answer } from '@allstars/types';
-import { DuplicateError, NotFoundError, ValidationError } from '../utils/errors';
+import { DuplicateError, NotFoundError, ValidationError, ForbiddenError } from '../utils/errors';
 import { getQuestionById } from './questionService';
+import { getGuestById } from './guestService';
+import { getCurrentGameState } from './gameStateService';
 
 /**
  * Submit an answer to a question
@@ -36,6 +38,49 @@ export async function submitAnswer(
       {
         field: 'answer',
         message: `"${data.answer}" is not a valid choice. Valid choices are: ${question.choices.join(', ')}`,
+      },
+    ]);
+  }
+
+  // US2: Validate guest status (must be active)
+  const guest = await getGuestById(guestId);
+  if (!guest) {
+    throw new NotFoundError('Guest not found', [
+      {
+        field: 'guestId',
+        message: `No guest found with ID "${guestId}"`,
+      },
+    ]);
+  }
+
+  if (guest.status !== 'active') {
+    throw new ForbiddenError('Guest is no longer active', [
+      {
+        field: 'guestId',
+        message: 'Only active guests can submit answers',
+      },
+    ]);
+  }
+
+  // US2: Validate game phase (must be accepting_answers)
+  const gameState = await getCurrentGameState();
+  if (gameState.phase !== 'accepting_answers') {
+    throw new ValidationError('Not accepting answers in current phase', [
+      {
+        field: 'phase',
+        message: `Current game phase is "${gameState.phase}". Answers can only be submitted during "accepting_answers" phase.`,
+      },
+    ]);
+  }
+
+  // US2: Validate deadline (must not be past)
+  const now = new Date();
+  const deadline = question.deadline.toDate();
+  if (now > deadline) {
+    throw new ValidationError('Answer deadline has passed', [
+      {
+        field: 'deadline',
+        message: `Deadline was ${deadline.toISOString()}. Current time is ${now.toISOString()}.`,
       },
     ]);
   }

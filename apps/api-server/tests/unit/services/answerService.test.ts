@@ -83,9 +83,37 @@ describe('Answer Service', () => {
 
   describe('Sub-collection Path Validation', () => {
     it('should use questions/{questionId}/answers/{guestId} sub-collection path', async () => {
+      // Mock all dependencies for validation
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Test Guest',
+        status: 'active',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        id: 'question-1',
+        text: 'Test question?',
+        choices: ['A', 'B', 'C', 'D'],
+        correctAnswer: 'A',
+        deadline: { toDate: () => new Date(Date.now() + 60000) },
+      });
+
       mockRunTransaction.mockImplementation(async (callback) => {
         const mockTransaction = {
-          get: jest.fn().mockResolvedValue({ empty: true }),
+          get: jest.fn().mockResolvedValue({ exists: false }),
           set: jest.fn(),
         };
 
@@ -128,22 +156,39 @@ describe('Answer Service', () => {
 
   describe('Duplicate Detection', () => {
     it('should detect duplicate answer for same guest and question', async () => {
+      // Mock all dependencies for validation
+      const { getGuestById } = require('../../../src/services/guestService');
+      (getGuestById as jest.Mock).mockResolvedValue({
+        id: 'guest-1',
+        name: 'Test Guest',
+        status: 'active',
+        attributes: [],
+        authMethod: 'anonymous',
+      });
+
+      const { getCurrentGameState } = require('../../../src/services/gameStateService');
+      (getCurrentGameState as jest.Mock).mockResolvedValue({
+        id: 'live',
+        phase: 'accepting_answers',
+        activeQuestionId: 'question-1',
+        isGongActive: false,
+        results: null,
+        prizeCarryover: 0,
+      });
+
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        id: 'question-1',
+        text: 'Test question?',
+        choices: ['A', 'B', 'C', 'D'],
+        correctAnswer: 'A',
+        deadline: { toDate: () => new Date(Date.now() + 60000) },
+      });
+
       // Mock transaction with duplicate found
       mockRunTransaction.mockImplementation(async (callback) => {
         const transaction = {
-          get: jest.fn().mockResolvedValue({
-            empty: false, // Duplicate exists
-            docs: [
-              {
-                id: 'existing-answer',
-                data: () => ({
-                  guestId: 'guest-1',
-                  questionId: 'question-1',
-                  answer: 'A',
-                }),
-              },
-            ],
-          }),
+          get: jest.fn().mockResolvedValue({ exists: true }),
+          set: jest.fn(),
         };
         return callback(transaction);
       });
