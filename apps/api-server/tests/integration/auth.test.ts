@@ -41,8 +41,7 @@ describe("Authentication Integration Tests", () => {
     it("should return 401 when no token provided", async () => {
       const response = await request(app).get("/admin/quizzes");
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once route is implemented, this should be 401
+      expect(response.status).toBe(401); // Route implemented
     });
 
     it("should return 401 when invalid token provided", async () => {
@@ -52,8 +51,7 @@ describe("Authentication Integration Tests", () => {
         .get("/admin/quizzes")
         .set("Authorization", "Bearer invalid-token");
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once route is implemented with auth, this should be 401
+      expect(response.status).toBe(401); // Route implemented with auth
     });
 
     it("should return 401 when token is expired", async () => {
@@ -63,8 +61,7 @@ describe("Authentication Integration Tests", () => {
         .get("/admin/quizzes")
         .set("Authorization", "Bearer expired-token");
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once route is implemented with auth, this should be 401
+      expect(response.status).toBe(401); // Route implemented with auth
     });
   });
 
@@ -81,8 +78,7 @@ describe("Authentication Integration Tests", () => {
         .get("/admin/quizzes")
         .set("Authorization", "Bearer anon-token");
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once route is implemented with requireGoogleLogin, this should be 403
+      expect(response.status).toBe(403); // Route implemented with requireGoogleLogin
     });
 
     it("should return 403 when Google user tries to access participant endpoint", async () => {
@@ -103,8 +99,7 @@ describe("Authentication Integration Tests", () => {
           responseTimeMs: 1000,
         });
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once route is implemented with requireAnonymousLogin, this should be 403
+      expect(response.status).toBe(403); // Route implemented with requireAnonymousLogin
     });
   });
 
