@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Print-specific styles for QR code cards */
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide navigation and UI elements */
+  header,
+  nav,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Optimize QR card layout for printing */
+  .qr-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  /* Ensure QR codes are visible */
+  .qr-code-container canvas,
+  .qr-code-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Prevent page breaks in the middle of cards */
+  .grid > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

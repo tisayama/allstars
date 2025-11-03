@@ -82,7 +82,7 @@ export async function withRetry<T>(
       } catch (error) {
         // If error is not retryable, abort immediately
         if (!isRetryableError(error)) {
-          throw new AbortError(error);
+          throw new AbortError(error instanceof Error ? error : new Error(String(error)));
         }
         // Otherwise, throw error to trigger retry
         throw error;
