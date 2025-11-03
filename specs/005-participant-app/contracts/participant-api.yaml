@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: AllStars Participant API
+  description: |
+    REST API endpoints for participant-app (guest quiz client).
+
+    NOTE: This specification is created retroactively to document existing
+    API endpoints implemented in api-server (001-002). Ideally, OpenAPI specs
+    should be created before implementation (Constitution Principle III).
+  version: 1.0.0
+  contact:
+    name: AllStars Platform
+servers:
+  - url: https://us-central1-{project-id}.cloudfunctions.net
+    description: Firebase Cloud Functions (Production)
+    variables:
+      project-id:
+        default: allstars-prod
+        description: Firebase project ID
+  - url: http://localhost:5001/{project-id}/us-central1
+    description: Firebase Emulator (Local Development)
+    variables:
+      project-id:
+        default: allstars-dev
+        description: Firebase project ID for emulator
+
+paths:
+  /participant/register:
+    post:
+      summary: Register guest with QR code token
+      description: |
+        Authenticates a guest using the token from QR code and links it to
+        the Firebase Anonymous Auth UID. Returns guest profile information.
+      operationId: registerGuest
+      tags:
+        - Authentication
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Unique guest token extracted from QR code
+                  example: "qr_token_abc123xyz789"
+      responses:
+        '200':
+          description: Successfully registered guest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestProfile'
+        '400':
+          description: Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  value:
+                    error: "Invalid token format"
+                    code: "INVALID_TOKEN"
+        '404':
+          description: Token not found or already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                tokenNotFound:
+                  value:
+                    error: "Token not found"
+                    code: "TOKEN_NOT_FOUND"
+                tokenUsed:
+                  value:
+                    error: "Token already registered to another device"
+                    code: "TOKEN_ALREADY_USED"
+        '401':
+          description: Unauthorized (missing or invalid Firebase token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /participant/time:
+    post:
+      summary: Clock synchronization ping
+      description: |
+        Returns current server timestamp for clock synchronization.
+        Client should send 5 pings and use minimum RTT offset for accuracy.
+      operationId: getServerTime
+      tags:
+        - Clock Sync
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clientSendTime
+              properties:
+                clientSendTime:
+                  type: number
+                  format: int64
+                  description: Client timestamp when request was sent (Unix ms)
+                  example: 1699000045000
+      responses:
+        '200':
+          description: Server time returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - serverTime
+                  - clientSendTime
+                properties:
+                  serverTime:
+                    type: number
+                    format: int64
+                    description: Server timestamp when request was received (Unix ms)
+                    example: 1699000045042
+                  clientSendTime:
+                    type: number
+                    format: int64
+                    description: Echo of client's send time for RTT calculation
+                    example: 1699000045000
+        '401':
+          description: Unauthorized (missing or invalid Firebase token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /participant/answer:
+    post:
+      summary: Submit answer to question
+      description: |
+        Submits guest's answer to a question with timing information.
+        Server validates that guest hasn't already answered this question.
+      operationId: submitAnswer
+      tags:
+        - Answers
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerSubmission'
+      responses:
+        '200':
+          description: Answer submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - answerId
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  answerId:
+                    type: string
+                    description: Unique identifier for this answer submission
+                    example: "ans_550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Invalid request (missing fields, invalid choice index)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidChoice:
+                  value:
+                    error: "Invalid choice index"
+                    code: "INVALID_CHOICE"
+                negativeTime:
+                  value:
+                    error: "Response time cannot be negative"
+                    code: "INVALID_RESPONSE_TIME"
+        '409':
+          description: Guest already answered this question
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicate:
+                  value:
+                    error: "Answer already submitted for this question"
+                    code: "DUPLICATE_ANSWER"
+        '403':
+          description: Guest is dropped out and cannot submit answers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                droppedOut:
+                  value:
+                    error: "Guest is eliminated and cannot answer"
+                    code: "GUEST_DROPPED"
+        '401':
+          description: Unauthorized (missing or invalid Firebase token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    firebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase Authentication token (obtained via Anonymous Login)
+
+  schemas:
+    GuestProfile:
+      type: object
+      required:
+        - guestId
+        - name
+        - tableNumber
+      properties:
+        guestId:
+          type: string
+          format: uuid
+          description: Unique guest identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          maxLength: 100
+          description: Guest's display name
+          example: "田中太郎"
+        tableNumber:
+          type: integer
+          minimum: 1
+          description: Table assignment number
+          example: 5
+        attributes:
+          type: array
+          items:
+            type: string
+          description: Guest attributes for question filtering
+          example: ["bride-side", "university-friend"]
+
+    AnswerSubmission:
+      type: object
+      required:
+        - guestId
+        - questionId
+        - choiceIndex
+        - responseTimeMs
+      properties:
+        guestId:
+          type: string
+          format: uuid
+          description: Guest identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        questionId:
+          type: string
+          description: Question identifier
+          example: "q-first-half-001"
+        choiceIndex:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Selected answer choice (0-based index, max 6 choices)
+          example: 2
+        responseTimeMs:
+          type: number
+          format: int64
+          minimum: 0
+          description: Time from question start to answer tap (milliseconds, clock-corrected)
+          example: 3250
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Invalid token format"
+        code:
+          type: string
+          description: Machine-readable error code
+          example: "INVALID_TOKEN"
+        details:
+          type: object
+          description: Additional error details (optional)
+          additionalProperties: true
+
+tags:
+  - name: Authentication
+    description: Guest authentication and registration
+  - name: Clock Sync
+    description: Client-server clock synchronization
+  - name: Answers
+    description: Answer submission and validation
