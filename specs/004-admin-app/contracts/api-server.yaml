@@ -1,0 +1,674 @@
+openapi: 3.0.3
+info:
+  title: AllStars Admin API
+  version: 1.0.0
+  description: |
+    REST API for the AllStars admin dashboard to manage quiz questions, guests, and game settings.
+
+    All endpoints require Firebase Authentication via Bearer token in Authorization header.
+    Admin privileges are verified server-side for each request.
+
+servers:
+  - url: http://localhost:5001/allstars-demo/us-central1
+    description: Local Firebase Emulator
+  - url: https://us-central1-allstars-prod.cloudfunctions.net
+    description: Production (Firebase Cloud Functions)
+
+security:
+  - FirebaseAuth: []
+
+tags:
+  - name: Questions
+    description: Quiz question management (CRUD)
+  - name: Guests
+    description: Guest list management (CRUD)
+  - name: Settings
+    description: Game configuration settings
+
+paths:
+  # === QUESTIONS ENDPOINTS ===
+
+  /admin/quizzes:
+    get:
+      tags: [Questions]
+      summary: Fetch all quiz questions
+      description: Returns all questions grouped by period and ordered by questionNumber
+      operationId: getAllQuestions
+      responses:
+        '200':
+          description: List of all questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Questions]
+      summary: Create new quiz question
+      description: Creates a new question with generated ID
+      operationId: createQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict - duplicate (period, questionNumber) combination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "DUPLICATE_QUESTION"
+                message: "Question with period 2, number 3 already exists"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/quizzes/{quizId}:
+    parameters:
+      - $ref: '#/components/parameters/QuizId'
+
+    put:
+      tags: [Questions]
+      summary: Update existing quiz question
+      description: Updates question fields. Fails if question is currently active in a live quiz.
+      operationId: updateQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestionRequest'
+      responses:
+        '200':
+          description: Question updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict - question is active in live quiz
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "QUESTION_ACTIVE"
+                message: "Cannot edit question while it is active in a quiz"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Questions]
+      summary: Delete quiz question
+      description: Deletes question. Fails if question is currently active in a live quiz.
+      operationId: deleteQuestion
+      responses:
+        '204':
+          description: Question deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict - question is active in live quiz
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "QUESTION_ACTIVE"
+                message: "Cannot delete question while it is active in a quiz"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # === GUESTS ENDPOINTS ===
+
+  /admin/guests:
+    get:
+      tags: [Guests]
+      summary: Fetch all guests
+      description: Returns all registered guests with authentication tokens
+      operationId: getAllGuests
+      responses:
+        '200':
+          description: List of all guests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Guests]
+      summary: Create new guest
+      description: Creates a new guest with auto-generated unique authentication token
+      operationId: createGuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuestRequest'
+      responses:
+        '201':
+          description: Guest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/guests/{guestId}:
+    parameters:
+      - $ref: '#/components/parameters/GuestId'
+
+    put:
+      tags: [Guests]
+      summary: Update guest information
+      description: Updates guest name, table, or attributes. Auth token cannot be changed.
+      operationId: updateGuest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuestRequest'
+      responses:
+        '200':
+          description: Guest updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Guests]
+      summary: Delete guest
+      description: Deletes guest. Fails if guest has already used their authentication token.
+      operationId: deleteGuest
+      responses:
+        '204':
+          description: Guest deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict - guest token already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "TOKEN_USED"
+                message: "Cannot delete guest who has already authenticated"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # === SETTINGS ENDPOINTS ===
+
+  /admin/settings:
+    get:
+      tags: [Settings]
+      summary: Fetch game settings
+      description: Returns current game configuration (dropout rule, ranking rule)
+      operationId: getSettings
+      responses:
+        '200':
+          description: Current game settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Settings]
+      summary: Update game settings
+      description: Updates game configuration in gameState/live document
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSettingsRequest'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSettings'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# === COMPONENTS ===
+
+components:
+  securitySchemes:
+    FirebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase ID Token obtained via Google OAuth
+
+  parameters:
+    QuizId:
+      name: quizId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique question identifier (Firestore document ID)
+
+    GuestId:
+      name: guestId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique guest identifier (Firestore document ID)
+
+  schemas:
+    # === QUESTION SCHEMAS ===
+
+    Choice:
+      type: object
+      required: [id, text]
+      properties:
+        id:
+          type: string
+          enum: [A, B, C, D]
+          description: Choice identifier letter
+        text:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Choice text displayed to players
+        imageUrl:
+          type: string
+          format: uri
+          description: Optional image URL for visual choices
+          example: "https://storage.googleapis.com/allstars/image123.jpg"
+
+    Question:
+      type: object
+      required: [id, period, questionNumber, type, text, choices, correctAnswer]
+      properties:
+        id:
+          type: string
+          description: Unique question identifier
+          example: "q3p2"
+        period:
+          type: integer
+          minimum: 1
+          description: Quiz round/period number
+          example: 2
+        questionNumber:
+          type: integer
+          minimum: 1
+          description: Order within period
+          example: 3
+        type:
+          type: string
+          enum: [four_choice, sorting, survey]
+          description: Question format type
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Question text
+          example: "Where did the couple meet?"
+        vtrUrl:
+          type: string
+          format: uri
+          description: Optional video URL
+          example: "https://www.youtube.com/watch?v=example"
+        choices:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Choice'
+        correctAnswer:
+          type: string
+          description: Correct answer (format depends on question type)
+          example: "B"
+        skipAttributes:
+          type: array
+          items:
+            type: string
+          description: Tags for guest targeting
+          example: ["groom_family", "speech_guest"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CreateQuestionRequest:
+      type: object
+      required: [period, questionNumber, type, text, choices, correctAnswer]
+      properties:
+        period:
+          type: integer
+          minimum: 1
+        questionNumber:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum: [four_choice, sorting, survey]
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        vtrUrl:
+          type: string
+          format: uri
+        choices:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Choice'
+        correctAnswer:
+          type: string
+          description: "For four_choice: single letter (e.g., 'C'). For sorting: comma-separated letters (e.g., 'B,D,A,C'). For survey: empty string."
+        skipAttributes:
+          type: array
+          items:
+            type: string
+
+    UpdateQuestionRequest:
+      type: object
+      description: All fields are optional - only provided fields will be updated
+      properties:
+        period:
+          type: integer
+          minimum: 1
+        questionNumber:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum: [four_choice, sorting, survey]
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        vtrUrl:
+          type: string
+          format: uri
+        choices:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Choice'
+        correctAnswer:
+          type: string
+        skipAttributes:
+          type: array
+          items:
+            type: string
+
+    # === GUEST SCHEMAS ===
+
+    Guest:
+      type: object
+      required: [guestId, name, tableNumber, attributes, authToken, authTokenUsed]
+      properties:
+        guestId:
+          type: string
+          description: Unique guest identifier
+          example: "guest123"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Guest display name
+          example: "John Doe"
+        tableNumber:
+          type: integer
+          minimum: 1
+          description: Seating table assignment
+          example: 5
+        attributes:
+          type: array
+          items:
+            type: string
+          description: Tags for question targeting
+          example: ["groom_friend", "speech_guest"]
+        authToken:
+          type: string
+          minLength: 32
+          maxLength: 64
+          description: Unique one-time-use authentication token
+          example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+        authTokenUsed:
+          type: boolean
+          description: Whether guest has redeemed their token
+          example: false
+        firebaseUid:
+          type: string
+          nullable: true
+          description: Firebase Anonymous Auth UID (set after QR code scan)
+          example: "xYz123AbC456"
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last authentication timestamp
+
+    CreateGuestRequest:
+      type: object
+      required: [name, tableNumber]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        tableNumber:
+          type: integer
+          minimum: 1
+        attributes:
+          type: array
+          items:
+            type: string
+          description: Tags for question targeting (optional)
+
+    UpdateGuestRequest:
+      type: object
+      description: All fields are optional - only provided fields will be updated
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        tableNumber:
+          type: integer
+          minimum: 1
+        attributes:
+          type: array
+          items:
+            type: string
+
+    # === SETTINGS SCHEMAS ===
+
+    GameSettings:
+      type: object
+      required: [defaultDropoutRule, defaultRankingRule]
+      properties:
+        defaultDropoutRule:
+          type: string
+          enum: [period, worst_one]
+          description: How players are eliminated
+        defaultRankingRule:
+          type: string
+          enum: [time, point]
+          description: How players are ranked
+      example:
+        defaultDropoutRule: "period"
+        defaultRankingRule: "time"
+
+    UpdateSettingsRequest:
+      type: object
+      description: At least one field must be provided
+      properties:
+        defaultDropoutRule:
+          type: string
+          enum: [period, worst_one]
+        defaultRankingRule:
+          type: string
+          enum: [time, point]
+
+    # === ERROR SCHEMAS ===
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid question type. Must be one of: four_choice, sorting, survey"
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context (optional)
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid Firebase authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UNAUTHORIZED"
+            message: "Authentication required. Please provide valid Firebase ID token."
+
+    Forbidden:
+      description: Authenticated user does not have admin privileges
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "FORBIDDEN"
+            message: "Admin privileges required to access this resource."
+
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "NOT_FOUND"
+            message: "Question with ID 'q123' not found."
+
+    ValidationError:
+      description: Request body validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "VALIDATION_ERROR"
+            message: "Invalid request body"
+            details:
+              period: "Must be a positive integer"
+              choices: "Must contain between 2 and 4 items"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "INTERNAL_ERROR"
+            message: "An unexpected error occurred. Please try again later."
