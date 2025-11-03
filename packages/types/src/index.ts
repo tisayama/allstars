@@ -9,3 +9,10 @@ export * from './Guest';
 export * from './Answer';
 export * from './ErrorResponse';
 export * from './SocketEvents';
+export * from './GameSettings';
+export * from './Choice';
+
+// Validators
+export * from './validators/question';
+export * from './validators/guest';
+export * from './validators/settings';

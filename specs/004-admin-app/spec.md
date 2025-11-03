@@ -116,6 +116,29 @@ As an event organizer, I need to configure initial game settings so that the def
 - How does the system handle image uploads for question choices if the file size exceeds limits?
 - What happens when a user tries to delete a question that is currently active in a live quiz?
 
+### Error Handling Strategy
+
+For all edge cases and validation failures, the system MUST:
+- **Block the action** from completing (prevent invalid data from being saved)
+- **Display user-friendly error messages** with specific guidance on how to fix the issue
+- **Preserve user input** in the form to allow correction and retry without re-entering all data
+- **Highlight invalid fields** visually with clear error indicators
+- **Provide actionable next steps** (e.g., "Period 2, Question 3 already exists. Please use a different question number or edit the existing question.")
+
+This ensures event organizers receive clear guidance when errors occur while protecting their time investment in data entry.
+
+## Clarifications
+
+### Session 2025-11-03
+
+- Q: How should the system handle edge cases and validation failures (missing required fields, duplicates, malformed CSV, expired tokens, etc.)? → A: Block action, show user-friendly error message with specific guidance, preserve user input for correction and retry
+- Q: Which CSV format should the guest bulk import feature support? → A: Template-based with validation - provide downloadable guest-template.csv with exact format (headers: Name,TableNumber,Attributes), strict validation rejecting non-conforming files with clear error messages referencing the template
+- Q: How should the system handle Firebase authentication token expiration during active admin sessions? → A: Proactive token refresh (silent background renewal) - monitor token expiration, automatically refresh 5 minutes before expiry using getIdToken(true), only require re-login if refresh fails
+- Q: How should the QR code URL be configured for different environments (development, staging, production)? → A: Use environment variable VITE_PARTICIPANT_APP_URL with validation at app startup to ensure it's set
+- Q: How should image uploads for question choices be implemented? → A: Firebase Storage with client-side upload - users upload directly from browser using signed URLs, storing the download URL in the imageUrl field
+- Q: How should game settings updates be applied to the gameState/live Firestore document? → A: Merge update (preserve other fields) - update only settings fields using Firestore merge operation to preserve other gameState data
+- Q: What should the guest-template.csv sample data look like to demonstrate the attribute format? → A: Multiple realistic examples showing edge cases - Row 1 with multiple attributes ("groom_friend,speech_guest"), Row 2 with single attribute ("bride_family"), Row 3 with no attributes ("")
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -124,66 +147,77 @@ As an event organizer, I need to configure initial game settings so that the def
 
 - **FR-001**: System MUST require users to authenticate via Firebase Authentication (Google Login) before accessing any admin features
 - **FR-002**: System MUST include Firebase ID Token in the Authorization Bearer header for all API requests to api-server
-- **FR-003**: System MUST display an error and redirect to login when an API request returns a 401 Unauthorized response
-- **FR-004**: api-server MUST validate the Firebase ID Token and verify the user has administrative privileges before processing any admin request
+- **FR-003**: System MUST monitor Firebase ID token expiration timestamp and automatically refresh tokens 5 minutes before expiry
+- **FR-004**: System MUST use Firebase SDK's getIdToken(true) method to force token refresh in the background without user interaction
+- **FR-005**: System MUST only redirect to login if automatic token refresh fails (e.g., network error, revoked credentials)
+- **FR-006**: System MUST display an error and redirect to login when an API request returns a 401 Unauthorized response after refresh attempts
+- **FR-007**: api-server MUST validate the Firebase ID Token and verify the user has administrative privileges before processing any admin request
 
 #### Dashboard
 
-- **FR-005**: System MUST display total question count and period count on the dashboard home page
-- **FR-006**: System MUST display total registered guest count on the dashboard home page
-- **FR-007**: System MUST provide navigation links to Quiz Management and Guest Management sections
+- **FR-008**: System MUST display total question count and period count on the dashboard home page
+- **FR-009**: System MUST display total registered guest count on the dashboard home page
+- **FR-010**: System MUST provide navigation links to Quiz Management and Guest Management sections
 
 #### Quiz Management (CRUD)
 
-- **FR-008**: System MUST fetch all questions by calling GET /admin/quizzes when the Quiz Management page loads
-- **FR-009**: System MUST display questions grouped by period and ordered by questionNumber
-- **FR-010**: System MUST provide a "New Question" button that opens a creation form
-- **FR-011**: Question form MUST include fields for: period (number), questionNumber (number), type (dropdown: "four_choice", "sorting", "survey"), text (textarea), vtrUrl (optional text), choices (dynamic list), correctAnswer, and skipAttributes
-- **FR-012**: System MUST allow users to dynamically add and remove choices in the question form
-- **FR-013**: Each choice MUST have fields for: id, text, and optional imageUrl
-- **FR-014**: System MUST validate question data client-side before submission
-- **FR-015**: System MUST send new question data to POST /admin/quizzes on form submission
-- **FR-016**: System MUST populate the form with existing question data when "Edit" is clicked
-- **FR-017**: System MUST send updated question data to PUT /admin/quizzes/{quizId} when edit form is submitted
-- **FR-018**: System MUST prompt for confirmation when "Delete" is clicked on a question
-- **FR-019**: System MUST send delete request to DELETE /admin/quizzes/{quizId} after confirmation
+- **FR-011**: System MUST fetch all questions by calling GET /admin/quizzes when the Quiz Management page loads
+- **FR-012**: System MUST display questions grouped by period and ordered by questionNumber
+- **FR-013**: System MUST provide a "New Question" button that opens a creation form
+- **FR-014**: Question form MUST include fields for: period (number), questionNumber (number), type (dropdown: "four_choice", "sorting", "survey"), text (textarea), vtrUrl (optional text), choices (dynamic list), correctAnswer, and skipAttributes
+- **FR-015**: System MUST allow users to dynamically add and remove choices in the question form
+- **FR-016**: Each choice MUST have fields for: id, text, and optional imageUrl
+- **FR-016a**: System MUST allow users to upload images for question choices directly to Firebase Storage from the browser and store the resulting download URL in the imageUrl field
+- **FR-017**: System MUST validate question data client-side before submission
+- **FR-018**: System MUST send new question data to POST /admin/quizzes on form submission
+- **FR-019**: System MUST populate the form with existing question data when "Edit" is clicked
+- **FR-020**: System MUST send updated question data to PUT /admin/quizzes/{quizId} when edit form is submitted
+- **FR-021**: System MUST prompt for confirmation when "Delete" is clicked on a question
+- **FR-022**: System MUST send delete request to DELETE /admin/quizzes/{quizId} after confirmation
 
 #### Guest Management (CRUD)
 
-- **FR-020**: System MUST fetch all guests by calling GET /admin/guests when the Guest Management page loads
-- **FR-021**: System MUST display guest list with columns: Name, Table, Attributes, and actions
-- **FR-022**: System MUST provide "Add Guest" button that opens a guest creation form
-- **FR-023**: Guest form MUST include fields for: Name (text), TableNumber (number), and attributes (tags)
-- **FR-024**: System MUST send new guest data to POST /admin/guests on form submission
-- **FR-025**: System MUST support CSV upload for bulk guest creation
-- **FR-026**: System MUST parse CSV file and create individual guest records via POST /admin/guests for each row
-- **FR-027**: api-server MUST generate a unique guestId for each new guest
-- **FR-028**: api-server MUST generate a unique, one-time-use token for each guest upon creation
+- **FR-023**: System MUST fetch all guests by calling GET /admin/guests when the Guest Management page loads
+- **FR-024**: System MUST display guest list with columns: Name, Table, Attributes, and actions
+- **FR-025**: System MUST provide "Add Guest" button that opens a guest creation form
+- **FR-026**: Guest form MUST include fields for: Name (text), TableNumber (number), and attributes (tags)
+- **FR-027**: System MUST send new guest data to POST /admin/guests on form submission
+- **FR-028**: System MUST support CSV upload for bulk guest creation
+- **FR-029**: System MUST parse CSV file and create individual guest records via POST /admin/guests for each row
+- **FR-030**: api-server MUST generate a unique guestId for each new guest
+- **FR-031**: api-server MUST generate a unique, one-time-use token for each guest upon creation
+- **FR-032**: System MUST provide a downloadable CSV template file (guest-template.csv) with exact format and sample data demonstrating edge cases: multiple attributes in quotes, single attribute in quotes, and empty attributes
+- **FR-033**: CSV template MUST use headers: Name, TableNumber, Attributes (first row)
+- **FR-034**: CSV template MUST use comma delimiters with attributes encoded as comma-separated values in quoted strings (e.g., "groom_friend,speech_guest")
+- **FR-034a**: CSV template MUST include 3 sample data rows: Row 1 with format "John Doe,5,\"groom_friend,speech_guest\"", Row 2 with "Jane Smith,3,\"bride_family\"", Row 3 with "Robert Johnson,7,\"\""
+- **FR-035**: System MUST validate uploaded CSV files against template structure and reject non-conforming files with specific error messages
+- **FR-036**: CSV validation errors MUST reference the template and specify which row/column caused the failure
 
 #### QR Code Generation
 
-- **FR-029**: System MUST provide a "Print All" button on the Guest Management page
-- **FR-030**: "Print All" button MUST open a new page at /print route
-- **FR-031**: Print page MUST display all guest names with their corresponding QR codes
-- **FR-032**: Each QR code MUST encode a URL in the format: https://[participant-app-domain]/join?token=[unique-guest-token]
-- **FR-033**: Print page MUST use a layout optimized for printing physical cards
-- **FR-034**: QR codes MUST be unique per guest and link to their pre-registered profile
+- **FR-037**: System MUST provide a "Print All" button on the Guest Management page
+- **FR-038**: "Print All" button MUST open a new page at /print route
+- **FR-039**: Print page MUST display all guest names with their corresponding QR codes
+- **FR-040**: Each QR code MUST encode a URL in the format: {VITE_PARTICIPANT_APP_URL}/join?token={unique-guest-token}, where VITE_PARTICIPANT_APP_URL is configured via environment variable and validated at app startup
+- **FR-041**: Print page MUST use a layout optimized for printing physical cards
+- **FR-042**: QR codes MUST be unique per guest and link to their pre-registered profile
 
 #### System Configuration
 
-- **FR-035**: System MUST provide a System Configuration page for editing game settings
-- **FR-036**: Configuration form MUST read current settings from gameState/live document
-- **FR-037**: Configuration form MUST include dropdown for Default Drop-out Rule with options: "period" and "worst_one"
-- **FR-038**: Configuration form MUST include dropdown for Default Ranking Rule with options: "time" and "point"
-- **FR-039**: System MUST send updated settings to PUT /admin/settings when Save is clicked
-- **FR-040**: api-server MUST update the settings object within gameState/live document
+- **FR-043**: System MUST provide a System Configuration page for editing game settings
+- **FR-044**: Configuration form MUST read current settings from gameState/live document
+- **FR-045**: Configuration form MUST include dropdown for Default Drop-out Rule with options: "period" and "worst_one"
+- **FR-046**: Configuration form MUST include dropdown for Default Ranking Rule with options: "time" and "point"
+- **FR-047**: System MUST send updated settings to PUT /admin/settings when Save is clicked
+- **FR-048**: api-server MUST update the settings object within gameState/live document using Firestore merge operation (merge: true) to preserve other gameState fields
 
 #### Local Development
 
-- **FR-041**: admin-app MUST support configuration via .env file for emulator endpoints
-- **FR-042**: admin-app MUST allow pointing to Firebase Auth emulator (default: http://localhost:9099)
-- **FR-043**: admin-app MUST allow pointing to Firestore emulator (default: localhost:8080)
-- **FR-044**: admin-app MUST allow pointing to Functions emulator for api-server (default: http://localhost:5001)
+- **FR-049**: admin-app MUST support configuration via .env file for emulator endpoints
+- **FR-050**: admin-app MUST allow pointing to Firebase Auth emulator (default: http://localhost:9099)
+- **FR-051**: admin-app MUST allow pointing to Firestore emulator (default: localhost:8080)
+- **FR-052**: admin-app MUST allow pointing to Functions emulator for api-server (default: http://localhost:5001)
+- **FR-053**: admin-app MUST validate that VITE_PARTICIPANT_APP_URL environment variable is set at application startup and display error if missing
 
 ### Key Entities
 
@@ -215,8 +249,8 @@ As an event organizer, I need to configure initial game settings so that the def
 - The api-server already has or will implement the required admin endpoints (GET/POST/PUT/DELETE for /admin/quizzes, GET/POST for /admin/guests, PUT for /admin/settings)
 - The participant-app is already built or will handle the /join?token= route for guest authentication
 - Firebase Authentication, Firestore, and Cloud Functions are already configured for the project
-- Image uploads for question choices will be handled via a separate file upload service or Firebase Storage
-- CSV files for guest import will follow a standard format with columns for Name, TableNumber, and Attributes
+- Image uploads for question choices will be handled via Firebase Storage with client-side upload (users upload directly from browser, storing download URLs in imageUrl fields)
+- Event organizers will download and use the provided CSV template (guest-template.csv) for bulk guest imports
 - The admin-app will be deployed to a secure, HTTPS-enabled domain
 - Only a small number of admin users (2-5) will use the dashboard concurrently
 - The gameState/live document structure already exists or will be created to support settings updates
