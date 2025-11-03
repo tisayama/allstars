@@ -15,12 +15,24 @@ jest.mock("../../src/utils/firestore", () => {
     settings: jest.fn(),
   };
 
+  const mockTimestamp = {
+    toDate: jest.fn(() => new Date()),
+    toMillis: jest.fn(() => Date.now()),
+  };
+
   return {
     admin: {
       auth: jest.fn(() => ({
         verifyIdToken: jest.fn(),
       })),
-      firestore: jest.fn(() => mockFirestore),
+      firestore: Object.assign(
+        jest.fn(() => mockFirestore),
+        {
+          Timestamp: {
+            fromDate: jest.fn((date) => mockTimestamp),
+          },
+        }
+      ),
     },
     db: mockFirestore,
     isEmulatorMode: true,
@@ -68,9 +80,16 @@ describe("Admin Quiz Management Integration Tests", () => {
     mockCollection = jest.fn();
 
     // Chain mocking for query builders
-    mockWhere.mockReturnThis();
-    mockOrderBy.mockReturnThis();
-    mockLimit.mockReturnValue({ get: mockGet });
+    const queryChain = {
+      where: mockWhere,
+      orderBy: mockOrderBy,
+      limit: mockLimit,
+      get: mockGet,
+    };
+
+    mockWhere.mockReturnValue(queryChain);
+    mockOrderBy.mockReturnValue(queryChain);
+    mockLimit.mockReturnValue(queryChain);
 
     mockCollection.mockReturnValue({
       add: mockAdd,
@@ -99,8 +118,11 @@ describe("Admin Quiz Management Integration Tests", () => {
         choices: ["3", "4", "5", "6"],
         correctAnswer: "4",
         skipAttributes: [],
+        deadline: new Date(Date.now() + 60000).toISOString(),
       };
 
+      // Mock duplicate check (should return empty for first create)
+      mockGet.mockResolvedValueOnce({ empty: true, docs: [] });
       mockAdd.mockResolvedValue({ id: "question-1" });
 
       const createResponse = await request(app)
@@ -108,13 +130,11 @@ describe("Admin Quiz Management Integration Tests", () => {
         .set("Authorization", `Bearer ${adminToken}`)
         .send(newQuestion);
 
-      expect(createResponse.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(createResponse.status).toBe(201);
-      // expect(createResponse.body).toHaveProperty('id', 'question-1');
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.body).toHaveProperty('id', 'question-1');
 
       // Step 2: List questions
-      mockGet.mockResolvedValue({
+      mockGet.mockResolvedValueOnce({
         empty: false,
         docs: [
           {
@@ -128,18 +148,18 @@ describe("Admin Quiz Management Integration Tests", () => {
         .get("/admin/quizzes")
         .set("Authorization", `Bearer ${adminToken}`);
 
-      expect(listResponse.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(listResponse.status).toBe(200);
-      // expect(listResponse.body).toHaveLength(1);
-      // expect(listResponse.body[0]).toMatchObject(newQuestion);
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.body).toHaveLength(1);
+      // Don't check deadline field as it gets transformed by Firestore Timestamp
+      const { deadline: _deadline, ...questionWithoutDeadline } = newQuestion;
+      expect(listResponse.body[0]).toMatchObject(questionWithoutDeadline);
 
       // Step 3: Update the question
       const updateData = {
         text: "What is 2 + 2? (Updated)",
       };
 
-      mockGet.mockResolvedValue({
+      mockGet.mockResolvedValueOnce({
         exists: true,
         id: "question-1",
         data: () => newQuestion,
@@ -152,10 +172,8 @@ describe("Admin Quiz Management Integration Tests", () => {
         .set("Authorization", `Bearer ${adminToken}`)
         .send(updateData);
 
-      expect(updateResponse.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(updateResponse.status).toBe(200);
-      // expect(updateResponse.body.text).toBe('What is 2 + 2? (Updated)');
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.text).toBe('What is 2 + 2? (Updated)');
 
       // Step 4: Verify duplicate rejection
       const duplicateQuestion = {
@@ -166,9 +184,11 @@ describe("Admin Quiz Management Integration Tests", () => {
         choices: ["A", "B", "C", "D"],
         correctAnswer: "A",
         skipAttributes: [],
+        deadline: new Date(Date.now() + 60000).toISOString(),
       };
 
-      mockGet.mockResolvedValue({
+      // Mock duplicate check (should return non-empty for duplicate)
+      mockGet.mockResolvedValueOnce({
         empty: false, // Duplicate exists
         docs: [
           {
@@ -183,15 +203,13 @@ describe("Admin Quiz Management Integration Tests", () => {
         .set("Authorization", `Bearer ${adminToken}`)
         .send(duplicateQuestion);
 
-      expect(duplicateResponse.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(duplicateResponse.status).toBe(409);
-      // expect(duplicateResponse.body.code).toBe('DUPLICATE_ERROR');
+      expect(duplicateResponse.status).toBe(409);
+      expect(duplicateResponse.body.code).toBe('DUPLICATE_ERROR');
     });
 
     it("should reject duplicate period + questionNumber combination", async () => {
-      // Mock existing question
-      mockGet.mockResolvedValue({
+      // Mock duplicate check (should return non-empty)
+      mockGet.mockResolvedValueOnce({
         empty: false,
         docs: [
           {
@@ -212,6 +230,7 @@ describe("Admin Quiz Management Integration Tests", () => {
         choices: ["A", "B", "C", "D"],
         correctAnswer: "A",
         skipAttributes: [],
+        deadline: new Date(Date.now() + 60000).toISOString(),
       };
 
       const response = await request(app)
@@ -219,12 +238,10 @@ describe("Admin Quiz Management Integration Tests", () => {
         .set("Authorization", `Bearer ${adminToken}`)
         .send(duplicateQuestion);
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(response.status).toBe(409);
-      // expect(response.body.code).toBe('DUPLICATE_ERROR');
-      // expect(response.body.message).toContain('period');
-      // expect(response.body.message).toContain('questionNumber');
+      expect(response.status).toBe(409);
+      expect(response.body.code).toBe('DUPLICATE_ERROR');
+      expect(response.body.message).toContain('period');
+      expect(response.body.message).toContain('question number');
     });
   });
 
@@ -259,12 +276,10 @@ describe("Admin Quiz Management Integration Tests", () => {
         .get("/admin/guests")
         .set("Authorization", `Bearer ${adminToken}`);
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(response.status).toBe(200);
-      // expect(response.body).toHaveLength(2);
-      // expect(response.body[0]).toMatchObject(mockGuests[0]);
-      // expect(response.body[1]).toMatchObject(mockGuests[1]);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0]).toMatchObject(mockGuests[0]);
+      expect(response.body[1]).toMatchObject(mockGuests[1]);
     });
 
     it("should return empty array when no guests exist", async () => {
@@ -277,10 +292,8 @@ describe("Admin Quiz Management Integration Tests", () => {
         .get("/admin/guests")
         .set("Authorization", `Bearer ${adminToken}`);
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(response.status).toBe(200);
-      // expect(response.body).toEqual([]);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
     });
   });
 
@@ -297,11 +310,9 @@ describe("Admin Quiz Management Integration Tests", () => {
         .set("Authorization", `Bearer ${adminToken}`)
         .send(invalidQuestion);
 
-      expect(response.status).toBe(404); // Route not implemented yet
-      // Once implemented:
-      // expect(response.status).toBe(400);
-      // expect(response.body.code).toBe('VALIDATION_ERROR');
-      // expect(response.body.details).toBeDefined();
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.details).toBeDefined();
     });
 
     it("should return 404 when updating non-existent question", async () => {
