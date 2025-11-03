@@ -1,0 +1,15 @@
+node_modules/
+.git/
+Dockerfile*
+.dockerignore
+*.log*
+.env*
+coverage/
+tests/
+dist/
+.gitignore
+.eslintrc.js
+.prettierrc.json
+jest.config.js
+tsconfig.json
+*.md

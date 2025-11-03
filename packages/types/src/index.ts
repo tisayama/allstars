@@ -8,3 +8,4 @@ export * from './GameState';
 export * from './Guest';
 export * from './Answer';
 export * from './ErrorResponse';
+export * from './SocketEvents';
