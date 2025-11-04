@@ -8,9 +8,7 @@ import { COLLECTIONS } from "../models/firestoreCollections";
 import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
 import { DuplicateError, NotFoundError } from "../utils/errors";
-
-// Get Timestamp from firestore instance
-const Timestamp = admin.firestore.Timestamp;
+import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * Create a new quiz question

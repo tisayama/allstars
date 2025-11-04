@@ -18,9 +18,7 @@ import {
   getTop10CorrectAnswers,
   getWorst10CorrectAnswers,
 } from "./answerService";
-
-// Get Timestamp from firestore instance
-const Timestamp = admin.firestore.Timestamp;
+import { Timestamp } from "firebase-admin/firestore";
 import { getGuestById } from "./guestService";
 import { getQuestionById } from "./questionService";
 import { withRetry } from "../utils/retry";
