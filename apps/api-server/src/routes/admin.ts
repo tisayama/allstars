@@ -72,7 +72,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const questions = await listQuestions();
-      res.status(200).json(questions);
+      res.status(200).json({ questions });
     } catch (error) {
       next(error);
     }
@@ -122,7 +122,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const guests = await listGuests();
-      res.status(200).json(guests);
+      res.status(200).json({ guests });
     } catch (error) {
       next(error);
     }
