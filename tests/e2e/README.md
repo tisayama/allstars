@@ -8,6 +8,30 @@ Comprehensive end-to-end testing infrastructure for the AllStars quiz game platf
 
 ---
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Running Tests](#running-tests)
+  - [Running Helper Unit Tests](#running-helper-unit-tests)
+- [What Gets Started Automatically](#what-gets-started-automatically)
+- [Directory Structure](#directory-structure)
+- [Test Coverage](#test-coverage)
+- [Writing Your First Test](#writing-your-first-test)
+- [Available Test Fixtures](#available-test-fixtures)
+- [Helper Utilities](#helper-utilities)
+- [Best Practices](#best-practices)
+- [Debugging Tests](#debugging-tests)
+  - [Advanced Debugging Techniques](#advanced-debugging-techniques)
+- [Performance Tips](#performance-tips)
+  - [Performance Benchmarking](#performance-benchmarking)
+- [CI/CD Integration](#cicd-integration)
+- [Architecture](#architecture)
+- [Further Reading](#further-reading)
+- [Support](#support)
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -44,9 +68,18 @@ pnpm test:e2e -g "Host triggers gong"
 # Run unit tests for helper utilities
 pnpm test:helpers
 
-# Run with watch mode
-pnpm test:helpers --watch
+# Run with watch mode (auto-rerun on file changes)
+pnpm test:helpers:watch
+
+# Run with code coverage
+pnpm test:helpers:coverage
 ```
+
+**Code Coverage:**
+- Coverage thresholds: 80% lines/functions/statements, 75% branches
+- Reports generated in `./coverage/` directory
+- Open `coverage/index.html` in browser for detailed report
+- Coverage focuses on helper utilities only (not test files)
 
 ---
 
@@ -359,6 +392,138 @@ Navigate to Firestore tab and look for collections starting with `test_` prefix.
 - **Solution**: Ensure socket-server is running
 - **Debug**: Check browser console for WebSocket errors
 
+### Advanced Debugging Techniques
+
+**1. Enable Playwright Trace Recording**
+
+Generate detailed trace files for post-mortem debugging:
+
+```typescript
+// In your test file
+test.use({ trace: 'on' }); // Always record
+test.use({ trace: 'on-first-retry' }); // Record on retry only
+test.use({ trace: 'retain-on-failure' }); // Keep trace only on failure
+```
+
+Or via CLI:
+```bash
+pnpm test:e2e --trace on
+```
+
+View trace:
+```bash
+pnpm playwright show-trace test-results/.../trace.zip
+```
+
+**2. Pause Test Execution**
+
+Insert breakpoints in your test code:
+
+```typescript
+test('my test', async ({ page }) => {
+  await page.goto('http://localhost:5174');
+  await page.pause(); // Opens Playwright Inspector
+  // ... rest of test
+});
+```
+
+**3. Debug Specific Browser Context**
+
+```typescript
+const hostContext = await browser.newContext();
+await hostContext.tracing.start({ screenshots: true, snapshots: true });
+
+// ... perform actions
+
+await hostContext.tracing.stop({ path: 'host-trace.zip' });
+```
+
+**4. Inspect Network Traffic**
+
+```typescript
+page.on('request', request =>
+  console.log('>>', request.method(), request.url())
+);
+page.on('response', response =>
+  console.log('<<', response.status(), response.url())
+);
+```
+
+**5. Debug Helper Functions in Isolation**
+
+Run helper unit tests with debugger:
+```bash
+# Use Node.js debugger
+node --inspect-brk node_modules/.bin/vitest tests/e2e/helpers.test.ts
+
+# Or use Vitest UI (visual debugger)
+pnpm test:helpers:watch --ui
+```
+
+**6. Examine Firestore Data Mid-Test**
+
+```typescript
+test('debug firestore', async ({ seeder, collectionPrefix }) => {
+  // Seed data
+  await seeder.seedGuests([GUEST_A], collectionPrefix);
+
+  // Pause here and visit http://localhost:4000
+  await page.pause();
+
+  // In Emulator UI: Firestore → Look for `test_*` collections
+});
+```
+
+**7. Capture Console Logs from Browser**
+
+```typescript
+page.on('console', msg => {
+  console.log(`[${msg.type()}] ${msg.text()}`);
+});
+
+page.on('pageerror', error => {
+  console.error('Page error:', error.message);
+});
+```
+
+**8. Debug Flaky Tests**
+
+Run same test multiple times to reproduce flakiness:
+```bash
+# Run test 10 times
+pnpm test:e2e failing-test.spec.ts --repeat-each=10
+
+# Run until failure (max 100 times)
+for i in {1..100}; do pnpm test:e2e failing-test.spec.ts || break; done
+```
+
+**9. Environment Variables for Debug Logging**
+
+```bash
+# Enable Playwright debug logs
+DEBUG=pw:api pnpm test:e2e
+
+# Enable Firebase Admin debug logs
+FIREBASE_DATABASE_EMULATOR_HOST_DEBUG=1 pnpm test:e2e
+
+# Verbose logging
+NODE_ENV=development VERBOSE=true pnpm test:e2e
+```
+
+**10. Inspect Test Artifacts**
+
+After test failure, check artifacts in `test-results/`:
+```bash
+# View screenshots
+open test-results/**/test-failed-1.png
+
+# View video recordings (if enabled)
+open test-results/**/video.webm
+
+# View trace files
+pnpm playwright show-trace test-results/**/trace.zip
+```
+
 ---
 
 ## Performance Tips
@@ -391,6 +556,54 @@ Speeds up startup:
 ```bash
 FIREBASE_EMULATOR_UI=false pnpm test:e2e
 ```
+
+### Performance Benchmarking
+
+Measure test execution times and identify bottlenecks:
+
+```bash
+# Generate detailed timing report with --reporter=list
+pnpm test:e2e --reporter=list
+
+# Generate JSON report for programmatic analysis
+pnpm test:e2e --reporter=json --output=test-results.json
+
+# Run with time limits to identify slow tests
+pnpm test:e2e --timeout=15000  # Fail tests taking >15s
+```
+
+**Analyzing Test Performance:**
+
+1. **View Playwright trace with timing data:**
+   ```bash
+   pnpm playwright show-report
+   ```
+   Click any test to see detailed timeline with network, DOM, and action timings.
+
+2. **Identify slow tests in HTML report:**
+   - Tests sorted by duration
+   - Shows setup/teardown overhead
+   - Highlights tests exceeding timeout
+
+3. **Common performance bottlenecks:**
+   - Health check polling too aggressive → Increase initial delay
+   - Too many concurrent browsers → Reduce worker count
+   - Large Firestore seed data → Use smaller datasets for speed tests
+   - Synchronous app launches → Already parallelized in globalSetup
+   - Heavy browser contexts → Reuse contexts when isolation not needed
+
+4. **Benchmark baseline (clean environment):**
+   - Infrastructure startup: ~10-15s (emulators + 6 apps)
+   - Single E2E test: ~2-5s
+   - Full P1 suite (18 tests): ~30-45s with 2 workers
+   - Full suite (26 tests): ~60-90s with 2 workers
+
+**Optimization Tips:**
+- Use `@P1` tags for critical path tests (run in PRs)
+- Keep P2 tests for comprehensive validation (run on main)
+- Avoid unnecessary `page.waitForTimeout()` → Use explicit waits
+- Minimize test data → Only seed what's needed for scenario
+- Profile helper functions → Use `pnpm test:helpers:coverage` to find unused code
 
 ---
 

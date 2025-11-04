@@ -9,11 +9,14 @@
     "test": "pnpm -r test",
     "test:e2e": "playwright test",
     "test:helpers": "vitest run tests/e2e/helpers.test.ts",
+    "test:helpers:watch": "vitest tests/e2e/helpers.test.ts",
+    "test:helpers:coverage": "vitest run tests/e2e/helpers.test.ts --coverage",
     "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/node": "^18.19.3",
+    "@vitest/coverage-v8": "^4.0.6",
     "firebase-admin": "^13.5.0",
     "firebase-tools": "^12.9.1",
     "vitest": "^4.0.6"
