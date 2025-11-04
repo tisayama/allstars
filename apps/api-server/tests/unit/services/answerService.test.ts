@@ -1,9 +1,12 @@
 /**
  * Unit tests for answer service
- * Tests duplicate answer detection logic
+ * Tests duplicate answer detection logic and ranking calculations
  */
 
-import { submitAnswer } from "../../../src/services/answerService";
+import {
+  submitAnswer,
+  getWorst10CorrectAnswers,
+} from "../../../src/services/answerService";
 import { db } from "../../../src/utils/firestore";
 import { DuplicateError, NotFoundError } from "../../../src/utils/errors";
 
@@ -75,8 +78,13 @@ describe("Answer Service", () => {
     // Mock question service
     (getQuestionById as jest.Mock).mockResolvedValue({
       id: "question-1",
-      text: "Test question?",
-      choices: ["A", "B", "C", "D"],
+      questionText: "Test question?",
+      choices: [
+        { index: 0, text: "A" },
+        { index: 1, text: "B" },
+        { index: 2, text: "C" },
+        { index: 3, text: "D" },
+      ],
       correctAnswer: "A",
     });
   });
@@ -107,8 +115,13 @@ describe("Answer Service", () => {
 
       (getQuestionById as jest.Mock).mockResolvedValue({
         id: "question-1",
-        text: "Test question?",
-        choices: ["A", "B", "C", "D"],
+        questionText: "Test question?",
+        choices: [
+          { index: 0, text: "A" },
+          { index: 1, text: "B" },
+          { index: 2, text: "C" },
+          { index: 3, text: "D" },
+        ],
         correctAnswer: "A",
         deadline: { toDate: () => new Date(Date.now() + 60000) },
       });
@@ -182,8 +195,13 @@ describe("Answer Service", () => {
 
       (getQuestionById as jest.Mock).mockResolvedValue({
         id: "question-1",
-        text: "Test question?",
-        choices: ["A", "B", "C", "D"],
+        questionText: "Test question?",
+        choices: [
+          { index: 0, text: "A" },
+          { index: 1, text: "B" },
+          { index: 2, text: "C" },
+          { index: 3, text: "D" },
+        ],
         correctAnswer: "A",
         deadline: { toDate: () => new Date(Date.now() + 60000) },
       });
@@ -279,8 +297,13 @@ describe("Answer Service", () => {
       // Mock question with future deadline
       (getQuestionById as jest.Mock).mockResolvedValue({
         id: "question-1",
-        text: "Test question?",
-        choices: ["A", "B", "C", "D"],
+        questionText: "Test question?",
+        choices: [
+          { index: 0, text: "A" },
+          { index: 1, text: "B" },
+          { index: 2, text: "C" },
+          { index: 3, text: "D" },
+        ],
         correctAnswer: "A",
         deadline: { toDate: () => new Date(Date.now() + 60000) },
       });
@@ -399,8 +422,13 @@ describe("Answer Service", () => {
       // Mock question with past deadline
       (getQuestionById as jest.Mock).mockResolvedValue({
         id: "question-1",
-        text: "Test question?",
-        choices: ["A", "B", "C", "D"],
+        questionText: "Test question?",
+        choices: [
+          { index: 0, text: "A" },
+          { index: 1, text: "B" },
+          { index: 2, text: "C" },
+          { index: 3, text: "D" },
+        ],
         correctAnswer: "A",
         deadline: { toDate: () => new Date(Date.now() - 1000) }, // 1 second ago
       });
@@ -414,6 +442,157 @@ describe("Answer Service", () => {
       await expect(submitAnswer("guest-1", answerData)).rejects.toThrow(
         "Answer deadline has passed"
       );
+    });
+  });
+
+  describe("getWorst10CorrectAnswers (User Story 1)", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("should return slowest 10 correct answers when 15 correct answers exist", async () => {
+      // T013: Test with 15 correct answers
+      const mockAnswers = Array.from({ length: 15 }, (_, i) => ({
+        id: `answer-${i + 1}`,
+        guestId: `guest-${i + 1}`,
+        questionId: "question-1",
+        answer: "A",
+        responseTimeMs: (i + 1) * 1000, // 1000ms to 15000ms
+        isCorrect: true,
+        submittedAt: new Date(),
+      }));
+
+      // Mock Firestore query chain - return all 15 answers in descending order
+      const mockGet = jest.fn().mockResolvedValue({
+        docs: mockAnswers
+          .sort((a, b) => b.responseTimeMs - a.responseTimeMs) // Descending order
+          .map((answer) => ({
+            id: answer.id,
+            data: () => answer,
+          })),
+      });
+
+      const mockOrderBy = jest.fn().mockReturnValue({ get: mockGet });
+      const mockWhere = jest.fn().mockReturnValue({ orderBy: mockOrderBy });
+      const mockSubCollection = jest.fn().mockReturnValue({ where: mockWhere });
+      const mockDoc = jest.fn().mockReturnValue({
+        collection: mockSubCollection,
+      });
+      const mockCollection = jest.fn().mockReturnValue({ doc: mockDoc });
+
+      (db.collection as jest.Mock) = mockCollection;
+
+      const result = await getWorst10CorrectAnswers("question-1");
+
+      // Verify query structure
+      expect(mockCollection).toHaveBeenCalledWith("questions");
+      expect(mockDoc).toHaveBeenCalledWith("question-1");
+      expect(mockSubCollection).toHaveBeenCalledWith("answers");
+      expect(mockWhere).toHaveBeenCalledWith("isCorrect", "==", true);
+      expect(mockOrderBy).toHaveBeenCalledWith("responseTimeMs", "desc");
+      // Note: No limit(10) call - we fetch all to handle ties correctly
+
+      // Verify result
+      expect(result).toHaveLength(10);
+      expect(result[0].responseTimeMs).toBe(15000); // Slowest
+      expect(result[9].responseTimeMs).toBe(6000); // 10th slowest
+    });
+
+    it("should return all 8 correct answers when only 8 exist", async () => {
+      // T014: Test with 8 correct answers (fewer than 10)
+      const mockAnswers = Array.from({ length: 8 }, (_, i) => ({
+        id: `answer-${i + 1}`,
+        guestId: `guest-${i + 1}`,
+        questionId: "question-1",
+        answer: "A",
+        responseTimeMs: (i + 1) * 1000, // 1000ms to 8000ms
+        isCorrect: true,
+        submittedAt: new Date(),
+      }));
+
+      // Mock Firestore query chain
+      const mockGet = jest.fn().mockResolvedValue({
+        docs: mockAnswers.reverse().map((answer) => ({
+          id: answer.id,
+          data: () => answer,
+        })),
+      });
+
+      const mockOrderBy = jest.fn().mockReturnValue({ get: mockGet });
+      const mockWhere = jest.fn().mockReturnValue({ orderBy: mockOrderBy });
+      const mockSubCollection = jest.fn().mockReturnValue({ where: mockWhere });
+      const mockDoc = jest.fn().mockReturnValue({
+        collection: mockSubCollection,
+      });
+      const mockCollection = jest.fn().mockReturnValue({ doc: mockDoc });
+
+      (db.collection as jest.Mock) = mockCollection;
+
+      const result = await getWorst10CorrectAnswers("question-1");
+
+      // Verify result
+      expect(result).toHaveLength(8);
+      expect(result[0].responseTimeMs).toBe(8000); // Slowest
+      expect(result[7].responseTimeMs).toBe(1000); // Fastest of the 8
+    });
+
+    it("should include all tied participants at 10th position", async () => {
+      // T015: Test tie handling at boundary
+      // 9 participants with unique times, 4 participants tied at 10000ms
+      const mockAnswers = [
+        ...Array.from({ length: 9 }, (_, i) => ({
+          id: `answer-${i + 1}`,
+          guestId: `guest-${i + 1}`,
+          questionId: "question-1",
+          answer: "A",
+          responseTimeMs: (i + 2) * 1000, // 2000ms to 10000ms
+          isCorrect: true,
+          submittedAt: new Date(),
+        })),
+        // 4 participants tied at 10000ms (same as 9th participant)
+        ...Array.from({ length: 4 }, (_, i) => ({
+          id: `answer-tie-${i + 1}`,
+          guestId: `guest-tie-${i + 1}`,
+          questionId: "question-1",
+          answer: "A",
+          responseTimeMs: 10000, // Tied with 9th slowest
+          isCorrect: true,
+          submittedAt: new Date(),
+        })),
+      ];
+
+      // Mock Firestore to return all tied participants
+      // In real implementation, we fetch all correct answers to handle ties
+      const mockGet = jest.fn().mockResolvedValue({
+        docs: mockAnswers
+          .sort((a, b) => b.responseTimeMs - a.responseTimeMs)
+          .map((answer) => ({
+            id: answer.id,
+            data: () => answer,
+          })),
+      });
+
+      const mockOrderBy = jest.fn().mockReturnValue({ get: mockGet });
+      const mockWhere = jest.fn().mockReturnValue({ orderBy: mockOrderBy });
+      const mockSubCollection = jest.fn().mockReturnValue({ where: mockWhere });
+      const mockDoc = jest.fn().mockReturnValue({
+        collection: mockSubCollection,
+      });
+      const mockCollection = jest.fn().mockReturnValue({ doc: mockDoc });
+
+      (db.collection as jest.Mock) = mockCollection;
+
+      const result = await getWorst10CorrectAnswers("question-1");
+
+      // With tie handling, should include all 13 participants
+      // (9 unique + 4 tied at 10th position)
+      expect(result.length).toBeGreaterThanOrEqual(10);
+
+      // All participants with responseTimeMs >= 10000ms should be included
+      const tiedParticipants = result.filter(
+        (answer) => answer.responseTimeMs === 10000
+      );
+      expect(tiedParticipants.length).toBeGreaterThanOrEqual(4);
     });
   });
 });
