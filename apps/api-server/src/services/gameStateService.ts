@@ -18,6 +18,9 @@ import {
   getTop10CorrectAnswers,
   getWorst10CorrectAnswers,
 } from "./answerService";
+
+// Get Timestamp from firestore instance
+const Timestamp = admin.firestore.Timestamp;
 import { getGuestById } from "./guestService";
 import { getQuestionById } from "./questionService";
 import { withRetry } from "../utils/retry";
@@ -89,7 +92,7 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
         currentPhase: "ready_for_next",
         currentQuestion: null,
         isGongActive: false,
-        lastUpdate: admin.firestore.Timestamp.now(),
+        lastUpdate: Timestamp.now(),
         results: null,
         prizeCarryover: 0,
       };
@@ -451,7 +454,7 @@ export async function getCurrentGameState(): Promise<GameState> {
       currentPhase: "ready_for_next",
       currentQuestion: null,
       isGongActive: false,
-      lastUpdate: admin.firestore.Timestamp.now(),
+      lastUpdate: Timestamp.now(),
       results: null,
       prizeCarryover: 0,
     };

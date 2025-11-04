@@ -33,6 +33,9 @@ router.post(
   "/quizzes",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Log request body for debugging
+      console.log("Create question request body:", JSON.stringify(req.body, null, 2));
+
       // Validate request body
       const validatedData = CreateQuestionSchema.parse(req.body);
 
@@ -48,6 +51,9 @@ router.post(
           field: err.path.join("."),
           message: err.message,
         }));
+
+        // Log detailed validation errors
+        console.error("Validation errors:", JSON.stringify(details, null, 2));
 
         next(new ValidationError("Invalid question data", details));
       } else {

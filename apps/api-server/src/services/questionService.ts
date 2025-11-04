@@ -9,6 +9,9 @@ import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
 import { DuplicateError, NotFoundError } from "../utils/errors";
 
+// Get Timestamp from firestore instance
+const Timestamp = admin.firestore.Timestamp;
+
 /**
  * Create a new quiz question
  * Validates uniqueness of period + questionNumber combination
@@ -51,7 +54,7 @@ export async function createQuestion(
   }
 
   // Create the question with deadline as Firestore Timestamp
-  const deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
+  const deadline = Timestamp.fromDate(new Date(data.deadline));
   const questionRef = await db.collection(COLLECTIONS.QUESTIONS).add({
     period: data.period,
     questionNumber: data.questionNumber,
@@ -160,7 +163,7 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = admin.firestore.Timestamp.fromDate(
+    updateData.deadline = Timestamp.fromDate(
       new Date(data.deadline)
     );
   }
