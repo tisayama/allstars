@@ -98,13 +98,13 @@ describe('useGameState', () => {
       };
 
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any) => {
-        // Simulate successful snapshot
-        setTimeout(() => {
+        // Simulate successful snapshot using queueMicrotask
+        queueMicrotask(() => {
           callback({
             exists: () => true,
             data: () => mockGameState,
           });
-        }, 10);
+        });
         return unsubscribeMock;
       });
 
@@ -136,13 +136,13 @@ describe('useGameState', () => {
 
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any) => {
         callbackFn = callback;
-        // Send initial state
-        setTimeout(() => {
+        // Send initial state using queueMicrotask
+        queueMicrotask(() => {
           callback({
             exists: () => true,
             data: () => initialState,
           });
-        }, 10);
+        });
         return unsubscribeMock;
       });
 
@@ -175,12 +175,12 @@ describe('useGameState', () => {
       };
 
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any) => {
-        setTimeout(() => {
+        queueMicrotask(() => {
           callback({
             exists: () => true,
             data: () => mockGameState,
           });
-        }, 10);
+        });
         return unsubscribeMock;
       });
 
@@ -197,8 +197,8 @@ describe('useGameState', () => {
       const mockError = new Error('Firestore connection failed');
 
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, onSuccess: any, onError: any) => {
-        // Call error callback immediately to avoid timing issues
-        Promise.resolve().then(() => {
+        // Call error callback using queueMicrotask
+        queueMicrotask(() => {
           if (onError) {
             onError(mockError);
           }
@@ -208,12 +208,9 @@ describe('useGameState', () => {
 
       const { result } = renderHook(() => useGameState('session-123'));
 
-      await waitFor(
-        () => {
-          expect(result.current.error).not.toBeNull();
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(result.current.error).not.toBeNull();
+      });
 
       expect(result.current.error?.message).toBe('Firestore connection failed');
       expect(result.current.isLoading).toBe(false);
@@ -221,7 +218,7 @@ describe('useGameState', () => {
 
     it('should handle non-existent session documents', async () => {
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any, onError: any) => {
-        Promise.resolve().then(() => {
+        queueMicrotask(() => {
           callback({
             exists: () => false,
             data: () => null,
@@ -232,12 +229,9 @@ describe('useGameState', () => {
 
       const { result } = renderHook(() => useGameState('non-existent-session'));
 
-      await waitFor(
-        () => {
-          expect(result.current.error).not.toBeNull();
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(result.current.error).not.toBeNull();
+      });
 
       expect(result.current.error?.message).toContain('not found');
       expect(result.current.gameState).toBeNull();
@@ -245,7 +239,7 @@ describe('useGameState', () => {
 
     it('should handle malformed data', async () => {
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any, onError: any) => {
-        Promise.resolve().then(() => {
+        queueMicrotask(() => {
           callback({
             exists: () => true,
             data: () => ({ invalid: 'data' }), // Missing required fields
@@ -256,12 +250,9 @@ describe('useGameState', () => {
 
       const { result } = renderHook(() => useGameState('session-123'));
 
-      await waitFor(
-        () => {
-          expect(result.current.error).not.toBeNull();
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(result.current.error).not.toBeNull();
+      });
 
       expect(result.current.error?.message).toContain('Invalid game state data');
     });
@@ -284,10 +275,10 @@ describe('useGameState', () => {
         callbackFn = onSuccess;
         errorCallbackFn = onError;
 
-        // Simulate initial error
-        setTimeout(() => {
+        // Simulate initial error using queueMicrotask
+        queueMicrotask(() => {
           errorCallbackFn(mockError);
-        }, 10);
+        });
 
         return unsubscribeMock;
       });
