@@ -195,18 +195,25 @@ describe('useGameState', () => {
   describe('error handling', () => {
     it('should handle Firestore listener errors', async () => {
       const mockError = new Error('Firestore connection failed');
+      let errorCallback: any;
 
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, onSuccess: any, onError: any) => {
-        // Call error callback using queueMicrotask
-        queueMicrotask(() => {
-          if (onError) {
-            onError(mockError);
-          }
-        });
+        // Save the error callback to invoke it manually
+        errorCallback = onError;
         return unsubscribeMock;
       });
 
       const { result } = renderHook(() => useGameState('session-123'));
+
+      // Wait for the mock to be called and callback to be captured
+      await waitFor(() => {
+        expect(errorCallback).toBeDefined();
+      });
+
+      // Manually invoke the error callback
+      act(() => {
+        errorCallback(mockError);
+      });
 
       await waitFor(() => {
         expect(result.current.error).not.toBeNull();
@@ -217,17 +224,28 @@ describe('useGameState', () => {
     });
 
     it('should handle non-existent session documents', async () => {
+      let successCallback: any;
+
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any, onError: any) => {
-        queueMicrotask(() => {
-          callback({
-            exists: () => false,
-            data: () => null,
-          });
-        });
+        // Save the success callback to invoke it manually
+        successCallback = callback;
         return unsubscribeMock;
       });
 
       const { result } = renderHook(() => useGameState('non-existent-session'));
+
+      // Wait for the mock to be called and callback to be captured
+      await waitFor(() => {
+        expect(successCallback).toBeDefined();
+      });
+
+      // Manually invoke with non-existent document
+      act(() => {
+        successCallback({
+          exists: () => false,
+          data: () => null,
+        });
+      });
 
       await waitFor(() => {
         expect(result.current.error).not.toBeNull();
@@ -238,17 +256,28 @@ describe('useGameState', () => {
     });
 
     it('should handle malformed data', async () => {
+      let successCallback: any;
+
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, callback: any, onError: any) => {
-        queueMicrotask(() => {
-          callback({
-            exists: () => true,
-            data: () => ({ invalid: 'data' }), // Missing required fields
-          });
-        });
+        // Save the success callback to invoke it manually
+        successCallback = callback;
         return unsubscribeMock;
       });
 
       const { result } = renderHook(() => useGameState('session-123'));
+
+      // Wait for the mock to be called and callback to be captured
+      await waitFor(() => {
+        expect(successCallback).toBeDefined();
+      });
+
+      // Manually invoke with malformed data
+      act(() => {
+        successCallback({
+          exists: () => true,
+          data: () => ({ invalid: 'data' }), // Missing required fields
+        });
+      });
 
       await waitFor(() => {
         expect(result.current.error).not.toBeNull();
@@ -274,16 +303,20 @@ describe('useGameState', () => {
       vi.mocked(firestore.onSnapshot).mockImplementation((docRef, onSuccess: any, onError: any) => {
         callbackFn = onSuccess;
         errorCallbackFn = onError;
-
-        // Simulate initial error using queueMicrotask
-        queueMicrotask(() => {
-          errorCallbackFn(mockError);
-        });
-
         return unsubscribeMock;
       });
 
       const { result } = renderHook(() => useGameState('session-123'));
+
+      // Wait for callbacks to be captured
+      await waitFor(() => {
+        expect(errorCallbackFn).toBeDefined();
+      });
+
+      // Manually trigger error
+      act(() => {
+        errorCallbackFn(mockError);
+      });
 
       // Wait for error
       await waitFor(() => {
@@ -292,10 +325,12 @@ describe('useGameState', () => {
 
       // Simulate reconnection
       act(() => {
-        callbackFn({
-          exists: () => true,
-          data: () => mockGameState,
-        });
+        if (callbackFn) {
+          callbackFn({
+            exists: () => true,
+            data: () => mockGameState,
+          });
+        }
       });
 
       await waitFor(() => {
