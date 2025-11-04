@@ -56,6 +56,17 @@ app.get('/healthz', (req: Request, res: Response) => {
 });
 
 /**
+ * Health check endpoint (alias for E2E tests)
+ */
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+  });
+});
+
+/**
  * Prometheus metrics endpoint (OR-001 through OR-004)
  * Exposes connection count, auth failures, broadcast latency, and listener status
  */

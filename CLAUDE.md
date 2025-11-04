@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - TypeScript 5.3+ / Node.js 18+ (development), ES2020+ (browser runtime) + React 18.2, Vite 5.0, Firebase SDK 10.7+ (Auth, Firestore, Crashlytics or Sentry), React Router 6.x (006-host-app)
 - Browser localStorage (session persistence), Firestore (game state monitoring, read-only) (006-host-app)
 - TypeScript 5.3.2 with Node.js >=18.0.0 + Express 4.18, Firebase Admin SDK 11.11, Firebase Functions 4.5, Zod 3.22 (validation), p-retry 6.1 (retry logic) (007-ranking-display-logic)
+- TypeScript 5.3+ / Node.js 18+ + Playwright Test (latest), Firebase Emulators (firestore, auth), Firebase Admin SDK 11.x (008-e2e-playwright-tests)
+- Firebase Firestore Emulator (localhost:8080), no persistent storage required (008-e2e-playwright-tests)
 
 - TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime) + Express.js 4.x, Firebase Admin SDK 11.x, firebase-functions 4.x (001-api-server)
 
@@ -31,6 +33,7 @@ npm test && npm run lint
 TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime): Follow standard conventions
 
 ## Recent Changes
+- 008-e2e-playwright-tests: Added TypeScript 5.3+ / Node.js 18+ + Playwright Test (latest), Firebase Emulators (firestore, auth), Firebase Admin SDK 11.x
 - 007-ranking-display-logic: Added TypeScript 5.3.2 with Node.js >=18.0.0 + Express 4.18, Firebase Admin SDK 11.11, Firebase Functions 4.5, Zod 3.22 (validation), p-retry 6.1 (retry logic)
 - 006-host-app: Added TypeScript 5.3+ / Node.js 18+ (development), ES2020+ (browser runtime) + React 18.2, Vite 5.0, Firebase SDK 10.7+ (Auth, Firestore, Crashlytics or Sentry), React Router 6.x
 
