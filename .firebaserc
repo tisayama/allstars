@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "prod": "wedding-allstars",
+    "stg": "stg-wedding-allstars"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}

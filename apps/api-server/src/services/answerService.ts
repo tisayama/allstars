@@ -38,11 +38,15 @@ export async function submitAnswer(
   }
 
   // Validate that the answer is one of the valid choices
-  if (!question.choices.includes(data.answer)) {
+  if (!question.choices.some((choice) => choice.text === data.answer)) {
     throw new ValidationError("Invalid answer choice", [
       {
         field: "answer",
-        message: `"${data.answer}" is not a valid choice. Valid choices are: ${question.choices.join(", ")}`,
+        message: `"${
+          data.answer
+        }" is not a valid choice. Valid choices are: ${question.choices.join(
+          ", "
+        )}`,
       },
     ]);
   }
@@ -69,25 +73,27 @@ export async function submitAnswer(
 
   // US2: Validate game phase (must be accepting_answers)
   const gameState = await getCurrentGameState();
-  if (gameState.phase !== "accepting_answers") {
+  if (gameState.currentPhase !== "accepting_answers") {
     throw new ValidationError("Not accepting answers in current phase", [
       {
         field: "phase",
-        message: `Current game phase is "${gameState.phase}". Answers can only be submitted during "accepting_answers" phase.`,
+        message: `Current game phase is "${gameState.currentPhase}". Answers can only be submitted during "accepting_answers" phase.`,
       },
     ]);
   }
 
   // US2: Validate deadline (must not be past)
-  const now = new Date();
-  const deadline = question.deadline.toDate();
-  if (now > deadline) {
-    throw new ValidationError("Answer deadline has passed", [
-      {
-        field: "deadline",
-        message: `Deadline was ${deadline.toISOString()}. Current time is ${now.toISOString()}.`,
-      },
-    ]);
+  if (question.deadline) {
+    const now = new Date();
+    const deadline = question.deadline.toDate();
+    if (now > deadline) {
+      throw new ValidationError("Answer deadline has passed", [
+        {
+          field: "deadline",
+          message: `Deadline was ${deadline.toISOString()}. Current time is ${now.toISOString()}.`,
+        },
+      ]);
+    }
   }
 
   // Use transaction to check for duplicates and create answer atomically
@@ -198,27 +204,45 @@ export async function getTop10CorrectAnswers(
 }
 
 /**
- * Get worst 10 slowest incorrect answers for a question
+ * Get worst 10 slowest correct answers for a question
  * Reads from sub-collection: questions/{questionId}/answers
+ * Handles ties: includes all participants with same response time as 10th position
  */
-export async function getWorst10IncorrectAnswers(
+export async function getWorst10CorrectAnswers(
   questionId: string
 ): Promise<Answer[]> {
+  // Fetch all correct answers (to handle ties and fewer-than-10 cases)
   const snapshot = await db
     .collection(COLLECTIONS.QUESTIONS)
     .doc(questionId)
     .collection("answers")
-    .where("isCorrect", "==", false)
+    .where("isCorrect", "==", true)
     .orderBy("responseTimeMs", "desc")
-    .limit(10)
     .get();
 
-  return snapshot.docs.map((doc) => {
+  const allCorrectAnswers = snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
       ...data,
-      submittedAt: data.submittedAt?.toDate() || new Date(),
+      submittedAt:
+        data.submittedAt?.toDate?.() || data.submittedAt || new Date(),
     } as Answer;
   });
+
+  // T021: Handle fewer than 10 correct answers - return all
+  if (allCorrectAnswers.length <= 10) {
+    return allCorrectAnswers;
+  }
+
+  // T020: Handle ties at 10th position
+  // Get the response time of the 10th slowest answer (index 9)
+  const tenthSlowTime = allCorrectAnswers[9].responseTimeMs;
+
+  // Include all answers with response time >= 10th position time (handles ties)
+  const worst10WithTies = allCorrectAnswers.filter(
+    (answer) => answer.responseTimeMs >= tenthSlowTime
+  );
+
+  return worst10WithTies;
 }
