@@ -1,0 +1,99 @@
+/**
+ * ControlButtons Styles
+ * Tablet-optimized layout for game control buttons
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.error {
+  padding: 12px 16px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.primaryActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.specialActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.specialTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.phaseInfo {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.phaseText {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.phaseText strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.noPhase {
+  padding: 32px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.noPhase p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Tablet viewport optimizations (768-1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    padding: 28px;
+    gap: 28px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .primaryActions,
+  .specialActions {
+    gap: 16px;
+  }
+
+  .error {
+    font-size: 15px;
+  }
+}

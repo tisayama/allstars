@@ -3,35 +3,47 @@
  * Represents a single question in the quiz game
  */
 
-import { Timestamp } from 'firebase-admin/firestore';
+import type { Timestamp } from './GameState';
 
 export type QuestionType = 'multiple-choice';
 
+export type GamePeriod =
+  | 'first-half'   // Regular questions before gong
+  | 'second-half'  // Questions after some eliminations
+  | 'overtime';     // Final tiebreaker questions
+
+export interface QuestionChoice {
+  /** 0-based choice index */
+  index: number;
+  /** Choice label (e.g., "A. Paris", "B. London") */
+  text: string;
+}
+
 export interface Question {
-  /** Firestore document ID */
-  id: string;
+  /** Unique question identifier (e.g., "q-first-half-001") */
+  questionId: string;
 
-  /** Game period (e.g., 'first-half', 'second-half') */
-  period: string;
+  /** Question text displayed to participants */
+  questionText: string;
 
-  /** Question number within the period (1-based) */
+  /** Array of answer choices (2-4 choices) */
+  choices: QuestionChoice[];
+
+  /** Game period classification */
+  period: GamePeriod;
+
+  /** Sequential question number (1-based) */
   questionNumber: number;
 
   /** Question type (currently only multiple-choice supported) */
-  type: QuestionType;
-
-  /** Question text displayed to participants */
-  text: string;
-
-  /** Array of answer choices (e.g., ['A', 'B', 'C', 'D']) */
-  choices: string[];
+  type?: QuestionType;
 
   /** Correct answer choice (must be one of the choices) */
-  correctAnswer: string;
+  correctAnswer?: string;
 
   /** Attributes to skip when displaying this question (e.g., ['age-under-20']) */
-  skipAttributes: string[];
+  skipAttributes?: string[];
 
   /** Deadline for answering this question (Firestore Timestamp) */
-  deadline: Timestamp;
+  deadline?: Timestamp;
 }

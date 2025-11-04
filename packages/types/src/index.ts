@@ -11,6 +11,7 @@ export * from './ErrorResponse';
 export * from './SocketEvents';
 export * from './GameSettings';
 export * from './Choice';
+export * from './HostApi';
 
 // Validators
 export * from './validators/question';

@@ -3,8 +3,18 @@
  * Singleton document tracking current game phase and results
  */
 
+import type { Question } from './Question';
+
+// Firebase Timestamp type (compatible with both admin and client SDKs)
+export type Timestamp = {
+  seconds: number;
+  nanoseconds: number;
+  toDate(): Date;
+  toMillis(): number;
+};
+
 export type GamePhase =
-  | 'idle'
+  | 'ready_for_next'
   | 'accepting_answers'
   | 'showing_distribution'
   | 'showing_correct_answer'
@@ -29,21 +39,30 @@ export interface GameResults {
 }
 
 export interface GameState {
-  /** Firestore document ID (singleton: 'current') */
-  id: string;
-
-  /** Currently active question ID, or null if no question active */
-  activeQuestionId: string | null;
+  /** Firestore document ID (singleton: 'live') */
+  id?: string;
 
   /** Current phase of the game */
-  phase: GamePhase;
+  currentPhase: GamePhase;
+
+  /** Currently active question object, or null if no question active */
+  currentQuestion: Question | null;
 
   /** Whether the gong sound effect is currently active */
   isGongActive: boolean;
 
+  /** Number of active participants (for display) */
+  participantCount?: number;
+
+  /** Seconds remaining in current phase (optional display) */
+  timeRemaining?: number | null;
+
+  /** Firestore server timestamp of last state change */
+  lastUpdate: Timestamp;
+
   /** Denormalized results for current question (calculated during SHOW_RESULTS) */
-  results: GameResults | null;
+  results?: GameResults | null;
 
   /** Accumulated prize money from questions where all guests answered incorrectly */
-  prizeCarryover: number;
+  prizeCarryover?: number;
 }
