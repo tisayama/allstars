@@ -1,0 +1,101 @@
+/**
+ * LoginPage Styles
+ * Tablet-optimized centered layout
+ */
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  width: 100%;
+  max-width: 440px;
+  padding: 40px 32px;
+
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.content {
+  display: flex;
+  justify-content: center;
+}
+
+.footer {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.footerText {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Tablet viewport optimizations (768-1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .card {
+    max-width: 480px;
+    padding: 48px 40px;
+    gap: 36px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .subtitle {
+    font-size: 17px;
+  }
+
+  .footerText {
+    font-size: 15px;
+  }
+}
+
+/* Smaller mobile screens */
+@media (max-width: 480px) {
+  .card {
+    padding: 32px 24px;
+    gap: 24px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+}

@@ -328,7 +328,7 @@ export function isStartQuestionPayload(payload: unknown): payload is StartQuesti
  */
 export function isGamePhaseChangedPayload(payload: unknown): payload is GamePhaseChangedPayload {
   const validPhases: GamePhase[] = [
-    'idle',
+    'ready_for_next',
     'accepting_answers',
     'showing_distribution',
     'showing_correct_answer',
