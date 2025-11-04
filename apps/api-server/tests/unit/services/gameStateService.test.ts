@@ -9,6 +9,55 @@ import {
   getCurrentGameState,
 } from "../../../src/services/gameStateService";
 
+// Mock p-retry module (same as retry.test.ts)
+jest.mock("p-retry", () => {
+  class AbortError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AbortError";
+    }
+  }
+
+  const mockPRetry = jest.fn(async (operation, options) => {
+    let lastError: Error | undefined;
+    const maxAttempts = (options?.retries || 3) + 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const result = await operation();
+        return result;
+      } catch (error) {
+        lastError = error as Error;
+
+        if (error instanceof AbortError) {
+          throw error;
+        }
+
+        if (options?.onFailedAttempt && attempt < maxAttempts) {
+          options.onFailedAttempt({
+            attemptNumber: attempt,
+            retriesLeft: maxAttempts - attempt,
+            name: (error as Error).name,
+            message: (error as Error).message,
+          });
+        }
+
+        if (attempt >= maxAttempts) {
+          throw lastError;
+        }
+      }
+    }
+
+    throw lastError;
+  });
+
+  return {
+    __esModule: true,
+    default: mockPRetry,
+    AbortError,
+  };
+});
+
 // Mock Firestore
 jest.mock("../../../src/utils/firestore", () => ({
   db: {
@@ -135,21 +184,27 @@ describe("Game State Service", () => {
       // Import mocked dependencies
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       const { getGuestById } = require("../../../src/services/guestService");
 
       // Reset mocks
       (getTop10CorrectAnswers as jest.Mock).mockReset();
-      (getWorst10IncorrectAnswers as jest.Mock).mockReset();
+      (getWorst10CorrectAnswers as jest.Mock).mockReset();
       (getGuestById as jest.Mock).mockReset();
     });
 
     it("should drop worst performer(s) when gong is active with mixed answers", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: true, // Gong is active
         results: null,
         prizeCarryover: 0,
@@ -164,13 +219,13 @@ describe("Game State Service", () => {
       // Mock mixed answers: some correct, some incorrect
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
         { guestId: "guest-2", isCorrect: true, responseTimeMs: 2000 },
       ]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-3", isCorrect: false, responseTimeMs: 5000 }, // Worst performer
         { guestId: "guest-4", isCorrect: false, responseTimeMs: 3000 },
       ]);
@@ -222,8 +277,14 @@ describe("Game State Service", () => {
     it("should set isGongActive to false after showing results with gong", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: true,
         results: null,
         prizeCarryover: 0,
@@ -237,12 +298,12 @@ describe("Game State Service", () => {
 
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
       ]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-2", isCorrect: false, responseTimeMs: 3000 },
       ]);
 
@@ -320,8 +381,14 @@ describe("Game State Service", () => {
     it("should not eliminate anyone when all guests answer correctly with gong active", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: true,
         results: null,
         prizeCarryover: 0,
@@ -336,14 +403,14 @@ describe("Game State Service", () => {
       // All correct answers
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
         { guestId: "guest-2", isCorrect: true, responseTimeMs: 2000 },
         { guestId: "guest-3", isCorrect: true, responseTimeMs: 2500 },
       ]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([]);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([]);
 
       const { getGuestById } = require("../../../src/services/guestService");
       (getGuestById as jest.Mock).mockImplementation((guestId) =>
@@ -388,8 +455,14 @@ describe("Game State Service", () => {
     it("should not eliminate anyone when all guests answer incorrectly with gong active", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: true,
         results: null,
         prizeCarryover: 0,
@@ -404,10 +477,10 @@ describe("Game State Service", () => {
       // All incorrect answers
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: false, responseTimeMs: 2000 },
         { guestId: "guest-2", isCorrect: false, responseTimeMs: 2500 },
         { guestId: "guest-3", isCorrect: false, responseTimeMs: 3000 },
@@ -445,8 +518,14 @@ describe("Game State Service", () => {
     it("should eliminate all guests tied for worst when gong is active", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: true,
         results: null,
         prizeCarryover: 0,
@@ -461,12 +540,12 @@ describe("Game State Service", () => {
       // Mixed answers with two guests tied for worst
       const {
         getTop10CorrectAnswers,
-        getWorst10IncorrectAnswers,
+        getWorst10CorrectAnswers,
       } = require("../../../src/services/answerService");
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
       ]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-2", isCorrect: false, responseTimeMs: 5000 }, // Tied for worst
         { guestId: "guest-3", isCorrect: false, responseTimeMs: 5000 }, // Tied for worst
         { guestId: "guest-4", isCorrect: false, responseTimeMs: 3000 },
@@ -570,7 +649,7 @@ describe("Game State Service", () => {
 
       const result = await advanceGame(action);
 
-      expect(result.phase).toBe("all_revived");
+      expect(result.currentPhase).toBe("all_revived");
     });
 
     it("should revive all dropped guests when REVIVE_ALL is called", async () => {
@@ -690,9 +769,484 @@ describe("Game State Service", () => {
       const result = await advanceGame(action);
 
       // Should still transition to all_revived phase
-      expect(result.phase).toBe("all_revived");
+      expect(result.currentPhase).toBe("all_revived");
       // But should not call batch update
       expect(mockBatchUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Period Champion Designation (User Story 2)", () => {
+    beforeEach(() => {
+      // Mock answerService functions
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      // Mock question service
+      const {
+        getQuestionById,
+      } = require("../../../src/services/questionService");
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        questionId: "question-1",
+        period: "first-half",
+      });
+    });
+
+    it("[US2] should designate single period champion when isGongActive is true", async () => {
+      // T024: Test with single fastest correct answer
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      // Mock top 10 with single fastest
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "champion-1", responseTimeMs: 1000 }, // Fastest
+        { guestId: "guest-2", responseTimeMs: 1500 },
+        { guestId: "guest-3", responseTimeMs: 2000 },
+      ]);
+
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "guest-10", responseTimeMs: 10000 },
+      ]);
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          period: "first-half",
+        },
+        activeQuestionId: "question-1",
+        isGongActive: true, // Period-final question
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Verify period champion is designated
+      expect(result.results?.periodChampions).toEqual(["champion-1"]);
+      expect(result.results?.period).toBe("first-half");
+    });
+
+    it("[US2] should designate multiple period champions when tied for fastest", async () => {
+      // T025: Test with tied fastest correct answers
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      // Mock top 10 with 3 participants tied for fastest
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "champion-1", responseTimeMs: 1000 }, // Tied fastest
+        { guestId: "champion-2", responseTimeMs: 1000 }, // Tied fastest
+        { guestId: "champion-3", responseTimeMs: 1000 }, // Tied fastest
+        { guestId: "guest-4", responseTimeMs: 1500 },
+        { guestId: "guest-5", responseTimeMs: 2000 },
+      ]);
+
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "guest-10", responseTimeMs: 10000 },
+      ]);
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          period: "second-half",
+        },
+        activeQuestionId: "question-1",
+        isGongActive: true, // Period-final question
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Verify all tied participants are designated as champions
+      expect(result.results?.periodChampions).toEqual([
+        "champion-1",
+        "champion-2",
+        "champion-3",
+      ]);
+      expect(result.results?.period).toBe("second-half");
+    });
+
+    it("[US2] should NOT populate periodChampions for non-final questions", async () => {
+      // Verify periodChampions is undefined when isGongActive is false
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "guest-1", responseTimeMs: 1000 },
+      ]);
+
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "guest-10", responseTimeMs: 10000 },
+      ]);
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          period: "first-half",
+        },
+        activeQuestionId: "question-1",
+        isGongActive: false, // Non-final question
+        results: null,
+        prizeCarryover: 0,
+      };
+
+      mockRunTransaction.mockImplementation(async (callback) => {
+        const mockTransaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(mockTransaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Verify periodChampions and period are NOT populated
+      expect(result.results?.periodChampions).toBeUndefined();
+      expect(result.results?.period).toBeUndefined();
+    });
+  });
+
+  describe("Elimination Logic for Non-Final Questions (User Story 3)", () => {
+    beforeEach(() => {
+      // Mock answerService functions
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      // Mock question service
+      const {
+        getQuestionById,
+      } = require("../../../src/services/questionService");
+      (getQuestionById as jest.Mock).mockResolvedValue({
+        questionId: "question-1",
+        period: "first-half",
+      });
+    });
+
+    it("[US3] should eliminate single slowest correct answer participant on non-final question", async () => {
+      // T035: Test elimination of single slowest participant
+      // Setup: Non-final question (isGongActive: false) with multiple correct answers
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer" as const,
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half" as const,
+          questionNumber: 1,
+        },
+        isGongActive: false, // Non-final question
+        results: null,
+        prizeCarryover: 0,
+        lastUpdate: new Date(),
+      };
+
+      // Mock 5 correct answers - slowest is guest-5 at 5000ms
+      const mockTop10 = [
+        { guestId: "guest-1", responseTimeMs: 1000, isCorrect: true },
+        { guestId: "guest-2", responseTimeMs: 2000, isCorrect: true },
+        { guestId: "guest-3", responseTimeMs: 3000, isCorrect: true },
+        { guestId: "guest-4", responseTimeMs: 4000, isCorrect: true },
+        { guestId: "guest-5", responseTimeMs: 5000, isCorrect: true },
+      ];
+
+      // Worst 10 is sorted descending (slowest first)
+      const mockWorst10 = [
+        { guestId: "guest-5", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-4", responseTimeMs: 4000, isCorrect: true },
+        { guestId: "guest-3", responseTimeMs: 3000, isCorrect: true },
+        { guestId: "guest-2", responseTimeMs: 2000, isCorrect: true },
+        { guestId: "guest-1", responseTimeMs: 1000, isCorrect: true },
+      ];
+
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue(mockTop10);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue(mockWorst10);
+
+      // Mock guest service
+      const { getGuestById } = require("../../../src/services/guestService");
+      (getGuestById as jest.Mock).mockImplementation((guestId: string) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: "active",
+        })
+      );
+
+      // Mock db.collection().doc() to return DocumentReference with id
+      (db.collection as jest.Mock).mockImplementation((collectionName) => ({
+        doc: (docId: string) => ({
+          id: docId,
+          get: mockGet,
+        }),
+      }));
+
+      // Mock Firestore batch for elimination
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock).mockReturnValue({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      });
+
+      // Mock transaction
+      (db.runTransaction as jest.Mock).mockImplementation(async (callback) => {
+        const transaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(transaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      await advanceGame(action);
+
+      // Verify guest-5 (slowest) was eliminated
+      expect(mockBatchUpdate).toHaveBeenCalled();
+      expect(mockBatchCommit).toHaveBeenCalled();
+
+      // Verify only the slowest participant was marked for elimination
+      const eliminatedGuests = mockBatchUpdate.mock.calls.map(
+        (call: any) => call[0].id
+      );
+      expect(eliminatedGuests).toContain("guest-5");
+      expect(eliminatedGuests).toHaveLength(1);
+    });
+
+    it("[US3] should eliminate all tied slowest correct answer participants", async () => {
+      // T036: Test elimination of multiple tied slowest participants
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer" as const,
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half" as const,
+          questionNumber: 1,
+        },
+        isGongActive: false, // Non-final question
+        results: null,
+        prizeCarryover: 0,
+        lastUpdate: new Date(),
+      };
+
+      // Mock answers where guest-4, guest-5, guest-6 are all tied for slowest at 5000ms
+      const mockTop10 = [
+        { guestId: "guest-1", responseTimeMs: 1000, isCorrect: true },
+        { guestId: "guest-2", responseTimeMs: 2000, isCorrect: true },
+        { guestId: "guest-3", responseTimeMs: 3000, isCorrect: true },
+        { guestId: "guest-4", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-5", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-6", responseTimeMs: 5000, isCorrect: true },
+      ];
+
+      const mockWorst10 = [
+        { guestId: "guest-4", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-5", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-6", responseTimeMs: 5000, isCorrect: true },
+        { guestId: "guest-3", responseTimeMs: 3000, isCorrect: true },
+        { guestId: "guest-2", responseTimeMs: 2000, isCorrect: true },
+        { guestId: "guest-1", responseTimeMs: 1000, isCorrect: true },
+      ];
+
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue(mockTop10);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue(mockWorst10);
+
+      // Mock guest service
+      const { getGuestById } = require("../../../src/services/guestService");
+      (getGuestById as jest.Mock).mockImplementation((guestId: string) =>
+        Promise.resolve({
+          id: guestId,
+          name: `Guest ${guestId}`,
+          status: "active",
+        })
+      );
+
+      // Mock db.collection().doc() to return DocumentReference with id
+      (db.collection as jest.Mock).mockImplementation((collectionName) => ({
+        doc: (docId: string) => ({
+          id: docId,
+          get: mockGet,
+        }),
+      }));
+
+      // Mock Firestore batch
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock).mockReturnValue({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      });
+
+      // Mock transaction
+      (db.runTransaction as jest.Mock).mockImplementation(async (callback) => {
+        const transaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(transaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      await advanceGame(action);
+
+      // Verify all 3 tied slowest participants were eliminated
+      expect(mockBatchUpdate).toHaveBeenCalled();
+      const eliminatedGuests = mockBatchUpdate.mock.calls.map(
+        (call: any) => call[0].id
+      );
+      expect(eliminatedGuests).toHaveLength(3);
+      expect(eliminatedGuests).toContain("guest-4");
+      expect(eliminatedGuests).toContain("guest-5");
+      expect(eliminatedGuests).toContain("guest-6");
+    });
+
+    it("[US3] should NOT eliminate anyone when all answers are incorrect", async () => {
+      // T037: Test no elimination when all incorrect
+
+      const currentState = {
+        id: "live",
+        currentPhase: "showing_correct_answer" as const,
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half" as const,
+          questionNumber: 1,
+        },
+        isGongActive: false, // Non-final question
+        results: null,
+        prizeCarryover: 0,
+        lastUpdate: new Date(),
+      };
+
+      // Mock all incorrect answers (empty arrays)
+      const {
+        getTop10CorrectAnswers,
+        getWorst10CorrectAnswers,
+      } = require("../../../src/services/answerService");
+
+      (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([]);
+
+      // Mock Firestore batch
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock).mockReturnValue({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      });
+
+      // Mock transaction
+      (db.runTransaction as jest.Mock).mockImplementation(async (callback) => {
+        const transaction = {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: "live",
+            data: () => currentState,
+          }),
+          set: jest.fn(),
+        };
+        return callback(transaction);
+      });
+
+      const action = {
+        action: "SHOW_RESULTS" as const,
+        payload: {},
+      };
+
+      const result = await advanceGame(action);
+
+      // Verify no eliminations occurred
+      expect(mockBatchUpdate).not.toHaveBeenCalled();
+      expect(result.currentPhase).toBe("all_incorrect");
+      expect(result.prizeCarryover).toBe(10000); // Base prize added to carryover
     });
   });
 });

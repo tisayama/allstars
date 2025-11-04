@@ -3,6 +3,55 @@
  * Tests all-incorrect detection and prize accumulation
  */
 
+// Mock p-retry module (must be before other imports that use it)
+jest.mock("p-retry", () => {
+  class AbortError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AbortError";
+    }
+  }
+
+  const mockPRetry = jest.fn(async (operation, options) => {
+    let lastError: Error | undefined;
+    const maxAttempts = (options?.retries || 3) + 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const result = await operation();
+        return result;
+      } catch (error) {
+        lastError = error as Error;
+
+        if (error instanceof AbortError) {
+          throw error;
+        }
+
+        if (options?.onFailedAttempt && attempt < maxAttempts) {
+          options.onFailedAttempt({
+            attemptNumber: attempt,
+            retriesLeft: maxAttempts - attempt,
+            name: (error as Error).name,
+            message: (error as Error).message,
+          });
+        }
+
+        if (attempt >= maxAttempts) {
+          throw lastError;
+        }
+      }
+    }
+
+    throw lastError;
+  });
+
+  return {
+    __esModule: true,
+    default: mockPRetry,
+    AbortError,
+  };
+});
+
 import { db } from "../../../src/utils/firestore";
 import {
   advanceGame,
@@ -11,7 +60,7 @@ import {
 import {
   getAnswersByQuestion,
   getTop10CorrectAnswers,
-  getWorst10IncorrectAnswers,
+  getWorst10CorrectAnswers,
 } from "../../../src/services/answerService";
 
 // Mock Firestore
@@ -36,7 +85,7 @@ jest.mock("../../../src/services/guestService");
 jest.mock("../../../src/services/answerService", () => ({
   getAnswersByQuestion: jest.fn(),
   getTop10CorrectAnswers: jest.fn(),
-  getWorst10IncorrectAnswers: jest.fn(),
+  getWorst10CorrectAnswers: jest.fn(),
 }));
 
 describe("Prize Carryover Logic (US3)", () => {
@@ -62,8 +111,14 @@ describe("Prize Carryover Logic (US3)", () => {
       // Mock game state with active question
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: false,
         results: null,
         prizeCarryover: 1000, // Previous carryover
@@ -77,11 +132,7 @@ describe("Prize Carryover Logic (US3)", () => {
 
       // Mock answer service to return no correct answers
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
-        { guestId: "guest-1", isCorrect: false, responseTimeMs: 1500 },
-        { guestId: "guest-2", isCorrect: false, responseTimeMs: 2000 },
-        { guestId: "guest-3", isCorrect: false, responseTimeMs: 2500 },
-      ]);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([]);
 
       mockRunTransaction.mockImplementation(async (callback) => {
         const mockTransaction = {
@@ -110,8 +161,14 @@ describe("Prize Carryover Logic (US3)", () => {
       // Mock game state
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: false,
         results: null,
         prizeCarryover: 0,
@@ -119,10 +176,7 @@ describe("Prize Carryover Logic (US3)", () => {
 
       // Mock all incorrect answers
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
-        { guestId: "guest-1", isCorrect: false, responseTimeMs: 1500 },
-        { guestId: "guest-2", isCorrect: false, responseTimeMs: 2000 },
-      ]);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([]);
 
       // Mock guest service
       const { getGuestById } = require("../../../src/services/guestService");
@@ -162,8 +216,14 @@ describe("Prize Carryover Logic (US3)", () => {
     it("should transition phase to all_incorrect after calculating all-incorrect results", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: false,
         results: null,
         prizeCarryover: 0,
@@ -177,9 +237,7 @@ describe("Prize Carryover Logic (US3)", () => {
 
       // Mock all incorrect answers
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
-        { guestId: "guest-1", isCorrect: false, responseTimeMs: 1500 },
-      ]);
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([]);
 
       mockRunTransaction.mockImplementation(async (callback) => {
         const mockTransaction = {
@@ -200,7 +258,7 @@ describe("Prize Carryover Logic (US3)", () => {
 
       const result = await advanceGame(action);
 
-      expect(result.phase).toBe("all_incorrect");
+      expect(result.currentPhase).toBe("all_incorrect");
     });
   });
 
@@ -214,8 +272,14 @@ describe("Prize Carryover Logic (US3)", () => {
     it("should reset prizeCarryover to 0 after question with any correct answers", async () => {
       const currentState = {
         id: "live",
-        phase: "showing_correct_answer",
-        activeQuestionId: "question-1",
+        currentPhase: "showing_correct_answer",
+        currentQuestion: {
+          questionId: "question-1",
+          questionText: "Test?",
+          choices: [],
+          period: "first-half",
+          questionNumber: 1,
+        },
         isGongActive: false,
         results: null,
         prizeCarryover: 5000, // Has accumulated carryover
@@ -231,8 +295,8 @@ describe("Prize Carryover Logic (US3)", () => {
       (getTop10CorrectAnswers as jest.Mock).mockResolvedValue([
         { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
       ]);
-      (getWorst10IncorrectAnswers as jest.Mock).mockResolvedValue([
-        { guestId: "guest-2", isCorrect: false, responseTimeMs: 2000 },
+      (getWorst10CorrectAnswers as jest.Mock).mockResolvedValue([
+        { guestId: "guest-1", isCorrect: true, responseTimeMs: 1500 },
       ]);
 
       const { getGuestById } = require("../../../src/services/guestService");
@@ -245,6 +309,22 @@ describe("Prize Carryover Logic (US3)", () => {
           authMethod: "anonymous",
         })
       );
+
+      // Mock db.collection().doc() to return DocumentReference with id
+      (db.collection as jest.Mock).mockImplementation((collectionName) => ({
+        doc: (docId: string) => ({
+          id: docId,
+          get: mockGet,
+        }),
+      }));
+
+      // Mock db.batch for elimination logic
+      const mockBatchUpdate = jest.fn();
+      const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+      (db.batch as jest.Mock).mockReturnValue({
+        update: mockBatchUpdate,
+        commit: mockBatchCommit,
+      });
 
       mockRunTransaction.mockImplementation(async (callback) => {
         const mockTransaction = {
@@ -267,7 +347,7 @@ describe("Prize Carryover Logic (US3)", () => {
 
       // Should reset to 0 when there are correct answers
       expect(result.prizeCarryover).toBe(0);
-      expect(result.phase).toBe("showing_results"); // Normal phase, not all_incorrect
+      expect(result.currentPhase).toBe("showing_results"); // Normal phase, not all_incorrect
     });
   });
 });
