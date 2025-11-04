@@ -3,7 +3,7 @@
  * Singleton document tracking current game phase and results
  */
 
-import type { Question } from './Question';
+import type { Question, GamePeriod } from './Question';
 
 // Firebase Timestamp type (compatible with both admin and client SDKs)
 export type Timestamp = {
@@ -22,20 +22,42 @@ export type GamePhase =
   | 'all_incorrect'
   | 'all_revived';
 
-export interface GameResults {
-  /** Top 10 fastest correct answers */
-  top10: Array<{
-    guestId: string;
-    guestName: string;
-    responseTimeMs: number;
-  }>;
+/**
+ * Ranked answer entry for Top 10 and Worst 10 rankings
+ */
+export interface RankedAnswer {
+  /** Participant (guest) ID */
+  guestId: string;
+  /** Participant display name */
+  guestName: string;
+  /** Response time in milliseconds */
+  responseTimeMs: number;
+}
 
-  /** Worst 10 slowest incorrect answers */
-  worst10: Array<{
-    guestId: string;
-    guestName: string;
-    responseTimeMs: number;
-  }>;
+export interface GameResults {
+  /** Top 10 fastest correct answers (ascending order by responseTimeMs) */
+  top10: RankedAnswer[];
+
+  /** Worst 10 slowest correct answers (descending order by responseTimeMs) */
+  worst10: RankedAnswer[];
+
+  /**
+   * Participant IDs of period champions (fastest correct answers on period-final questions)
+   * Supports multiple champions in case of ties
+   */
+  periodChampions?: string[];
+
+  /**
+   * Period identifier for the question these results belong to
+   * Matches currentQuestion.period from GameState
+   */
+  period?: GamePeriod;
+
+  /**
+   * True if ranking calculation failed after all retry attempts
+   * When true, top10 and worst10 will be empty arrays
+   */
+  rankingError?: boolean;
 }
 
 export interface GameState {
@@ -65,4 +87,52 @@ export interface GameState {
 
   /** Accumulated prize money from questions where all guests answered incorrectly */
   prizeCarryover?: number;
+}
+
+// Type Guards
+
+/**
+ * Type guard: Check if GameResults object is valid
+ * @param results - GameResults object to validate
+ * @returns true if results has required fields (top10 and worst10 arrays)
+ */
+export function isValidGameResults(results: unknown): results is GameResults {
+  if (!results || typeof results !== 'object') {
+    return false;
+  }
+  const r = results as Partial<GameResults>;
+  return Array.isArray(r.top10) && Array.isArray(r.worst10);
+}
+
+/**
+ * Type guard: Check if GameResults has a ranking error
+ * @param results - GameResults object to check
+ * @returns true if ranking calculation failed
+ */
+export function hasRankingError(results: GameResults): boolean {
+  return results.rankingError === true;
+}
+
+/**
+ * Type guard: Check if GameResults has period champions designated
+ * @param results - GameResults object to check
+ * @returns true if periodChampions array exists and has at least one champion
+ */
+export function hasPeriodChampions(results: GameResults): boolean {
+  return Array.isArray(results.periodChampions) && results.periodChampions.length > 0;
+}
+
+// Helper Functions
+
+/**
+ * Get the appropriate ranking to display based on question type
+ * @param results - GameResults object
+ * @param isGongActive - Whether gong is active (identifies period-final question)
+ * @returns 'top10' for period-final questions, 'worst10' for non-final questions
+ */
+export function getDisplayRanking(
+  results: GameResults,
+  isGongActive: boolean
+): 'top10' | 'worst10' {
+  return isGongActive ? 'top10' : 'worst10';
 }
