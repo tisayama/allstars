@@ -45,10 +45,10 @@ router.post(
       const validatedData = GameActionSchema.parse(req.body);
 
       // Advance game state
-      const gameState = await advanceGame(validatedData);
+      await advanceGame(validatedData);
 
-      // Return updated game state
-      res.status(200).json(gameState);
+      // Return success response (HostActionResponse format)
+      res.status(200).json({ success: true });
     } catch (error) {
       if (error instanceof ZodError) {
         // Transform Zod validation error to our error format
