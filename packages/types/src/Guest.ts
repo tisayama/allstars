@@ -22,4 +22,7 @@ export interface Guest {
 
   /** Authentication method used (google for admin/host, anonymous for participants) */
   authMethod: AuthMethod;
+
+  /** Optional table number for seating arrangement */
+  tableNumber?: number;
 }

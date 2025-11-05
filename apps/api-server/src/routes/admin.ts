@@ -15,7 +15,13 @@ import {
   listQuestions,
   updateQuestion,
 } from "../services/questionService";
-import { listGuests } from "../services/guestService";
+import {
+  listGuests,
+  createGuestAdmin,
+  updateGuest,
+  deleteGuest,
+  bulkCreateGuests,
+} from "../services/guestService";
 import { ValidationError } from "../utils/errors";
 import { ZodError } from "zod";
 
@@ -123,6 +129,107 @@ router.get(
     try {
       const guests = await listGuests();
       res.status(200).json({ guests });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /admin/guests
+ * Create a new guest
+ */
+router.post(
+  "/guests",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, attributes, tableNumber } = req.body;
+
+      if (!name || typeof name !== "string") {
+        return next(
+          new ValidationError("Invalid guest data", [
+            { field: "name", message: "Name is required" },
+          ])
+        );
+      }
+
+      const guest = await createGuestAdmin({
+        name,
+        attributes: attributes || [],
+        tableNumber,
+      });
+
+      res.status(201).json(guest);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * PUT /admin/guests/:guestId
+ * Update a guest
+ */
+router.put(
+  "/guests/:guestId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { guestId } = req.params;
+      const { name, attributes, tableNumber } = req.body;
+
+      const guest = await updateGuest(guestId, {
+        name,
+        attributes,
+        tableNumber,
+      });
+
+      res.status(200).json(guest);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * DELETE /admin/guests/:guestId
+ * Delete a guest
+ */
+router.delete(
+  "/guests/:guestId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { guestId } = req.params;
+
+      await deleteGuest(guestId);
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /admin/guests/bulk
+ * Bulk import guests
+ */
+router.post(
+  "/guests/bulk",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { guests } = req.body;
+
+      if (!Array.isArray(guests)) {
+        return next(
+          new ValidationError("Invalid bulk data", [
+            { field: "guests", message: "Guests must be an array" },
+          ])
+        );
+      }
+
+      const createdGuests = await bulkCreateGuests(guests);
+
+      res.status(201).json({ guests: createdGuests, count: createdGuests.length });
     } catch (error) {
       next(error);
     }
