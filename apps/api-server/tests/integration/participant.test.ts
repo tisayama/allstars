@@ -87,7 +87,8 @@ describe("Participant Answer Submission Integration Tests", () => {
       const clientStart = Date.now();
       const response = await request(app).get("/participant/time");
       const clientEnd = Date.now();
-      const roundTripTime = clientEnd - clientStart;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _roundTripTime = clientEnd - clientStart;
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:

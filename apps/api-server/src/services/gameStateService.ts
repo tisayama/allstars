@@ -170,7 +170,10 @@ async function handleStartQuestion(
 
     if (!question) {
       throw new NotFoundError("No questions available", [
-        { field: "questions", message: "Please create questions in admin panel first" },
+        {
+          field: "questions",
+          message: "Please create questions in admin panel first",
+        },
       ]);
     }
 

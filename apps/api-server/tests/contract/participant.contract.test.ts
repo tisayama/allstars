@@ -48,9 +48,11 @@ describe("Participant Endpoints Contract Tests", () => {
 
   describe("GET /participant/time - Server Time Synchronization", () => {
     it("should return current server timestamp according to OpenAPI spec", async () => {
-      const beforeTime = Date.now();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _beforeTime = Date.now();
       const response = await request(app).get("/participant/time");
-      const afterTime = Date.now();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _afterTime = Date.now();
 
       expect(response.status).toBe(404); // Route not implemented yet
       // Once implemented:
@@ -72,7 +74,8 @@ describe("Participant Endpoints Contract Tests", () => {
     it("should have response time under 50ms (SC-005 target)", async () => {
       const start = Date.now();
       await request(app).get("/participant/time");
-      const duration = Date.now() - start;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _duration = Date.now() - start;
 
       // Route not implemented yet, but this test will validate SC-005
       // expect(duration).toBeLessThan(50);

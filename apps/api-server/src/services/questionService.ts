@@ -3,7 +3,7 @@
  * Business logic for quiz question management
  */
 
-import { db, admin } from "../utils/firestore";
+import { db } from "../utils/firestore";
 import { COLLECTIONS } from "../models/firestoreCollections";
 import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
@@ -161,9 +161,7 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = Timestamp.fromDate(
-      new Date(data.deadline)
-    );
+    updateData.deadline = Timestamp.fromDate(new Date(data.deadline));
   }
 
   await questionRef.update(updateData);

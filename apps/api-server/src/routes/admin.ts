@@ -41,7 +41,10 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Log request body for debugging
-      console.log("Create question request body:", JSON.stringify(req.body, null, 2));
+      console.log(
+        "Create question request body:",
+        JSON.stringify(req.body, null, 2)
+      );
 
       // Validate request body
       const validatedData = CreateQuestionSchema.parse(req.body);
@@ -230,7 +233,9 @@ router.post(
 
       const createdGuests = await bulkCreateGuests(guests);
 
-      res.status(201).json({ guests: createdGuests, count: createdGuests.length });
+      res
+        .status(201)
+        .json({ guests: createdGuests, count: createdGuests.length });
     } catch (error) {
       next(error);
     }
