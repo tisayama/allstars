@@ -4,7 +4,7 @@
   "private": true,
   "description": "AllStars wedding quiz game platform monorepo",
   "scripts": {
-    "dev": "concurrently -n admin,host,participant,socket -c bgBlue,bgMagenta,bgGreen,bgYellow \"pnpm --filter @allstars/admin-app dev\" \"pnpm --filter @allstars/host-app dev\" \"pnpm --filter @allstars/participant-app dev\" \"pnpm --filter @allstars/socket-server dev\"",
+    "dev": "concurrently -n admin,host,participant,socket,firebase -c bgBlue,bgMagenta,bgGreen,bgYellow,bgRed \"pnpm --filter @allstars/admin-app dev\" \"pnpm --filter @allstars/host-app dev\" \"pnpm --filter @allstars/participant-app dev\" \"pnpm --filter @allstars/socket-server dev\" \"firebase emulators:start --import=./emulator-data --export-on-exit\"",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
