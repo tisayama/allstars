@@ -3,7 +3,7 @@
  * Business logic for quiz question management
  */
 
-import { db, admin } from "../utils/firestore";
+import { db } from "../utils/firestore";
 import { COLLECTIONS } from "../models/firestoreCollections";
 import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
@@ -161,9 +161,7 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = Timestamp.fromDate(
-      new Date(data.deadline)
-    );
+    updateData.deadline = Timestamp.fromDate(new Date(data.deadline));
   }
 
   await questionRef.update(updateData);
@@ -213,6 +211,38 @@ export async function getQuestionById(
   return {
     questionId: questionDoc.id,
     questionText: (data as any).questionText || (data as any).text, // Support both old and new field names
+    choices: (data as any).choices,
+    period: (data as any).period,
+    questionNumber: (data as any).questionNumber,
+    type: (data as any).type,
+    correctAnswer: (data as any).correctAnswer,
+    skipAttributes: (data as any).skipAttributes || [],
+    deadline: (data as any).deadline,
+  } as Question;
+}
+
+/**
+ * Get the next question to be asked
+ * Returns the first question ordered by period and questionNumber
+ */
+export async function getNextQuestion(): Promise<Question | null> {
+  const questionsSnapshot = await db
+    .collection(COLLECTIONS.QUESTIONS)
+    .orderBy("period")
+    .orderBy("questionNumber")
+    .limit(1)
+    .get();
+
+  if (questionsSnapshot.empty) {
+    return null;
+  }
+
+  const doc = questionsSnapshot.docs[0];
+  const data = doc.data();
+
+  return {
+    questionId: doc.id,
+    questionText: (data as any).questionText || (data as any).text,
     choices: (data as any).choices,
     period: (data as any).period,
     questionNumber: (data as any).questionNumber,

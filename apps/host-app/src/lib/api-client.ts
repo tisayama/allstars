@@ -30,12 +30,11 @@ interface ApiClientOptions {
  * Send a host action request to the API
  */
 export async function sendHostAction(
-  sessionId: string,
   action: HostActionRequest,
   idToken: string,
   options: ApiClientOptions = {}
 ): Promise<HostActionResponse> {
-  const endpoint = `/api/host-action/${sessionId}`;
+  const endpoint = `/api/host/game/advance`;
   const url = `${API_BASE_URL}${endpoint}`;
   const timeout = options.timeout || API_TIMEOUT;
 
@@ -108,7 +107,6 @@ export async function sendHostAction(
  * Retry a host action with exponential backoff
  */
 export async function sendHostActionWithRetry(
-  sessionId: string,
   action: HostActionRequest,
   idToken: string,
   maxRetries = 2
@@ -117,7 +115,7 @@ export async function sendHostActionWithRetry(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await sendHostAction(sessionId, action, idToken);
+      return await sendHostAction(action, idToken);
     } catch (error) {
       lastError = error as Error;
 
@@ -143,26 +141,4 @@ export async function sendHostActionWithRetry(
   }
 
   throw lastError || new Error('Request failed after retries');
-}
-
-/**
- * Validate session connectivity
- */
-export async function validateSession(sessionId: string, idToken: string): Promise<boolean> {
-  const endpoint = `/api/session/${sessionId}/validate`;
-  const url = `${API_BASE_URL}${endpoint}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    return response.ok;
-  } catch {
-    return false;
-  }
 }

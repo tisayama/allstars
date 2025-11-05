@@ -5,7 +5,7 @@
 
 import request from "supertest";
 import { app } from "../../src/index";
-import { db, admin } from "../../src/utils/firestore";
+import { admin } from "../../src/utils/firestore";
 
 // Mock Firebase Admin
 jest.mock("../../src/utils/firestore", () => {

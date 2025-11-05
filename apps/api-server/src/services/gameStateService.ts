@@ -3,7 +3,7 @@
  * Business logic for host game control and state management
  */
 
-import { db, admin } from "../utils/firestore";
+import { db } from "../utils/firestore";
 import { COLLECTIONS } from "../models/firestoreCollections";
 import { GameActionInput } from "../models/validators";
 import {
@@ -12,13 +12,14 @@ import {
   GameResults,
   GamePeriod,
   Answer,
+  GameSettings,
 } from "@allstars/types";
 import { ValidationError, NotFoundError } from "../utils/errors";
 import {
   getTop10CorrectAnswers,
   getWorst10CorrectAnswers,
 } from "./answerService";
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getGuestById } from "./guestService";
 import { getQuestionById } from "./questionService";
 import { withRetry } from "../utils/retry";
@@ -109,7 +110,7 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
       currentPhase: newState.currentPhase,
       currentQuestion: newState.currentQuestion,
       isGongActive: newState.isGongActive,
-      lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdate: FieldValue.serverTimestamp(),
       results: newState.results,
       prizeCarryover: newState.prizeCarryover,
     });
@@ -159,23 +160,35 @@ async function handleStartQuestion(
   state: GameState,
   action: GameActionInput
 ): Promise<GameState> {
-  const questionId = action.payload?.questionId;
+  let questionId = action.payload?.questionId;
+  let question;
 
   if (!questionId) {
-    throw new ValidationError("questionId is required in payload", [
-      { field: "payload.questionId", message: "Question ID is required" },
-    ]);
-  }
+    // No questionId provided - auto-select next question
+    const { getNextQuestion } = await import("./questionService");
+    question = await getNextQuestion();
 
-  // Verify question exists and get full question object
-  const question = await getQuestionById(questionId);
-  if (!question) {
-    throw new NotFoundError("Question not found", [
-      {
-        field: "questionId",
-        message: `No question found with ID "${questionId}"`,
-      },
-    ]);
+    if (!question) {
+      throw new NotFoundError("No questions available", [
+        {
+          field: "questions",
+          message: "Please create questions in admin panel first",
+        },
+      ]);
+    }
+
+    questionId = question.questionId;
+  } else {
+    // Verify question exists and get full question object
+    question = await getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question not found", [
+        {
+          field: "questionId",
+          message: `No question found with ID "${questionId}"`,
+        },
+      ]);
+    }
   }
 
   return {
@@ -445,21 +458,69 @@ export async function getCurrentGameState(): Promise<GameState> {
     .doc(GAME_STATE_DOC_ID)
     .get();
 
+  // Default initial state
+  const defaultState: GameState = {
+    id: GAME_STATE_DOC_ID,
+    currentPhase: "ready_for_next",
+    currentQuestion: null,
+    isGongActive: false,
+    lastUpdate: Timestamp.now(),
+    results: null,
+    prizeCarryover: 0,
+  };
+
   if (!gameStateDoc.exists) {
-    // Return default initial state
+    return defaultState;
+  }
+
+  // Merge existing data with defaults to ensure all required fields exist
+  const existingData = gameStateDoc.data() || {};
+  return {
+    ...defaultState,
+    ...existingData,
+    id: gameStateDoc.id,
+  } as GameState;
+}
+
+/**
+ * Get game settings from gameState
+ */
+export async function getSettings(): Promise<GameSettings> {
+  const gameStateDoc = await db
+    .collection(COLLECTIONS.GAME_STATE)
+    .doc(GAME_STATE_DOC_ID)
+    .get();
+
+  if (!gameStateDoc.exists || !gameStateDoc.data()?.settings) {
+    // Return default settings
     return {
-      id: GAME_STATE_DOC_ID,
-      currentPhase: "ready_for_next",
-      currentQuestion: null,
-      isGongActive: false,
-      lastUpdate: Timestamp.now(),
-      results: null,
-      prizeCarryover: 0,
+      defaultDropoutRule: "worst_one",
+      defaultRankingRule: "time",
     };
   }
 
-  return {
-    id: gameStateDoc.id,
-    ...gameStateDoc.data(),
-  } as GameState;
+  return gameStateDoc.data()!.settings as GameSettings;
+}
+
+/**
+ * Update game settings with merge
+ * FR-048: Preserves other gameState fields using merge
+ */
+export async function updateSettings(
+  settings: GameSettings
+): Promise<GameSettings> {
+  const gameStateRef = db
+    .collection(COLLECTIONS.GAME_STATE)
+    .doc(GAME_STATE_DOC_ID);
+
+  // Use merge to preserve other gameState fields
+  await gameStateRef.set(
+    {
+      settings,
+      lastUpdate: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return settings;
 }
