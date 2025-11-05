@@ -3,7 +3,7 @@
  * Business logic for host game control and state management
  */
 
-import { db, admin } from "../utils/firestore";
+import { db } from "../utils/firestore";
 import { COLLECTIONS } from "../models/firestoreCollections";
 import { GameActionInput } from "../models/validators";
 import {
@@ -19,7 +19,7 @@ import {
   getTop10CorrectAnswers,
   getWorst10CorrectAnswers,
 } from "./answerService";
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getGuestById } from "./guestService";
 import { getQuestionById } from "./questionService";
 import { withRetry } from "../utils/retry";
@@ -110,7 +110,7 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
       currentPhase: newState.currentPhase,
       currentQuestion: newState.currentQuestion,
       isGongActive: newState.isGongActive,
-      lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdate: FieldValue.serverTimestamp(),
       results: newState.results,
       prizeCarryover: newState.prizeCarryover,
     });
@@ -500,7 +500,7 @@ export async function updateSettings(
   await gameStateRef.set(
     {
       settings,
-      lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdate: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
