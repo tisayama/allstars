@@ -6,7 +6,6 @@
 import request from "supertest";
 import { app } from "../../src/index";
 import { db, admin } from "../../src/utils/firestore";
-import { COLLECTIONS } from "../../src/models/firestoreCollections";
 
 // Mock Firebase Admin
 jest.mock("../../src/utils/firestore", () => {
@@ -29,7 +28,7 @@ jest.mock("../../src/utils/firestore", () => {
         jest.fn(() => mockFirestore),
         {
           Timestamp: {
-            fromDate: jest.fn((date) => mockTimestamp),
+            fromDate: jest.fn((_date) => mockTimestamp),
           },
         }
       ),
@@ -151,6 +150,7 @@ describe("Admin Quiz Management Integration Tests", () => {
       expect(listResponse.status).toBe(200);
       expect(listResponse.body).toHaveLength(1);
       // Don't check deadline field as it gets transformed by Firestore Timestamp
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { deadline: _deadline, ...questionWithoutDeadline } = newQuestion;
       expect(listResponse.body[0]).toMatchObject(questionWithoutDeadline);
 

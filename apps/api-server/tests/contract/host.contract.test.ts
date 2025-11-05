@@ -82,7 +82,7 @@ describe("Host Endpoints Contract Tests", () => {
       },
     ];
 
-    gameActions.forEach(({ action, payload, description }) => {
+    gameActions.forEach(({ action, payload, description: _description }) => {
       it(`should accept ${action} action according to OpenAPI spec`, async () => {
         const response = await request(app)
           .post("/host/game/advance")

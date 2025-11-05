@@ -10,11 +10,10 @@ import type { GamePhase } from '@allstars/types';
 import styles from './ControlButtons.module.css';
 
 interface ControlButtonsProps {
-  sessionId: string;
   currentPhase: GamePhase | null;
 }
 
-export function ControlButtons({ sessionId, currentPhase }: ControlButtonsProps): ReactElement {
+export function ControlButtons({ currentPhase }: ControlButtonsProps): ReactElement {
   const {
     triggerAction,
     isLoading,
@@ -23,7 +22,7 @@ export function ControlButtons({ sessionId, currentPhase }: ControlButtonsProps)
     canShowDistribution,
     canShowCorrectAnswer,
     canShowResults,
-  } = useHostActions({ sessionId, currentPhase });
+  } = useHostActions({ currentPhase });
 
   const handleStartQuestion = async () => {
     try {
