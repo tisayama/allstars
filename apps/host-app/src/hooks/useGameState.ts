@@ -109,8 +109,14 @@ export function useGameState(): UseGameStateReturn {
         const data = snapshot.data();
 
         if (!validateGameState(data)) {
-          setError(new Error('Invalid game state data received from Firestore'));
-          setIsLoading(false);
+          // Invalid data - try API fallback before giving up
+          if (!hasTriedApiFallback.current) {
+            logger.error(new Error('Firestore data validation failed, trying API fallback'), { context: 'handleSnapshot' });
+            fetchFromApi();
+          } else {
+            setError(new Error('Invalid game state data received from Firestore'));
+            setIsLoading(false);
+          }
           return;
         }
 

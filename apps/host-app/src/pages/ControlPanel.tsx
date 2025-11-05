@@ -89,7 +89,14 @@ export function ControlPanel(): ReactElement {
               <div className={styles.stateCard}>
                 <h3>Last Updated</h3>
                 <p className={styles.timestampValue}>
-                  {new Date(gameState.lastUpdate.toMillis()).toLocaleTimeString()}
+                  {(() => {
+                    const timestamp = gameState.lastUpdate;
+                    // Handle both Firebase Timestamp and plain object from API
+                    const millis = typeof timestamp.toMillis === 'function'
+                      ? timestamp.toMillis()
+                      : (timestamp._seconds || timestamp.seconds || 0) * 1000;
+                    return new Date(millis).toLocaleTimeString();
+                  })()}
                 </p>
               </div>
             </div>
