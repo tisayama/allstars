@@ -1,16 +1,19 @@
 /**
  * useGameState Hook
  * Manages real-time Firestore listener for game state updates
+ * Falls back to API if Firestore document doesn't exist
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { doc, onSnapshot, DocumentSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { logger } from '@/lib/logger';
+import { useAuth } from './useAuth';
 import type { GameState } from '@allstars/types';
 
 const GAME_STATE_COLLECTION = 'gameState';
 const GAME_STATE_DOC_ID = 'live';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/allstars-wedding-quiz/us-central1';
 
 interface UseGameStateReturn {
   gameState: GameState | null;
@@ -43,14 +46,47 @@ function validateGameState(data: unknown): data is GameState {
  * Custom hook for real-time game state from Firestore
  * Provides live updates, error handling, and reconnection logic
  * Connects to singleton gameState/live document (consistent with API server)
+ * Falls back to API endpoint if document doesn't exist yet
  */
 export function useGameState(): UseGameStateReturn {
+  const { user } = useAuth();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Track previous phase for logging
   const previousPhaseRef = useRef<string | null>(null);
+  const hasTriedApiFallback = useRef(false);
+
+  /**
+   * Fetch game state from API as fallback
+   */
+  const fetchFromApi = useCallback(async () => {
+    if (!user?.idToken || hasTriedApiFallback.current) return;
+
+    hasTriedApiFallback.current = true;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/host/game/state`, {
+        headers: {
+          'Authorization': `Bearer ${user.idToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (validateGameState(data)) {
+          setGameState(data as GameState);
+          setIsLoading(false);
+          setError(null);
+          logger.gameState.phaseChange('unknown', data.currentPhase, 'api_fetch');
+        }
+      }
+    } catch (err) {
+      logger.error(err as Error, { context: 'fetchFromApi' });
+      // Don't set error here, let Firestore listener handle it
+    }
+  }, [user]);
 
   /**
    * Handle snapshot updates
@@ -59,9 +95,14 @@ export function useGameState(): UseGameStateReturn {
     (snapshot: DocumentSnapshot) => {
       try {
         if (!snapshot.exists()) {
-          setError(new Error('Game state document not found'));
-          setGameState(null);
-          setIsLoading(false);
+          // Document doesn't exist yet - try to fetch from API
+          if (!hasTriedApiFallback.current) {
+            fetchFromApi();
+          } else {
+            // Already tried API, still no data
+            setError(new Error('Game state not initialized. Please start a question from admin panel.'));
+            setIsLoading(false);
+          }
           return;
         }
 
@@ -98,7 +139,7 @@ export function useGameState(): UseGameStateReturn {
         setIsLoading(false);
       }
     },
-    [error]
+    [error, fetchFromApi]
   );
 
   /**
@@ -114,11 +155,14 @@ export function useGameState(): UseGameStateReturn {
    * Set up Firestore listener
    */
   useEffect(() => {
+    if (!user) return;
+
     // Reset state on mount
     setIsLoading(true);
     setError(null);
     setGameState(null);
     previousPhaseRef.current = null;
+    hasTriedApiFallback.current = false;
 
     const gameStateRef = doc(firestore, GAME_STATE_COLLECTION, GAME_STATE_DOC_ID);
 
@@ -129,7 +173,7 @@ export function useGameState(): UseGameStateReturn {
     return () => {
       unsubscribe();
     };
-  }, [handleSnapshot, handleError]);
+  }, [user, handleSnapshot, handleError]);
 
   return {
     gameState,

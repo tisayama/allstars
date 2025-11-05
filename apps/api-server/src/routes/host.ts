@@ -7,7 +7,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { auth } from "../middleware/auth";
 import { requireGoogleLogin } from "../middleware/roleGuard";
 import { GameActionSchema } from "../models/validators";
-import { advanceGame } from "../services/gameStateService";
+import { advanceGame, getCurrentGameState } from "../services/gameStateService";
 import { ValidationError } from "../utils/errors";
 import { ZodError } from "zod";
 
@@ -16,6 +16,22 @@ const router = Router();
 // Apply authentication and role guard to all host routes
 router.use(auth);
 router.use(requireGoogleLogin);
+
+/**
+ * GET /host/game/state
+ * Get current game state
+ */
+router.get(
+  "/game/state",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const gameState = await getCurrentGameState();
+      res.status(200).json(gameState);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 /**
  * POST /host/game/advance
