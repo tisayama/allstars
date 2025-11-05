@@ -87,37 +87,47 @@ This project is structured as a **monorepo** using `pnpm workspaces` to share co
 
 For local development, we use the Firebase Emulator Suite to simulate Auth, Firestore, and Cloud Functions.
 
-1.  **Start the Firebase Emulators:**
-    This command will start the Auth, Firestore, and Functions emulators.
-    ```bash
-    firebase emulators:start
-    ```
+**Start all development services with a single command:**
+```bash
+pnpm run dev
+```
 
-2.  **Run the Frontend Apps:**
-    In separate terminals, run each frontend application you need:
-    ```bash
-    # Terminal 2: Run Participant App
-    pnpm run dev --filter=participant-app
+This command starts all frontend apps, socket server, and Firebase emulators concurrently. Each service is labeled with a color-coded prefix in the terminal output:
+- **admin** (blue) - Admin dashboard
+- **host** (magenta) - Host control panel
+- **participant** (green) - Guest participation app
+- **projector** (cyan) - Broadcast display
+- **socket** (yellow) - WebSocket server
+- **firebase** (red) - Firebase emulators
 
-    # Terminal 3: Run Projector App
-    pnpm run dev --filter=projector-app
+**Alternatively, run services individually:**
+```bash
+# Run a specific frontend app
+pnpm run dev --filter=admin-app
+pnpm run dev --filter=host-app
+pnpm run dev --filter=participant-app
+pnpm run dev --filter=projector-app
 
-    # ...and so on
-    ```
+# Run backend services
+pnpm run dev --filter=socket-server
+firebase emulators:start
+```
 
-3.  **Run the Socket Server (Locally):**
-    The Cloud Run service (`socket-server`) also needs to be run locally.
-    ```bash
-    # Terminal 4: Run Socket Server
-    pnpm run dev --filter=socket-server
-    ```
+### 3. Development Server Ports
 
-### 3. Application URLs (Default)
+| Service | Port | Configuration File | URL |
+|---------|------|-------------------|-----|
+| admin-app | 5170 | [apps/admin-app/vite.config.ts](apps/admin-app/vite.config.ts) | http://localhost:5170 |
+| host-app | 5175 | [apps/host-app/vite.config.ts](apps/host-app/vite.config.ts) | http://localhost:5175 |
+| participant-app | 5180 | [apps/participant-app/vite.config.ts](apps/participant-app/vite.config.ts) | http://localhost:5180 |
+| projector-app | 5185 | [apps/projector-app/vite.config.ts](apps/projector-app/vite.config.ts) | http://localhost:5185 |
+| socket-server | 3001 | N/A - WebSocket server | http://localhost:3001 |
+| Firebase Emulators | 4000 | firebase.json | http://localhost:4000 |
+| Auth Emulator | 9099 | firebase.json | localhost:9099 |
+| Firestore Emulator | 8080 | firebase.json | localhost:8080 |
+| Functions Emulator | 5001 | firebase.json | http://localhost:5001 |
 
-* **Firebase Emulators:** `http://localhost:4000` (Emulator Suite UI)
-* **Auth Emulator:** `localhost:9099`
-* **Firestore Emulator:** `localhost:8080`
-* **Functions Emulator (`api-server`):** `http://localhost:5001/[project-id]/[region]/...`
-* **Socket Server (Local):** `http://localhost:3001`
-* **Frontend Apps:** `http://localhost:5173` (Participant), `http://localhost:5174` (Projector), etc.
+**Port Conflict Resolution**: If you encounter "EADDRINUSE" errors, ensure no other processes are using these ports. Use `lsof -i :PORT` (macOS/Linux) or `netstat -ano | findstr :PORT` (Windows) to identify conflicting processes.
+
+**Note**: Ports 5170, 5175, 5180, and 5185 are fixed and will not automatically fall back to other ports if unavailable. This ensures consistent URLs for development and testing.
 

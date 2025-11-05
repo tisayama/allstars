@@ -12,8 +12,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 5175,
     host: true, // Allow network access for tablet testing
+    strictPort: true,
   },
   build: {
     outDir: 'dist',
