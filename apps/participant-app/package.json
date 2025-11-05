@@ -5,7 +5,7 @@
   "type": "module",
   "description": "AllStars Participant App - Guest quiz controller for mobile devices",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "timeout 300 tsc && timeout 300 vite build",
     "preview": "vite preview",
     "test": "timeout 120 vitest run",
