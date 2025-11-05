@@ -63,6 +63,7 @@ jest.mock("../../../src/utils/firestore", () => ({
   db: {
     collection: jest.fn(),
     runTransaction: jest.fn(),
+    batch: jest.fn(),
   },
   admin: {
     firestore: {
@@ -811,6 +812,12 @@ describe("Game State Service", () => {
         { guestId: "guest-10", responseTimeMs: 10000 },
       ]);
 
+      // Mock batch for potential eliminations
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: jest.fn().mockResolvedValue(undefined),
+      }));
+
       const currentState = {
         id: "live",
         currentPhase: "showing_correct_answer",
@@ -893,6 +900,12 @@ describe("Game State Service", () => {
         return callback(mockTransaction);
       });
 
+      // Mock batch for potential eliminations
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: jest.fn().mockResolvedValue(undefined),
+      }));
+
       const action = {
         action: "SHOW_RESULTS" as const,
         payload: {},
@@ -948,6 +961,12 @@ describe("Game State Service", () => {
         };
         return callback(mockTransaction);
       });
+
+      // Mock batch for potential eliminations
+      (db.batch as jest.Mock) = jest.fn(() => ({
+        update: jest.fn(),
+        commit: jest.fn().mockResolvedValue(undefined),
+      }));
 
       const action = {
         action: "SHOW_RESULTS" as const,

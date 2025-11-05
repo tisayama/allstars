@@ -33,9 +33,7 @@ export function ActionButton({
       disabled={disabled || isLoading}
       {...props}
     >
-      {isLoading ? (
-        <span className={styles.loadingSpinner}>⏳</span>
-      ) : null}
+      {isLoading ? <span className={styles.loadingSpinner}>⏳</span> : null}
       <span className={styles.buttonText}>{children}</span>
     </button>
   );

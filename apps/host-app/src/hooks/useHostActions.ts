@@ -30,13 +30,13 @@ function isActionAllowed(action: HostAction, currentPhase: GamePhase | null): bo
   if (!currentPhase) return false;
 
   const allowedTransitions: Record<GamePhase, HostAction[]> = {
-    'ready_for_next': ['START_QUESTION'],
-    'accepting_answers': ['SHOW_DISTRIBUTION', 'TRIGGER_GONG'],
-    'showing_distribution': ['SHOW_CORRECT_ANSWER', 'TRIGGER_GONG'],
-    'showing_correct_answer': ['SHOW_RESULTS'],
-    'showing_results': ['ready_for_next'],
-    'all_incorrect': ['REVIVE_ALL'],
-    'all_revived': ['ready_for_next'],
+    ready_for_next: ['START_QUESTION'],
+    accepting_answers: ['SHOW_DISTRIBUTION', 'TRIGGER_GONG'],
+    showing_distribution: ['SHOW_CORRECT_ANSWER', 'TRIGGER_GONG'],
+    showing_correct_answer: ['SHOW_RESULTS'],
+    showing_results: ['ready_for_next'],
+    all_incorrect: ['REVIVE_ALL'],
+    all_revived: ['ready_for_next'],
   };
 
   return allowedTransitions[currentPhase]?.includes(action) || false;
@@ -46,7 +46,10 @@ function isActionAllowed(action: HostAction, currentPhase: GamePhase | null): bo
  * Custom hook for triggering host actions
  * Integrates with authentication and validates actions against current phase
  */
-export function useHostActions({ sessionId, currentPhase }: UseHostActionsOptions): UseHostActionsReturn {
+export function useHostActions({
+  sessionId,
+  currentPhase,
+}: UseHostActionsOptions): UseHostActionsReturn {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +91,7 @@ export function useHostActions({ sessionId, currentPhase }: UseHostActionsOption
         setError(null);
       } catch (err) {
         const error = err as Error;
-        const errorMessage = error instanceof ApiError
-          ? error.message
-          : 'Failed to execute action';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to execute action';
 
         setError(errorMessage);
         throw error;

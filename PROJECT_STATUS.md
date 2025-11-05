@@ -1,7 +1,7 @@
 # AllStars Quiz Platform - Project Status
 
-**Updated**: 2025-11-03
-**Current Branch**: `004-admin-app`
+**Updated**: 2025-11-05
+**Current Branch**: `001-projector-app`
 
 ## 🎯 Project Overview
 
@@ -9,7 +9,7 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
 
 ## 📊 Implementation Progress
 
-### Completed Components (50% Complete)
+### Completed Components (67% Complete - 4/6 Apps)
 
 #### ✅ Backend Services
 1. **API Server** (001-api-server, 002-api-server-refinement)
@@ -52,10 +52,24 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
      - Optimized production build (428KB main bundle)
      - 35/35 tests passing (100% coverage)
 
-### Pending Components (50% Not Started)
+4. **Projector App** (001-projector-app)
+   - Status: ✅ Complete
+   - Branch: `001-projector-app`
+   - Features:
+     - Real-time game state display from Firestore
+     - 7 phase-specific UI components (ready_for_next, accepting_answers, showing_distribution, showing_correct_answer, showing_results, all_revived, all_incorrect)
+     - WebSocket integration with Firebase Authentication
+     - Real-time answer counting
+     - Phase-based background music with Web Audio API
+     - ErrorBoundary for graceful error handling
+     - Connection status indicators (Firestore + WebSocket)
+     - 114 tests passing (comprehensive coverage)
+     - Production build: 636KB total (166KB gzipped) with code splitting
+
+### Pending Components (33% Not Started - 2/6 Apps)
 
 #### ❌ Frontend Applications (Not Implemented)
-4. **Participant App** (participant-app)
+5. **Participant App** (participant-app)
    - Status: ❌ Not Started
    - Description: Guest's mobile quiz client
    - Authentication: Firebase Anonymous Login
@@ -66,18 +80,6 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
      - Time synchronization
      - Personal results view
      - Rejoin capability
-
-5. **Projector App** (projector-app)
-   - Status: ❌ Not Started
-   - Description: Main broadcast/display screen
-   - Authentication: None (public display)
-   - Key Features:
-     - Question display
-     - Live answer distribution
-     - Real-time leaderboard
-     - Period countdown
-     - Visual effects
-     - Drop-out animations
 
 6. **Host App** (host-app)
    - Status: ❌ Not Started
@@ -100,14 +102,15 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
 │   ├── /admin-app         ✅ COMPLETE
 │   ├── /api-server        ✅ COMPLETE
 │   ├── /socket-server     ✅ COMPLETE
+│   ├── /projector-app     ✅ COMPLETE
 │   ├── /participant-app   ❌ NOT STARTED
-│   ├── /projector-app     ❌ NOT STARTED
 │   └── /host-app          ❌ NOT STARTED
 ├── /packages/
 │   ├── /types             ✅ COMPLETE (shared types)
 │   └── /ui-components     ❌ NOT STARTED (optional)
 └── /specs/
     ├── /001-api-server    ✅ Implemented
+    ├── /001-projector-app ✅ Implemented
     ├── /002-refinement    ✅ Implemented
     ├── /003-socket        ✅ Implemented
     └── /004-admin-app     ✅ Implemented
@@ -129,6 +132,7 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
 
 ### Test Coverage
 - **Admin App**: 35/35 tests passing (100%)
+- **Projector App**: 114/114 tests passing (100%)
 - **API Server**: 60/118 tests passing (51%) - Integration test technical debt
 - **Socket Server**: Full test coverage achieved
 - **Overall**: Core functionality fully tested
@@ -138,6 +142,10 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
   - Main bundle: 428 KB (gzipped: 117 KB)
   - Code-split routes implemented
   - Performance optimized
+- **Projector App**: ✅ Production build successful
+  - Total bundle: 636 KB (gzipped: 166 KB)
+  - Code-split vendor chunks (React, Firebase, Socket.io)
+  - Build time: 1.41s
 - **API Server**: ✅ Builds successfully
 - **Socket Server**: ✅ Builds successfully
 
@@ -152,61 +160,60 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
 
 ### Immediate Priorities
 
-1. **Merge Admin App PR**
-   - Review and merge `004-admin-app` branch
+1. **Merge Projector App PR**
+   - Review and merge `001-projector-app` branch
    - Close pull request
-   - Verify deployment to staging
+   - Verify production build and deployment
 
-2. **Participant App (High Priority)**
+2. **Participant App (HIGH PRIORITY - CRITICAL)**
    - **Why**: Core user experience component
    - **Impact**: Enables actual quiz participation
-   - **Dependencies**: Requires api-server and socket-server (both complete)
+   - **Dependencies**: ✅ api-server (complete), ✅ socket-server (complete)
    - **User**: Wedding guests (primary users)
+   - **Status**: Spec exists at specs/005-participant-app/
    - **Suggested Branch**: `005-participant-app`
 
-3. **Host App (High Priority)**
+3. **Host App (HIGH PRIORITY - CRITICAL)**
    - **Why**: Essential for game control
    - **Impact**: Enables hosts to run the quiz
-   - **Dependencies**: Requires api-server and socket-server (both complete)
+   - **Dependencies**: ✅ api-server (complete), ✅ socket-server (complete), ✅ projector-app (complete)
    - **User**: Newly-weds (game hosts)
+   - **Status**: Spec exists at specs/006-host-app/
    - **Suggested Branch**: `006-host-app`
-
-4. **Projector App (Medium Priority)**
-   - **Why**: Public display for audience engagement
-   - **Impact**: Creates TV show atmosphere
-   - **Dependencies**: Requires socket-server for real-time updates
-   - **User**: All attendees (viewing)
-   - **Suggested Branch**: `007-projector-app`
 
 ### Development Order Rationale
 
-**Recommended Order**: Participant → Host → Projector
+**Recommended Order**: Participant → Host
 
 **Reasoning**:
 1. **Participant App** should come first because:
-   - It's the core user-facing component
+   - It's the core user-facing component (CRITICAL for MVP)
    - Testing requires actual user interactions
    - Most complex client-side logic (time sync, answer submission)
    - Can be tested independently with emulators
+   - Host app can better test flow with active participants
 
 2. **Host App** should come second because:
    - Requires participant app to exist for meaningful testing
    - Game flow control needs active participants
    - Can trigger and validate participant interactions
+   - Completes the MVP (with projector-app already done)
 
-3. **Projector App** should come last because:
-   - Primarily displays data from other components
-   - Simpler than participant/host apps
-   - Can be fully tested once other components exist
-   - Less critical for MVP (can use admin dashboard temporarily)
+## 📋 Feature Specifications Status
 
-## 📋 Feature Specifications Needed
+### Completed Specs:
+- [X] Spec for API Server (001-api-server)
+- [X] Spec for Projector App (001-projector-app)
+- [X] Spec for API Server Refinement (002-api-server-refinement)
+- [X] Spec for Socket Server (003-socket-server)
+- [X] Spec for Admin App (004-admin-app)
+- [X] Spec for Participant App (005-participant-app)
+- [X] Spec for Host App (006-host-app)
+- [X] Spec for Ranking Display Logic (007-ranking-display-logic)
+- [X] Spec for E2E Playwright Tests (008-e2e-playwright-tests)
 
-### To Create Next:
-- [ ] Spec for Participant App (005)
-- [ ] Spec for Host App (006)
-- [ ] Spec for Projector App (007)
-- [ ] Spec for UI Components package (optional)
+### Optional:
+- [ ] Spec for UI Components package (shared components library)
 
 ## 🔧 Technical Debt
 
@@ -260,9 +267,9 @@ For a functional MVP, we need:
 3. ✅ Admin App (pre-event setup)
 4. ❌ Participant App (guest interaction) - **CRITICAL**
 5. ❌ Host App (game control) - **CRITICAL**
-6. ⚠️  Projector App (public display) - **OPTIONAL** for MVP
+6. ✅ Projector App (public display) - **COMPLETE**
 
-**MVP Completion**: Currently 3/5 critical components complete (60%)
+**MVP Completion**: Currently 4/6 components complete (67%)
 
 ## 🔮 Future Enhancements (Post-MVP)
 
@@ -279,24 +286,25 @@ For a functional MVP, we need:
 ## 📞 Contact & Contribution
 
 - **Repository**: https://github.com/tisayama/allstars
-- **Current Branch**: `004-admin-app`
-- **Active Pull Requests**: 1 (admin-app)
+- **Current Branch**: `001-projector-app`
+- **Active Pull Requests**: TBD
 
 ---
 
 ## Next Action Items
 
-1. ✅ Push admin-app branch to origin (DONE)
-2. ⏳ Review and merge admin-app PR
-3. ⏳ Create specification for participant-app (005)
-4. ⏳ Begin participant-app implementation
-5. ⏳ Create specification for host-app (006)
-6. ⏳ Create specification for projector-app (007)
+1. ✅ Push projector-app branch to origin
+2. ✅ Projector App implementation complete (DONE)
+3. ⏳ Review and merge projector-app PR
+4. ⏳ Begin participant-app implementation (specs/005-participant-app exists)
+5. ⏳ Begin host-app implementation (specs/006-host-app exists)
 
-**Current Focus**: Awaiting admin-app PR review and merge before proceeding to participant-app.
+**Current Focus**: Projector app complete. Next priority: Participant App or Host App implementation.
+
+**Recommended Next**: **Participant App** (critical user-facing component) or **Host App** (game control interface)
 
 ---
 
-**Last Updated**: 2025-11-03
-**Project Completion**: 50% (3/6 apps implemented)
-**MVP Completion**: 60% (3/5 critical components)
+**Last Updated**: 2025-11-05
+**Project Completion**: 67% (4/6 apps implemented)
+**MVP Completion**: 67% (4/6 components complete)
