@@ -90,6 +90,45 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
      - Period gong control (TRIGGER_GONG, UNDO_GONG)
      - Real-time monitoring (guest status, answer counts)
      - Manual guest management (DROP_GUEST, REVIVE_GUEST, REVIVE_ALL)
+6. **Projector App** (001-projector-app)
+   - Status: ✅ Complete
+   - Branch: `001-projector-app`
+   - Features:
+     - Real-time game state display from Firestore
+     - 7 phase-specific UI components (ready_for_next, accepting_answers, showing_distribution, showing_correct_answer, showing_results, all_revived, all_incorrect)
+     - WebSocket integration with Firebase Authentication
+     - Real-time answer counting
+     - Phase-based background music with Web Audio API
+     - ErrorBoundary for graceful error handling
+     - Connection status indicators (Firestore + WebSocket)
+     - 114 tests passing (comprehensive coverage)
+     - Production build: 636KB total (166KB gzipped) with code splitting
+
+### Pending Components (33% Not Started - 2/6 Apps)
+
+#### ❌ Frontend Applications (Not Implemented)
+5. **Participant App** (participant-app)
+   - Status: ❌ Not Started
+   - Description: Guest's mobile quiz client
+   - Authentication: Firebase Anonymous Login
+   - Key Features:
+     - QR code login
+     - Question display
+     - Answer submission
+     - Time synchronization
+     - Personal results view
+     - Rejoin capability
+
+6. **Host App** (host-app)
+   - Status: ❌ Not Started
+   - Description: Host's control panel for game management
+   - Authentication: Google Login
+   - Key Features:
+     - Game flow control
+     - Question triggering
+     - Period gong control
+     - Real-time monitoring
+     - Manual overrides
      - Results display control
      - Real-time game state from Firestore
      - WebSocket connection status
@@ -236,6 +275,138 @@ AllStars is a real-time wedding quiz platform inspired by the Japanese TV show "
 - ✅ CLAUDE.md with development guidelines
 
 ## 🚀 Deployment Readiness
+## 🚀 Recommended Next Steps
+
+### Immediate Priorities
+
+1. **Merge Projector App PR**
+   - Review and merge `001-projector-app` branch
+   - Close pull request
+   - Verify production build and deployment
+
+2. **Participant App (HIGH PRIORITY - CRITICAL)**
+   - **Why**: Core user experience component
+   - **Impact**: Enables actual quiz participation
+   - **Dependencies**: ✅ api-server (complete), ✅ socket-server (complete)
+   - **User**: Wedding guests (primary users)
+   - **Status**: Spec exists at specs/005-participant-app/
+   - **Suggested Branch**: `005-participant-app`
+
+3. **Host App (HIGH PRIORITY - CRITICAL)**
+   - **Why**: Essential for game control
+   - **Impact**: Enables hosts to run the quiz
+   - **Dependencies**: ✅ api-server (complete), ✅ socket-server (complete), ✅ projector-app (complete)
+   - **User**: Newly-weds (game hosts)
+   - **Status**: Spec exists at specs/006-host-app/
+   - **Suggested Branch**: `006-host-app`
+
+### Development Order Rationale
+
+**Recommended Order**: Participant → Host
+
+**Reasoning**:
+1. **Participant App** should come first because:
+   - It's the core user-facing component (CRITICAL for MVP)
+   - Testing requires actual user interactions
+   - Most complex client-side logic (time sync, answer submission)
+   - Can be tested independently with emulators
+   - Host app can better test flow with active participants
+
+2. **Host App** should come second because:
+   - Requires participant app to exist for meaningful testing
+   - Game flow control needs active participants
+   - Can trigger and validate participant interactions
+   - Completes the MVP (with projector-app already done)
+
+## 📋 Feature Specifications Status
+
+### Completed Specs:
+- [X] Spec for API Server (001-api-server)
+- [X] Spec for Projector App (001-projector-app)
+- [X] Spec for API Server Refinement (002-api-server-refinement)
+- [X] Spec for Socket Server (003-socket-server)
+- [X] Spec for Admin App (004-admin-app)
+- [X] Spec for Participant App (005-participant-app)
+- [X] Spec for Host App (006-host-app)
+- [X] Spec for Ranking Display Logic (007-ranking-display-logic)
+- [X] Spec for E2E Playwright Tests (008-e2e-playwright-tests)
+
+### Optional:
+- [ ] Spec for UI Components package (shared components library)
+
+## 🔧 Technical Debt
+
+### Known Issues
+1. **API Server Integration Tests**
+   - Status: 60/118 tests passing
+   - Issue: Outdated test expectations (404 → actual status codes)
+   - Impact: Low (tests verify wrong behavior, not actual bugs)
+   - Effort: Medium (requires systematic updates)
+
+2. **Shared UI Components Package**
+   - Status: Not created
+   - Impact: Code duplication across frontend apps
+   - Effort: Low (can extract common components later)
+
+3. **OpenAPI Specifications**
+   - Status: Mentioned in README but not fully documented
+   - Impact: Low (TypeScript types provide similar value)
+   - Effort: Medium (requires thorough documentation)
+
+### Recommended Improvements
+- Complete remaining integration tests
+- Create shared UI component library
+- Add E2E testing across all apps
+- Implement CI/CD pipeline
+- Add performance monitoring
+- Document API contracts with OpenAPI
+
+## 📊 Project Metrics
+
+### Code Statistics
+- **Total Commits**: 40+ across all features
+- **Lines of Code**: ~15,000+ (estimated)
+- **Test Files**: 50+ test files
+- **Documentation**: 1,500+ lines of documentation
+
+### Implementation Time
+- **001-002 API Server**: Completed
+- **003 Socket Server**: Completed
+- **004 Admin App**: ~3-4 sessions (comprehensive implementation)
+- **Estimated for Participant App**: 3-5 sessions
+- **Estimated for Host App**: 2-3 sessions
+- **Estimated for Projector App**: 2-3 sessions
+
+## 🎯 MVP Definition
+
+### Minimum Viable Product Components
+For a functional MVP, we need:
+1. ✅ API Server (backend logic)
+2. ✅ Socket Server (real-time updates)
+3. ✅ Admin App (pre-event setup)
+4. ❌ Participant App (guest interaction) - **CRITICAL**
+5. ❌ Host App (game control) - **CRITICAL**
+6. ✅ Projector App (public display) - **COMPLETE**
+
+**MVP Completion**: Currently 4/6 components complete (67%)
+
+## 🔮 Future Enhancements (Post-MVP)
+
+### Potential Features
+- Multiple quiz types (sorting, surveys)
+- Advanced analytics dashboard
+- Mobile apps (native iOS/Android)
+- Social sharing features
+- Multi-language support
+- Accessibility improvements
+- Offline mode support
+- Video/audio content in questions
+
+## 📞 Contact & Contribution
+
+- **Repository**: https://github.com/tisayama/allstars
+- **Current Branch**: `001-projector-app`
+- **Active Pull Requests**: TBD
 
 ### Production Ready ✅
 

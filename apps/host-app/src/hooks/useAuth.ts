@@ -83,22 +83,19 @@ export function useAuth(): UseAuthReturn {
   /**
    * Convert Firebase User to HostUser with token
    */
-  const createHostUser = useCallback(
-    async (firebaseUser: FirebaseUser): Promise<HostUser> => {
-      const idToken = await firebaseUser.getIdToken();
-      const tokenResult = await firebaseUser.getIdTokenResult();
-      const expirationTime = new Date(tokenResult.expirationTime).getTime();
+  const createHostUser = useCallback(async (firebaseUser: FirebaseUser): Promise<HostUser> => {
+    const idToken = await firebaseUser.getIdToken();
+    const tokenResult = await firebaseUser.getIdTokenResult();
+    const expirationTime = new Date(tokenResult.expirationTime).getTime();
 
-      return {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        displayName: firebaseUser.displayName,
-        idToken,
-        tokenExpiresAt: expirationTime,
-      };
-    },
-    []
-  );
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email || '',
+      displayName: firebaseUser.displayName,
+      idToken,
+      tokenExpiresAt: expirationTime,
+    };
+  }, []);
 
   /**
    * Check if token needs refresh (within 5 minutes of expiry)
@@ -223,17 +220,14 @@ export function useAuth(): UseAuthReturn {
     }
 
     // Set up interval to check token expiry every minute
-    const interval = setInterval(
-      () => {
-        if (shouldRefreshToken(user.tokenExpiresAt)) {
-          const currentUser = auth.currentUser;
-          if (currentUser) {
-            refreshToken(currentUser);
-          }
+    const interval = setInterval(() => {
+      if (shouldRefreshToken(user.tokenExpiresAt)) {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          refreshToken(currentUser);
         }
-      },
-      60 * 1000
-    ); // Check every minute
+      }
+    }, 60 * 1000); // Check every minute
 
     return () => clearInterval(interval);
   }, [user, shouldRefreshToken, refreshToken]);

@@ -131,7 +131,7 @@ describe("Admin Quiz Management Integration Tests", () => {
         .send(newQuestion);
 
       expect(createResponse.status).toBe(201);
-      expect(createResponse.body).toHaveProperty('id', 'question-1');
+      expect(createResponse.body).toHaveProperty("id", "question-1");
 
       // Step 2: List questions
       mockGet.mockResolvedValueOnce({
@@ -173,7 +173,7 @@ describe("Admin Quiz Management Integration Tests", () => {
         .send(updateData);
 
       expect(updateResponse.status).toBe(200);
-      expect(updateResponse.body.text).toBe('What is 2 + 2? (Updated)');
+      expect(updateResponse.body.text).toBe("What is 2 + 2? (Updated)");
 
       // Step 4: Verify duplicate rejection
       const duplicateQuestion = {
@@ -204,7 +204,7 @@ describe("Admin Quiz Management Integration Tests", () => {
         .send(duplicateQuestion);
 
       expect(duplicateResponse.status).toBe(409);
-      expect(duplicateResponse.body.code).toBe('DUPLICATE_ERROR');
+      expect(duplicateResponse.body.code).toBe("DUPLICATE_ERROR");
     });
 
     it("should reject duplicate period + questionNumber combination", async () => {
@@ -239,9 +239,9 @@ describe("Admin Quiz Management Integration Tests", () => {
         .send(duplicateQuestion);
 
       expect(response.status).toBe(409);
-      expect(response.body.code).toBe('DUPLICATE_ERROR');
-      expect(response.body.message).toContain('period');
-      expect(response.body.message).toContain('question number');
+      expect(response.body.code).toBe("DUPLICATE_ERROR");
+      expect(response.body.message).toContain("period");
+      expect(response.body.message).toContain("question number");
     });
   });
 
@@ -311,7 +311,7 @@ describe("Admin Quiz Management Integration Tests", () => {
         .send(invalidQuestion);
 
       expect(response.status).toBe(400);
-      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.code).toBe("VALIDATION_ERROR");
       expect(response.body.details).toBeDefined();
     });
 

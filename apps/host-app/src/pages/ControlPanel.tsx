@@ -68,9 +68,7 @@ export function ControlPanel(): ReactElement {
                 Connect
               </button>
             </div>
-            <p className={styles.hint}>
-              Enter a game session ID to view real-time state updates
-            </p>
+            <p className={styles.hint}>Enter a game session ID to view real-time state updates</p>
           </div>
         ) : (
           <div className={styles.gameStateSection}>
@@ -112,7 +110,9 @@ export function ControlPanel(): ReactElement {
 
                 <div className={styles.stateCard}>
                   <h3>Gong Status</h3>
-                  <p className={styles.gongValue}>{gameState.isGongActive ? 'Active' : 'Inactive'}</p>
+                  <p className={styles.gongValue}>
+                    {gameState.isGongActive ? 'Active' : 'Inactive'}
+                  </p>
                 </div>
 
                 {gameState.participantCount !== undefined && (

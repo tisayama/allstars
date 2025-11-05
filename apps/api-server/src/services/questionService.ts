@@ -8,6 +8,7 @@ import { COLLECTIONS } from "../models/firestoreCollections";
 import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
 import { DuplicateError, NotFoundError } from "../utils/errors";
+import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * Create a new quiz question
@@ -51,12 +52,12 @@ export async function createQuestion(
   }
 
   // Create the question with deadline as Firestore Timestamp
-  const deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
+  const deadline = Timestamp.fromDate(new Date(data.deadline));
   const questionRef = await db.collection(COLLECTIONS.QUESTIONS).add({
     period: data.period,
     questionNumber: data.questionNumber,
     type: data.type,
-    text: data.text,
+    questionText: (data as any).questionText || (data as any).text, // Support both old and new field names
     choices: data.choices,
     correctAnswer: data.correctAnswer,
     skipAttributes: data.skipAttributes || [],
@@ -65,11 +66,16 @@ export async function createQuestion(
 
   // Return the created question
   return {
-    id: questionRef.id,
-    ...data,
-    skipAttributes: data.skipAttributes || [],
+    questionId: questionRef.id,
+    questionText: (data as any).questionText || (data as any).text,
+    choices: (data as any).choices,
+    period: (data as any).period,
+    questionNumber: (data as any).questionNumber,
+    type: (data as any).type,
+    correctAnswer: (data as any).correctAnswer,
+    skipAttributes: (data as any).skipAttributes || [],
     deadline,
-  };
+  } as Question;
 }
 
 /**
@@ -90,14 +96,15 @@ export async function listQuestions(): Promise<Question[]> {
   return snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
-      id: doc.id,
+      questionId: doc.id,
       period: data.period,
       questionNumber: data.questionNumber,
       type: data.type,
-      text: data.text,
+      questionText: data.questionText || data.text, // Support both old and new field names
       choices: data.choices,
       correctAnswer: data.correctAnswer,
       skipAttributes: data.skipAttributes || [],
+      deadline: data.deadline,
     } as Question;
   });
 }
@@ -125,16 +132,22 @@ export async function updateQuestion(
   const currentData = questionDoc.data() as Question;
 
   // Validate that correctAnswer matches one of the choices
-  const updatedChoices = data.choices || currentData.choices;
-  const updatedCorrectAnswer = data.correctAnswer || currentData.correctAnswer;
+  const updatedChoices = (data as any).choices || currentData.choices;
+  const updatedCorrectAnswer =
+    (data as any).correctAnswer || currentData.correctAnswer;
 
-  if (!updatedChoices.includes(updatedCorrectAnswer)) {
-    throw new DuplicateError("Correct answer must be one of the choices", [
-      {
-        field: "correctAnswer",
-        message: `"${updatedCorrectAnswer}" is not in the choices list`,
-      },
-    ]);
+  if (Array.isArray(updatedChoices) && updatedChoices.length > 0) {
+    const choiceTexts = updatedChoices.map((choice: any) =>
+      typeof choice === "string" ? choice : choice.text
+    );
+    if (!choiceTexts.includes(updatedCorrectAnswer)) {
+      throw new DuplicateError("Correct answer must be one of the choices", [
+        {
+          field: "correctAnswer",
+          message: `"${updatedCorrectAnswer}" is not in the choices list`,
+        },
+      ]);
+    }
   }
 
   // Update the question
@@ -148,7 +161,7 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = admin.firestore.Timestamp.fromDate(
+    updateData.deadline = Timestamp.fromDate(
       new Date(data.deadline)
     );
   }
@@ -159,9 +172,21 @@ export async function updateQuestion(
   const updatedDoc = await questionRef.get();
   const updatedData = updatedDoc.data();
 
+  if (!updatedData) {
+    throw new NotFoundError("Question not found after update", []);
+  }
+
   return {
-    ...updatedData,
-    id: questionId,
+    questionId: questionId,
+    questionText:
+      (updatedData as any).questionText || (updatedData as any).text,
+    choices: (updatedData as any).choices,
+    period: (updatedData as any).period,
+    questionNumber: (updatedData as any).questionNumber,
+    type: (updatedData as any).type,
+    correctAnswer: (updatedData as any).correctAnswer,
+    skipAttributes: (updatedData as any).skipAttributes || [],
+    deadline: (updatedData as any).deadline,
   } as Question;
 }
 
@@ -181,8 +206,19 @@ export async function getQuestionById(
   }
 
   const data = questionDoc.data();
+  if (!data) {
+    return null;
+  }
+
   return {
-    id: questionDoc.id,
-    ...data,
+    questionId: questionDoc.id,
+    questionText: (data as any).questionText || (data as any).text, // Support both old and new field names
+    choices: (data as any).choices,
+    period: (data as any).period,
+    questionNumber: (data as any).questionNumber,
+    type: (data as any).type,
+    correctAnswer: (data as any).correctAnswer,
+    skipAttributes: (data as any).skipAttributes || [],
+    deadline: (data as any).deadline,
   } as Question;
 }

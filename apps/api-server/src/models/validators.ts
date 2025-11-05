@@ -94,3 +94,78 @@ export const GameActionSchema = z.object({
 });
 
 export type GameActionInput = z.infer<typeof GameActionSchema>;
+
+/**
+ * Schema for ranked answer entry (Top 10 / Worst 10 rankings)
+ */
+export const RankedAnswerSchema = z.object({
+  guestId: z.string().min(1, "Guest ID is required"),
+  guestName: z.string().min(1, "Guest name is required"),
+  responseTimeMs: z
+    .number()
+    .int()
+    .min(0, "Response time cannot be negative")
+    .max(300000, "Response time cannot exceed 5 minutes"),
+});
+
+export type RankedAnswerData = z.infer<typeof RankedAnswerSchema>;
+
+/**
+ * Schema for game results (rankings displayed after each question)
+ * Validates both required fields and optional period championship fields
+ */
+export const GameResultsSchema = z
+  .object({
+    /** Top 10 fastest correct answers (ascending order by responseTimeMs) */
+    top10: z.array(RankedAnswerSchema),
+
+    /** Worst 10 slowest correct answers (descending order by responseTimeMs) */
+    worst10: z.array(RankedAnswerSchema),
+
+    /**
+     * Participant IDs of period champions (fastest on period-final questions)
+     * Optional field, present only when isGongActive is true
+     */
+    periodChampions: z.array(z.string().min(1)).optional(),
+
+    /**
+     * Period identifier for these results
+     * Optional field, present only when isGongActive is true
+     */
+    period: z.enum(["first-half", "second-half", "overtime"]).optional(),
+
+    /**
+     * True if ranking calculation failed after all retry attempts
+     * When true, top10 and worst10 should be empty arrays
+     */
+    rankingError: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      // If rankingError is true, top10 and worst10 must be empty
+      if (data.rankingError === true) {
+        return data.top10.length === 0 && data.worst10.length === 0;
+      }
+      return true;
+    },
+    {
+      message:
+        "When rankingError is true, top10 and worst10 must be empty arrays",
+      path: ["rankingError"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If periodChampions exists, period must also exist
+      if (data.periodChampions && data.periodChampions.length > 0) {
+        return data.period !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Period field is required when periodChampions are designated",
+      path: ["period"],
+    }
+  );
+
+export type GameResultsData = z.infer<typeof GameResultsSchema>;

@@ -102,14 +102,11 @@ export function useGameState(sessionId: string): UseGameStateReturn {
   /**
    * Handle listener errors
    */
-  const handleError = useCallback(
-    (err: Error) => {
-      logger.firestore.listenerError(err);
-      setError(err);
-      setIsLoading(false);
-    },
-    []
-  );
+  const handleError = useCallback((err: Error) => {
+    logger.firestore.listenerError(err);
+    setError(err);
+    setIsLoading(false);
+  }, []);
 
   /**
    * Set up Firestore listener
