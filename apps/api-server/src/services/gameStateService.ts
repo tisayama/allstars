@@ -446,22 +446,27 @@ export async function getCurrentGameState(): Promise<GameState> {
     .doc(GAME_STATE_DOC_ID)
     .get();
 
+  // Default initial state
+  const defaultState: GameState = {
+    id: GAME_STATE_DOC_ID,
+    currentPhase: "ready_for_next",
+    currentQuestion: null,
+    isGongActive: false,
+    lastUpdate: Timestamp.now(),
+    results: null,
+    prizeCarryover: 0,
+  };
+
   if (!gameStateDoc.exists) {
-    // Return default initial state
-    return {
-      id: GAME_STATE_DOC_ID,
-      currentPhase: "ready_for_next",
-      currentQuestion: null,
-      isGongActive: false,
-      lastUpdate: Timestamp.now(),
-      results: null,
-      prizeCarryover: 0,
-    };
+    return defaultState;
   }
 
+  // Merge existing data with defaults to ensure all required fields exist
+  const existingData = gameStateDoc.data() || {};
   return {
+    ...defaultState,
+    ...existingData,
     id: gameStateDoc.id,
-    ...gameStateDoc.data(),
   } as GameState;
 }
 
