@@ -9,7 +9,6 @@ import { sendHostActionWithRetry, ApiError } from '@/lib/api-client';
 import type { HostAction, HostActionRequest, GamePhase } from '@allstars/types';
 
 interface UseHostActionsOptions {
-  sessionId: string;
   currentPhase: GamePhase | null;
 }
 
@@ -47,7 +46,6 @@ function isActionAllowed(action: HostAction, currentPhase: GamePhase | null): bo
  * Integrates with authentication and validates actions against current phase
  */
 export function useHostActions({
-  sessionId,
   currentPhase,
 }: UseHostActionsOptions): UseHostActionsReturn {
   const { user } = useAuth();
@@ -62,11 +60,6 @@ export function useHostActions({
       if (!user?.idToken) {
         setError('Not authenticated');
         throw new Error('Not authenticated');
-      }
-
-      if (!sessionId) {
-        setError('No session connected');
-        throw new Error('No session connected');
       }
 
       // Validate action is allowed in current phase
@@ -85,7 +78,7 @@ export function useHostActions({
           payload,
         };
 
-        await sendHostActionWithRetry(sessionId, request, user.idToken);
+        await sendHostActionWithRetry(request, user.idToken);
 
         // Clear error on success
         setError(null);
@@ -99,7 +92,7 @@ export function useHostActions({
         setIsLoading(false);
       }
     },
-    [user, sessionId, currentPhase]
+    [user, currentPhase]
   );
 
   // Compute which actions are currently allowed

@@ -9,7 +9,8 @@ import { firestore } from '@/lib/firebase';
 import { logger } from '@/lib/logger';
 import type { GameState } from '@allstars/types';
 
-const GAME_SESSIONS_COLLECTION = 'game-sessions';
+const GAME_STATE_COLLECTION = 'gameState';
+const GAME_STATE_DOC_ID = 'live';
 
 interface UseGameStateReturn {
   gameState: GameState | null;
@@ -41,8 +42,9 @@ function validateGameState(data: unknown): data is GameState {
 /**
  * Custom hook for real-time game state from Firestore
  * Provides live updates, error handling, and reconnection logic
+ * Connects to singleton gameState/live document (consistent with API server)
  */
-export function useGameState(sessionId: string): UseGameStateReturn {
+export function useGameState(): UseGameStateReturn {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -57,7 +59,7 @@ export function useGameState(sessionId: string): UseGameStateReturn {
     (snapshot: DocumentSnapshot) => {
       try {
         if (!snapshot.exists()) {
-          setError(new Error('Game session not found'));
+          setError(new Error('Game state document not found'));
           setGameState(null);
           setIsLoading(false);
           return;
@@ -91,12 +93,12 @@ export function useGameState(sessionId: string): UseGameStateReturn {
         setIsLoading(false);
       } catch (err) {
         const error = err as Error;
-        logger.error(error, { context: 'handleSnapshot', sessionId });
+        logger.error(error, { context: 'handleSnapshot' });
         setError(error);
         setIsLoading(false);
       }
     },
-    [error, sessionId]
+    [error]
   );
 
   /**
@@ -112,29 +114,22 @@ export function useGameState(sessionId: string): UseGameStateReturn {
    * Set up Firestore listener
    */
   useEffect(() => {
-    // Validate session ID
-    if (!sessionId || sessionId.trim() === '') {
-      setError(new Error('Session ID required'));
-      setIsLoading(false);
-      return;
-    }
-
-    // Reset state when session changes
+    // Reset state on mount
     setIsLoading(true);
     setError(null);
     setGameState(null);
     previousPhaseRef.current = null;
 
-    const sessionRef = doc(firestore, GAME_SESSIONS_COLLECTION, sessionId);
+    const gameStateRef = doc(firestore, GAME_STATE_COLLECTION, GAME_STATE_DOC_ID);
 
     // Set up real-time listener
-    const unsubscribe = onSnapshot(sessionRef, handleSnapshot, handleError);
+    const unsubscribe = onSnapshot(gameStateRef, handleSnapshot, handleError);
 
-    // Cleanup on unmount or session change
+    // Cleanup on unmount
     return () => {
       unsubscribe();
     };
-  }, [sessionId, handleSnapshot, handleError]);
+  }, [handleSnapshot, handleError]);
 
   return {
     gameState,
