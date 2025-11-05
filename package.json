@@ -4,6 +4,7 @@
   "private": true,
   "description": "AllStars wedding quiz game platform monorepo",
   "scripts": {
+    "dev": "concurrently -n admin,host,participant,socket,firebase -c bgBlue,bgMagenta,bgGreen,bgYellow,bgRed \"pnpm --filter @allstars/admin-app dev\" \"pnpm --filter @allstars/host-app dev\" \"pnpm --filter @allstars/participant-app dev\" \"pnpm --filter @allstars/socket-server dev\" \"firebase emulators:start --import=./emulator-data --export-on-exit\"",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
@@ -17,6 +18,7 @@
     "@playwright/test": "^1.56.1",
     "@types/node": "^18.19.3",
     "@vitest/coverage-v8": "^4.0.6",
+    "concurrently": "^9.2.1",
     "firebase-admin": "^13.5.0",
     "firebase-tools": "^12.9.1",
     "vitest": "^4.0.6"
