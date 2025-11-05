@@ -16,12 +16,7 @@ const app = express();
 // CORS middleware - allow requests from localhost apps
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // participant-app
-      "http://localhost:5174", // host-app
-      "http://localhost:5175", // projector-app
-      "http://localhost:5176", // admin-app
-    ],
+    origin: "*",
     credentials: true,
   })
 );
