@@ -1,0 +1,149 @@
+/**
+ * TestDataSeeder - Seed Firestore emulator with test data
+ * Feature: 008-e2e-playwright-tests
+ *
+ * Uses Firebase Admin SDK to create test data with collection prefixes
+ */
+
+import * as admin from 'firebase-admin';
+import type { TestQuestion, TestGuest, TestGameState } from '../fixtures';
+import { randomUUID } from 'crypto';
+
+export interface SeededGuest {
+  /** Firestore document ID */
+  guestId: string;
+  /** Join token for authentication */
+  joinToken: string;
+  /** Full join URL with token */
+  joinUrl: string;
+}
+
+export class TestDataSeeder {
+  private db: admin.firestore.Firestore;
+
+  constructor() {
+    // Initialize Firebase Admin if not already initialized
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        projectId: 'test',
+      });
+    }
+
+    this.db = admin.firestore();
+  }
+
+  /**
+   * Seed Firestore with test questions
+   * @param questions - Array of test questions
+   * @param collectionPrefix - Collection prefix for isolation
+   * @returns Array of created question IDs
+   */
+  async seedQuestions(
+    questions: TestQuestion[],
+    collectionPrefix: string
+  ): Promise<string[]> {
+    const collectionName = `${collectionPrefix}questions`;
+    const questionIds: string[]= [];
+
+    for (const question of questions) {
+      const { testId, description, ...questionData } = question;
+
+      // Generate unique question ID
+      const questionId = `question-${questionData.questionNumber}`;
+
+      await this.db
+        .collection(collectionName)
+        .doc(questionId)
+        .set({
+          ...questionData,
+          questionId,
+        });
+
+      questionIds.push(questionId);
+    }
+
+    return questionIds;
+  }
+
+  /**
+   * Seed Firestore with test guests
+   * @param guests - Array of test guests
+   * @param collectionPrefix - Collection prefix for isolation
+   * @returns Array of created guest IDs with join tokens
+   */
+  async seedGuests(
+    guests: TestGuest[],
+    collectionPrefix: string
+  ): Promise<SeededGuest[]> {
+    const collectionName = `${collectionPrefix}guests`;
+    const seededGuests: SeededGuest[] = [];
+
+    for (const guest of guests) {
+      const { testId, description, ...guestData } = guest;
+
+      // Generate unique guest ID and join token
+      const guestId = randomUUID();
+      const joinToken = randomUUID();
+
+      await this.db
+        .collection(collectionName)
+        .doc(guestId)
+        .set({
+          ...guestData,
+          id: guestId,
+        });
+
+      // Store join token mapping (for authentication flow)
+      await this.db
+        .collection(`${collectionPrefix}joinTokens`)
+        .doc(joinToken)
+        .set({
+          guestId,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      seededGuests.push({
+        guestId,
+        joinToken,
+        joinUrl: `http://localhost:5173/join?token=${joinToken}`,
+      });
+    }
+
+    return seededGuests;
+  }
+
+  /**
+   * Set initial game state in Firestore
+   * @param gameState - Initial game state
+   * @param collectionPrefix - Collection prefix for isolation
+   */
+  async seedGameState(
+    gameState: TestGameState,
+    collectionPrefix: string
+  ): Promise<void> {
+    const collectionName = `${collectionPrefix}gameState`;
+    const { testId, description, ...gameStateData } = gameState;
+
+    // GameState is typically a singleton document
+    await this.db.collection(collectionName).doc('current').set(gameStateData);
+  }
+
+  /**
+   * Clear all test data for a specific collection prefix
+   * @param collectionPrefix - Collection prefix to clear
+   */
+  async clearTestData(collectionPrefix: string): Promise<void> {
+    const collections = await this.db.listCollections();
+
+    // Filter collections that start with the test prefix
+    const testCollections = collections.filter((col) =>
+      col.id.startsWith(collectionPrefix)
+    );
+
+    // Delete all documents in matching collections
+    for (const collection of testCollections) {
+      const snapshot = await collection.get();
+      await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
+    }
+  }
+}

@@ -8,6 +8,7 @@ import { COLLECTIONS } from "../models/firestoreCollections";
 import { CreateQuestionInput, UpdateQuestionInput } from "../models/validators";
 import { Question } from "@allstars/types";
 import { DuplicateError, NotFoundError } from "../utils/errors";
+import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * Create a new quiz question
@@ -51,7 +52,7 @@ export async function createQuestion(
   }
 
   // Create the question with deadline as Firestore Timestamp
-  const deadline = admin.firestore.Timestamp.fromDate(new Date(data.deadline));
+  const deadline = Timestamp.fromDate(new Date(data.deadline));
   const questionRef = await db.collection(COLLECTIONS.QUESTIONS).add({
     period: data.period,
     questionNumber: data.questionNumber,
@@ -160,7 +161,7 @@ export async function updateQuestion(
   };
 
   if (data.deadline) {
-    updateData.deadline = admin.firestore.Timestamp.fromDate(
+    updateData.deadline = Timestamp.fromDate(
       new Date(data.deadline)
     );
   }

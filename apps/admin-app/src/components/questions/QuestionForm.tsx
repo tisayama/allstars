@@ -54,6 +54,18 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
         },
   });
 
+  // Convert datetime-local format to ISO 8601 before submitting
+  const handleFormSubmit = async (data: QuestionFormData) => {
+    const isoDeadline = data.deadline.includes('.')
+      ? data.deadline  // Already in ISO format
+      : `${data.deadline}:00.000Z`;  // Add seconds and timezone
+
+    await onSubmit({
+      ...data,
+      deadline: isoDeadline,
+    });
+  };
+
   const choices = watch('choices');
 
   const addChoice = () => {
@@ -72,7 +84,7 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Period */}
       <div>
         <label htmlFor="period" className="block text-sm font-medium text-gray-700 mb-1">

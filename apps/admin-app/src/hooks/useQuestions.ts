@@ -27,8 +27,22 @@ export function useQuestions(): UseQuestionsResult {
       setLoading(true);
       setError(null);
 
-      const response = await api.get<{ questions: Question[] }>('/admin/quizzes');
-      setQuestions(response.questions || []);
+      const response = await api.get<{ questions: any[] }>('/admin/quizzes');
+      // Map API response to admin-app format
+      const mappedQuestions = (response.questions || []).map((q: any) => ({
+        id: q.questionId,
+        period: q.period,
+        questionNumber: q.questionNumber,
+        type: q.type,
+        text: q.questionText || q.text,
+        choices: Array.isArray(q.choices)
+          ? q.choices.map((c: any) => typeof c === 'string' ? c : c.text)
+          : [],
+        correctAnswer: q.correctAnswer,
+        skipAttributes: q.skipAttributes || [],
+        deadline: q.deadline,
+      }));
+      setQuestions(mappedQuestions as Question[]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch questions';
       setError(errorMessage);
@@ -43,9 +57,23 @@ export function useQuestions(): UseQuestionsResult {
       setLoading(true);
       setError(null);
 
-      const response = await api.post<Question>('/admin/quizzes', data);
-      setQuestions((prev) => [...prev, response]);
-      return response;
+      const response = await api.post<any>('/admin/quizzes', data);
+      // Map API response to admin-app format
+      const mappedQuestion = {
+        id: response.questionId,
+        period: response.period,
+        questionNumber: response.questionNumber,
+        type: response.type,
+        text: response.questionText || response.text,
+        choices: Array.isArray(response.choices)
+          ? response.choices.map((c: any) => typeof c === 'string' ? c : c.text)
+          : [],
+        correctAnswer: response.correctAnswer,
+        skipAttributes: response.skipAttributes || [],
+        deadline: response.deadline,
+      } as Question;
+      setQuestions((prev) => [...prev, mappedQuestion]);
+      return mappedQuestion;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create question';
       setError(errorMessage);
@@ -60,11 +88,25 @@ export function useQuestions(): UseQuestionsResult {
       setLoading(true);
       setError(null);
 
-      const response = await api.put<Question>(`/admin/quizzes/${id}`, data);
+      const response = await api.put<any>(`/admin/quizzes/${id}`, data);
+      // Map API response to admin-app format
+      const mappedQuestion = {
+        id: response.questionId,
+        period: response.period,
+        questionNumber: response.questionNumber,
+        type: response.type,
+        text: response.questionText || response.text,
+        choices: Array.isArray(response.choices)
+          ? response.choices.map((c: any) => typeof c === 'string' ? c : c.text)
+          : [],
+        correctAnswer: response.correctAnswer,
+        skipAttributes: response.skipAttributes || [],
+        deadline: response.deadline,
+      } as Question;
       setQuestions((prev) =>
-        prev.map((q) => (q.id === id ? response : q))
+        prev.map((q) => (q.id === id ? mappedQuestion : q))
       );
-      return response;
+      return mappedQuestion;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update question';
       setError(errorMessage);

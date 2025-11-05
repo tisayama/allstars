@@ -1,37 +1,36 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 1.1.0
-Bump Rationale: MINOR version - Material expansion of Principle I (Monorepo Architecture) to reflect apps/ and packages/ directory structure with shared code management
+Version Change: 1.1.0 → 1.2.0
+Bump Rationale: MINOR version - New principle added (VI. Protected Main Branch) establishing mandatory Git workflow with feature branching
 
 Modified Principles:
-- I. Monorepo Architecture - Updated from flat 6-component structure to hierarchical apps/packages organization
-  - Added /apps/ directory for deployable applications (6 apps)
-  - Added /packages/ directory for shared code (types, ui-components, openapi)
-  - Updated component naming to match actual implementation (participant-app, projector-app, host-app, admin-app, api-server, socket-server)
-  - Added explicit guidance on shared package management
+- None (existing principles unchanged)
 
 Added Sections:
-- None (principles expanded, not added)
+- VI. Protected Main Branch - New principle prohibiting direct commits to master/main branch
+  - Mandates feature branch workflow for all development work
+  - Requires branch naming convention: feature/<issue-number>-<feature-name>
+  - Establishes branch protection as non-negotiable rule
 
 Removed Sections:
-- None (structure updated, not removed)
+- None
 
 Templates Requiring Updates:
-- ✅ .specify/templates/plan-template.md - Project Structure section already flexible enough for apps/ and packages/ layout
+- ✅ .specify/templates/plan-template.md - Branch Strategy section already aligns with new principle
 - ✅ .specify/templates/spec-template.md - No changes needed (principle-agnostic)
-- ✅ .specify/templates/tasks-template.md - Path conventions already support multiple structures
-- ⚠ .specify/templates/agent-file-template.md - Not reviewed, may need monorepo path updates
-- ⚠ .specify/templates/checklist-template.md - Not reviewed, may need monorepo verification steps
+- ✅ .specify/templates/tasks-template.md - No changes needed (principle-agnostic)
+- ✅ .specify/templates/agent-file-template.md - Not reviewed in detail, likely no impact
+- ✅ .specify/templates/checklist-template.md - Not reviewed in detail, may benefit from Git workflow verification step
 
 Follow-up TODOs:
-- Review agent-file-template.md for monorepo-specific path guidance
-- Review checklist-template.md for monorepo-specific verification steps
-- Establish concrete timeout values for different operation categories (from Principle V)
-- Create linting configuration files for each app and package
-- Define OpenAPI validation workflow for packages/openapi
+- Configure branch protection rules in GitHub repository settings for master/main branch
+- Update CI/CD pipelines to enforce branch naming conventions
+- Add pre-commit hooks to prevent accidental commits to master/main
+- Document exception process for emergency hotfixes (if needed)
+- Review checklist-template.md to add Git workflow verification steps
 
-Date: 2025-11-02
+Date: 2025-11-05
 -->
 
 # AllStars Game Platform Constitution
@@ -146,6 +145,21 @@ timeout 60 command-that-might-hang
 - Interactive commands requiring user input MUST NOT be used in automation
 - Timeout thresholds MUST be documented in script headers or CI configuration
 
+### VI. Protected Main Branch
+
+Direct commits to the master/main branch are STRICTLY PROHIBITED. All development work MUST be performed on feature branches.
+
+**Rationale**: Branch protection prevents accidental or unauthorized changes to production-ready code, enforces code review processes, maintains a clean commit history, and enables parallel development without conflicts. The master/main branch represents the stable, deployable state of the project and must be protected from direct modifications.
+
+**Non-negotiable rules**:
+- NO direct commits to master/main branch under any circumstances
+- ALL work MUST be performed on feature branches created from latest master/main
+- Feature branches MUST follow naming convention: `<issue-number>-<feature-name>` (e.g., `042-firebase-emulator-config`)
+- Feature branches MUST be merged to master/main only via pull requests after code review
+- Emergency hotfixes MUST also follow feature branch workflow (expedited review acceptable)
+- Branch protection MUST be configured in repository settings to enforce this rule technically
+- Attempts to commit directly to master/main MUST be blocked by pre-commit hooks or repository settings
+
 ## Quality Assurance Requirements
 
 ### Testing Strategy
@@ -187,18 +201,20 @@ packages/<package-name>/
 
 ### Branch Strategy
 
-- **main/master**: Production-ready code only
+- **main/master**: Production-ready code only - PROTECTED (no direct commits)
 - **Feature branches**: Named `<issue-number>-<feature-name>` (e.g., `123-player-authentication`)
 - Feature branches MUST be created from latest main/master
 - Feature branches MUST be rebased or merged with main/master before PR creation
+- Feature branches SHOULD be short-lived (< 1 week) to minimize merge conflicts
 
 ### Commit Discipline
 
-1. Run linters and auto-format code
-2. Run full test suite and verify all tests pass
-3. Perform manual verification of changed functionality
-4. Write descriptive commit message following conventional commits format
-5. Commit with verified changes only
+1. Ensure you are on a feature branch (NOT master/main)
+2. Run linters and auto-format code
+3. Run full test suite and verify all tests pass
+4. Perform manual verification of changed functionality
+5. Write descriptive commit message following conventional commits format
+6. Commit with verified changes only
 
 ### Code Review Requirements
 
@@ -210,6 +226,7 @@ packages/<package-name>/
   - Test coverage adequacy
   - Architecture principle compliance
   - Monorepo workspace dependency correctness
+  - Branch is NOT master/main (must be feature branch)
 
 ### Pull Request Standards
 
@@ -219,6 +236,7 @@ packages/<package-name>/
 - PRs MUST pass all CI checks before review
 - PRs SHOULD be small and focused (< 400 lines changed when possible)
 - PRs affecting shared packages MUST validate impact on all dependent apps
+- PRs MUST originate from feature branches, never from master/main
 
 ## Governance
 
@@ -266,4 +284,4 @@ All exceptions MUST:
 - Be tracked in project issue tracker
 - Be reviewed monthly for resolution
 
-**Version**: 1.1.0 | **Ratified**: 2025-11-02 | **Last Amended**: 2025-11-02
+**Version**: 1.2.0 | **Ratified**: 2025-11-02 | **Last Amended**: 2025-11-05
