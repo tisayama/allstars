@@ -4,6 +4,7 @@
  */
 
 import type { Question, GamePeriod } from './Question';
+import type { GameSettings } from './GameSettings';
 
 // Firebase Timestamp type (compatible with both admin and client SDKs)
 export type Timestamp = {
@@ -87,6 +88,9 @@ export interface GameState {
 
   /** Accumulated prize money from questions where all guests answered incorrectly */
   prizeCarryover?: number;
+
+  /** Game configuration settings */
+  settings?: GameSettings;
 }
 
 // Type Guards

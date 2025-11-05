@@ -22,6 +22,7 @@ import {
   deleteGuest,
   bulkCreateGuests,
 } from "../services/guestService";
+import { getSettings, updateSettings } from "../services/gameStateService";
 import { ValidationError } from "../utils/errors";
 import { ZodError } from "zod";
 
@@ -230,6 +231,48 @@ router.post(
       const createdGuests = await bulkCreateGuests(guests);
 
       res.status(201).json({ guests: createdGuests, count: createdGuests.length });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /admin/settings
+ * Get game settings
+ */
+router.get(
+  "/settings",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const settings = await getSettings();
+      res.status(200).json({ settings });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * PUT /admin/settings
+ * Update game settings (with merge to preserve other gameState fields)
+ */
+router.put(
+  "/settings",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { settings } = req.body;
+
+      if (!settings) {
+        return next(
+          new ValidationError("Invalid settings data", [
+            { field: "settings", message: "Settings object is required" },
+          ])
+        );
+      }
+
+      const updatedSettings = await updateSettings(settings);
+      res.status(200).json({ settings: updatedSettings });
     } catch (error) {
       next(error);
     }

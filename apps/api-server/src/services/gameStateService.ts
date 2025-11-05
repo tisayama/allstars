@@ -12,6 +12,7 @@ import {
   GameResults,
   GamePeriod,
   Answer,
+  GameSettings,
 } from "@allstars/types";
 import { ValidationError, NotFoundError } from "../utils/errors";
 import {
@@ -462,4 +463,47 @@ export async function getCurrentGameState(): Promise<GameState> {
     id: gameStateDoc.id,
     ...gameStateDoc.data(),
   } as GameState;
+}
+
+/**
+ * Get game settings from gameState
+ */
+export async function getSettings(): Promise<GameSettings> {
+  const gameStateDoc = await db
+    .collection(COLLECTIONS.GAME_STATE)
+    .doc(GAME_STATE_DOC_ID)
+    .get();
+
+  if (!gameStateDoc.exists || !gameStateDoc.data()?.settings) {
+    // Return default settings
+    return {
+      defaultDropoutRule: "worst_one",
+      defaultRankingRule: "time",
+    };
+  }
+
+  return gameStateDoc.data()!.settings as GameSettings;
+}
+
+/**
+ * Update game settings with merge
+ * FR-048: Preserves other gameState fields using merge
+ */
+export async function updateSettings(
+  settings: GameSettings
+): Promise<GameSettings> {
+  const gameStateRef = db
+    .collection(COLLECTIONS.GAME_STATE)
+    .doc(GAME_STATE_DOC_ID);
+
+  // Use merge to preserve other gameState fields
+  await gameStateRef.set(
+    {
+      settings,
+      lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return settings;
 }
