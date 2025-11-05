@@ -160,23 +160,32 @@ async function handleStartQuestion(
   state: GameState,
   action: GameActionInput
 ): Promise<GameState> {
-  const questionId = action.payload?.questionId;
+  let questionId = action.payload?.questionId;
+  let question;
 
   if (!questionId) {
-    throw new ValidationError("questionId is required in payload", [
-      { field: "payload.questionId", message: "Question ID is required" },
-    ]);
-  }
+    // No questionId provided - auto-select next question
+    const { getNextQuestion } = await import("./questionService");
+    question = await getNextQuestion();
 
-  // Verify question exists and get full question object
-  const question = await getQuestionById(questionId);
-  if (!question) {
-    throw new NotFoundError("Question not found", [
-      {
-        field: "questionId",
-        message: `No question found with ID "${questionId}"`,
-      },
-    ]);
+    if (!question) {
+      throw new NotFoundError("No questions available", [
+        { field: "questions", message: "Please create questions in admin panel first" },
+      ]);
+    }
+
+    questionId = question.questionId;
+  } else {
+    // Verify question exists and get full question object
+    question = await getQuestionById(questionId);
+    if (!question) {
+      throw new NotFoundError("Question not found", [
+        {
+          field: "questionId",
+          message: `No question found with ID "${questionId}"`,
+        },
+      ]);
+    }
   }
 
   return {

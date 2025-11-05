@@ -222,3 +222,35 @@ export async function getQuestionById(
     deadline: (data as any).deadline,
   } as Question;
 }
+
+/**
+ * Get the next question to be asked
+ * Returns the first question ordered by period and questionNumber
+ */
+export async function getNextQuestion(): Promise<Question | null> {
+  const questionsSnapshot = await db
+    .collection(COLLECTIONS.QUESTIONS)
+    .orderBy("period")
+    .orderBy("questionNumber")
+    .limit(1)
+    .get();
+
+  if (questionsSnapshot.empty) {
+    return null;
+  }
+
+  const doc = questionsSnapshot.docs[0];
+  const data = doc.data();
+
+  return {
+    questionId: doc.id,
+    questionText: (data as any).questionText || (data as any).text,
+    choices: (data as any).choices,
+    period: (data as any).period,
+    questionNumber: (data as any).questionNumber,
+    type: (data as any).type,
+    correctAnswer: (data as any).correctAnswer,
+    skipAttributes: (data as any).skipAttributes || [],
+    deadline: (data as any).deadline,
+  } as Question;
+}
