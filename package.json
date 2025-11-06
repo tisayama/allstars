@@ -12,7 +12,8 @@
     "test:helpers": "vitest run tests/e2e/helpers.test.ts",
     "test:helpers:watch": "vitest tests/e2e/helpers.test.ts",
     "test:helpers:coverage": "vitest run tests/e2e/helpers.test.ts --coverage",
-    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit"
+    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit",
+    "init:dev": "timeout 10 tsx scripts/init-firestore-dev.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
@@ -21,6 +22,7 @@
     "concurrently": "^9.2.1",
     "firebase-admin": "^13.5.0",
     "firebase-tools": "^12.9.1",
+    "tsx": "^4.20.6",
     "vitest": "^4.0.6"
   },
   "packageManager": "pnpm@8.0.0"
