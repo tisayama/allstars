@@ -113,7 +113,7 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
       lastUpdate: FieldValue.serverTimestamp(),
       results: newState.results,
       prizeCarryover: newState.prizeCarryover,
-    });
+    }, { merge: true });
 
     return newState;
   });
