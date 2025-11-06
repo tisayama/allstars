@@ -17,3 +17,4 @@ export * from './HostApi';
 export * from './validators/question';
 export * from './validators/guest';
 export * from './validators/settings';
+export * from './validators/gameState';

@@ -29,6 +29,21 @@ export function setupAuthenticationFlow(socket: Socket<any, any, any, SocketData
     return;
   }
 
+  // Development mode: Skip authentication if DISABLE_AUTH is set
+  if (process.env.DISABLE_AUTH === 'true') {
+    logger.warn(`[DEV MODE] Bypassing authentication for ${socket.id}`);
+    socket.data.userId = 'dev-user';
+    socket.data.isAuthenticated = true;
+    socket.join('gameRoom');
+    connectionCountGauge.inc();
+    socket.emit('AUTH_SUCCESS', { userId: 'dev-user' });
+    socket.on('disconnect', () => {
+      connectionCountGauge.dec();
+      logger.info(`Dev user disconnected (socket ${socket.id})`);
+    });
+    return;
+  }
+
   logger.info(`New connection from ${socket.id}, requesting authentication`);
 
   // Send AUTH_REQUIRED event immediately on connection

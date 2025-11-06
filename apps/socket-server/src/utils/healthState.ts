@@ -18,6 +18,10 @@ let healthy = true;
  * @returns true if Firestore listener is connected, false otherwise
  */
 export function isHealthy(): boolean {
+  // Development mode: Always return healthy if DISABLE_AUTH is set
+  if (process.env.DISABLE_AUTH === 'true') {
+    return true;
+  }
   return healthy;
 }
 

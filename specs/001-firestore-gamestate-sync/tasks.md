@@ -26,9 +26,9 @@ Monorepo structure:
 
 **Purpose**: Prepare shared validation infrastructure that all user stories will depend on
 
-- [ ] T001 Build packages/types to ensure latest shared types are available for all apps
-- [ ] T002 [P] Verify Firebase emulators are running and accessible at localhost:8080 (Firestore)
-- [ ] T003 [P] Verify existing retry utility in apps/api-server/src/utils/retry.ts is functional
+- [X] T001 Build packages/types to ensure latest shared types are available for all apps
+- [X] T002 [P] Verify Firebase emulators are running and accessible at localhost:8080 (Firestore)
+- [X] T003 [P] Verify existing retry utility in apps/api-server/src/utils/retry.ts is functional
 
 ---
 
@@ -42,8 +42,8 @@ Monorepo structure:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T004 [P] Write unit tests for GameState validation schema in packages/types/tests/validators/gameState.test.ts
-- [ ] T005 [P] Write unit tests for structured JSON logger in apps/api-server/tests/unit/utils/logger.test.ts
+- [X] T004 [P] Write unit tests for GameState validation schema in packages/types/tests/validators/gameState.test.ts
+- [X] T005 [P] Write unit tests for structured JSON logger in apps/api-server/tests/unit/utils/logger.test.ts
 
 ### Foundational Implementation
 

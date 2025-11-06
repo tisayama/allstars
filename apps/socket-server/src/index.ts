@@ -14,9 +14,22 @@ const PORT = process.env.PORT || 8080;
  */
 function initializeFirebase(): void {
   if (admin.apps.length === 0) {
-    admin.initializeApp({
+    const config: admin.AppOptions = {
       projectId: process.env.GOOGLE_CLOUD_PROJECT || 'allstars-dev',
-    });
+    };
+
+    admin.initializeApp(config);
+
+    // Connect to Firestore emulator if FIRESTORE_EMULATOR_HOST is set
+    if (process.env.FIRESTORE_EMULATOR_HOST) {
+      const [host, port] = process.env.FIRESTORE_EMULATOR_HOST.split(':');
+      admin.firestore().settings({
+        host: `${host}:${port}`,
+        ssl: false,
+      });
+      logger.info(`Connected to Firestore emulator at ${host}:${port}`);
+    }
+
     logger.info('Firebase Admin SDK initialized');
   }
 }
