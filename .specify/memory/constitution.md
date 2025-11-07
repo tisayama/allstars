@@ -1,36 +1,38 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.1.0 → 1.2.0
-Bump Rationale: MINOR version - New principle added (VI. Protected Main Branch) establishing mandatory Git workflow with feature branching
+Version Change: 1.2.0 → 1.3.0
+Bump Rationale: MINOR version - New principle added (VII. Pull Request Workflow & Quality Assurance) establishing mandatory PR workflow with self-review, feedback loop, and zero-failing-test policy
 
 Modified Principles:
 - None (existing principles unchanged)
 
 Added Sections:
-- VI. Protected Main Branch - New principle prohibiting direct commits to master/main branch
-  - Mandates feature branch workflow for all development work
-  - Requires branch naming convention: feature/<issue-number>-<feature-name>
-  - Establishes branch protection as non-negotiable rule
+- VII. Pull Request Workflow & Quality Assurance - New principle establishing complete work delivery workflow
+  - Mandates Git commit/push upon work completion
+  - Requires GitHub PR creation and self-review
+  - Establishes feedback-fix-merge cycle
+  - Prohibits merging with failing unit tests
+  - Enforces zero-failing-test policy as non-negotiable quality gate
 
 Removed Sections:
 - None
 
 Templates Requiring Updates:
-- ✅ .specify/templates/plan-template.md - Branch Strategy section already aligns with new principle
-- ✅ .specify/templates/spec-template.md - No changes needed (principle-agnostic)
-- ✅ .specify/templates/tasks-template.md - No changes needed (principle-agnostic)
-- ✅ .specify/templates/agent-file-template.md - Not reviewed in detail, likely no impact
-- ✅ .specify/templates/checklist-template.md - Not reviewed in detail, may benefit from Git workflow verification step
+- ✅ .specify/templates/plan-template.md - Already includes Constitution Check section, no additional changes needed
+- ✅ .specify/templates/spec-template.md - Principle-agnostic, no changes needed
+- ✅ .specify/templates/tasks-template.md - Already includes test phases, aligns with new principle
+- ✅ .specify/templates/agent-file-template.md - No changes needed (agent-agnostic template)
+- ✅ .specify/templates/checklist-template.md - Could benefit from PR workflow verification steps (optional enhancement)
 
 Follow-up TODOs:
-- Configure branch protection rules in GitHub repository settings for master/main branch
-- Update CI/CD pipelines to enforce branch naming conventions
-- Add pre-commit hooks to prevent accidental commits to master/main
-- Document exception process for emergency hotfixes (if needed)
-- Review checklist-template.md to add Git workflow verification steps
+- Consider adding PR workflow checklist items to checklist-template.md
+- Update CI/CD pipeline to block PRs with failing tests
+- Document self-review checklist or guidelines (what to look for during self-review)
+- Consider adding automated PR description templates in GitHub repository settings
+- Add pre-merge hooks to verify zero failing tests
 
-Date: 2025-11-05
+Date: 2025-11-07
 -->
 
 # AllStars Game Platform Constitution
@@ -160,6 +162,37 @@ Direct commits to the master/main branch are STRICTLY PROHIBITED. All developmen
 - Branch protection MUST be configured in repository settings to enforce this rule technically
 - Attempts to commit directly to master/main MUST be blocked by pre-commit hooks or repository settings
 
+### VII. Pull Request Workflow & Quality Assurance
+
+Upon work completion, a complete PR workflow MUST be followed to ensure code quality and maintainability. All code changes MUST be delivered through this workflow before being considered complete.
+
+**Rationale**: A structured PR workflow with self-review ensures quality control even in solo development, creates audit trails for all changes, enforces test discipline, and maintains project stability. Self-review catches issues before external review, reducing iteration cycles. The zero-failing-test policy prevents regression and maintains confidence in the codebase. This workflow transforms "code written" into "code delivered" by adding essential quality gates.
+
+**Non-negotiable rules**:
+- Upon work completion, changes MUST be committed and pushed to the feature branch
+- A GitHub Pull Request MUST be created from the feature branch to master/main
+- Developer MUST perform self-review of the PR:
+  - Review all changed files for code quality, clarity, and correctness
+  - Verify TDD compliance (tests exist and follow red-green-refactor)
+  - Check for debugging code, commented code, or unintended changes
+  - Validate adherence to all constitution principles
+- Developer MUST leave feedback comments on their own PR for any issues found
+- All feedback MUST be addressed through code fixes before proceeding
+- Unit tests MUST have ZERO failing cases before merge - NO EXCEPTIONS
+  - Run full test suite and verify 100% pass rate
+  - Flaky tests MUST be fixed or quarantined before merge
+  - Skipped tests MUST be justified with tracking tickets
+- Feature branch MUST be merged to master/main only after:
+  - Self-review complete and all feedback addressed
+  - All tests passing (unit, integration, contract)
+  - Linting and quality gates passed
+  - Manual verification completed
+- PR description MUST document:
+  - What was changed and why
+  - Verification steps performed
+  - Test results (all passing)
+  - Links to related issues or specifications
+
 ## Quality Assurance Requirements
 
 ### Testing Strategy
@@ -284,4 +317,4 @@ All exceptions MUST:
 - Be tracked in project issue tracker
 - Be reviewed monthly for resolution
 
-**Version**: 1.2.0 | **Ratified**: 2025-11-02 | **Last Amended**: 2025-11-05
+**Version**: 1.3.0 | **Ratified**: 2025-11-02 | **Last Amended**: 2025-11-07

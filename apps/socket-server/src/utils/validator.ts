@@ -7,9 +7,10 @@ import { ValidationError } from './errors';
 
 /**
  * Zod schema for GamePhase enum
+ * Must match GamePhase type from @allstars/types
  */
 const GamePhaseEnum = z.enum([
-  'idle',
+  'ready_for_next',
   'accepting_answers',
   'showing_distribution',
   'showing_correct_answer',
