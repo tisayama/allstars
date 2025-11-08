@@ -50,16 +50,10 @@ async function initializeFirestoreDev(): Promise<void> {
     // Reference to the gameState/live document
     const gameStateRef = db.collection('gameState').doc('live');
 
-    // IDEMPOTENCY CHECK: Check if document already exists
+    // VALIDATION: Check if document exists and validate required fields
     const doc = await gameStateRef.get();
 
-    if (doc.exists) {
-      console.log('✓ gameState/live already exists, skipping initialization');
-      console.log('✓ Initialization complete');
-      process.exit(0);
-    }
-
-    // Create initial gameState document
+    // Define required gameState structure
     const initialGameState = {
       currentPhase: 'ready_for_next' as const,
       currentQuestion: null,
@@ -72,6 +66,36 @@ async function initializeFirestoreDev(): Promise<void> {
       settings: null,
     };
 
+    if (doc.exists) {
+      const data = doc.data();
+
+      // Check if document has all required fields
+      const hasRequiredFields = data &&
+        'currentPhase' in data &&
+        'isGongActive' in data &&
+        'participantCount' in data;
+
+      if (hasRequiredFields) {
+        console.log('✓ gameState/live already exists with valid structure');
+        console.log('✓ Initialization complete');
+        process.exit(0);
+      } else {
+        console.log('⚠️  gameState/live exists but is missing required fields');
+        console.log('   Updating document with complete structure...');
+
+        // Preserve settings if they exist
+        if (data && data.settings) {
+          initialGameState.settings = data.settings;
+        }
+
+        await gameStateRef.set(initialGameState);
+        console.log('✓ gameState/live updated with all required fields');
+        console.log('✓ Initialization complete');
+        process.exit(0);
+      }
+    }
+
+    // Document doesn't exist, create it
     await gameStateRef.set(initialGameState);
 
     console.log('✓ gameState/live created successfully');

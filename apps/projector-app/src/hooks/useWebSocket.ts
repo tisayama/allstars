@@ -22,6 +22,7 @@ export interface UseWebSocketOptions {
  * Return type for useWebSocket hook
  */
 export interface UseWebSocketReturn {
+  socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   isConnected: boolean;
   isAuthenticated: boolean;
   error: string | null;
@@ -160,6 +161,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   }, [authenticate, onGongActivated, onStartQuestion, onGamePhaseChanged]);
 
   return {
+    socket: socketRef.current,
     isConnected,
     isAuthenticated,
     error,

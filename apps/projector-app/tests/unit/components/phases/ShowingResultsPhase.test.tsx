@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ShowingResultsPhase } from '@/components/phases/ShowingResultsPhase';
 import type { GameState, GameResults, RankedAnswer } from '@/types';
+
+// Mock socket
+const mockSocket = {
+  on: vi.fn(),
+  off: vi.fn(),
+  connected: true,
+};
 
 describe('ShowingResultsPhase', () => {
   const mockResults: GameResults = {
@@ -26,10 +33,11 @@ describe('ShowingResultsPhase', () => {
     lastUpdate: { seconds: 1699113600, nanoseconds: 0 } as any,
   };
 
-  it('should render the results title', () => {
-    render(<ShowingResultsPhase gameState={mockGameState} />);
+  it('should render TV ranking display container', () => {
+    render(<ShowingResultsPhase gameState={mockGameState} socket={mockSocket as any} />);
 
-    expect(screen.getByText('Results')).toBeInTheDocument();
+    const container = document.querySelector('.tv-ranking-container');
+    expect(container).toBeTruthy();
   });
 
   describe('Non-final questions (isGongActive: false)', () => {
@@ -38,26 +46,25 @@ describe('ShowingResultsPhase', () => {
       isGongActive: false,
     };
 
-    it('should render worst 10 section header', () => {
-      render(<ShowingResultsPhase gameState={nonFinalGameState} />);
+    it('should render worst 10 section with Japanese label', () => {
+      render(<ShowingResultsPhase gameState={nonFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.getByText(/Worst 10 \(Slowest Correct\)/i)).toBeInTheDocument();
+      expect(screen.getByText('早押しワースト10')).toBeInTheDocument();
     });
 
-    it('should NOT render top 10 section header', () => {
-      render(<ShowingResultsPhase gameState={nonFinalGameState} />);
+    it('should NOT render top 10 section', () => {
+      render(<ShowingResultsPhase gameState={nonFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.queryByText(/Top 10 \(Fastest Correct\)/i)).not.toBeInTheDocument();
+      expect(screen.queryByText('早押しトップ10')).not.toBeInTheDocument();
     });
 
     it('should display all worst 10 entries with names and times', () => {
-      render(<ShowingResultsPhase gameState={nonFinalGameState} />);
+      render(<ShowingResultsPhase gameState={nonFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.getByText(/1\.\s*David/)).toBeInTheDocument();
-      expect(screen.getByText(/2\.\s*Eve/)).toBeInTheDocument();
-
-      expect(screen.getByText('10.00s')).toBeInTheDocument();
-      expect(screen.getByText('12.00s')).toBeInTheDocument();
+      expect(screen.getByText('David')).toBeInTheDocument();
+      expect(screen.getByText('Eve')).toBeInTheDocument();
+      expect(screen.getByText('10.00')).toBeInTheDocument();
+      expect(screen.getByText('12.00')).toBeInTheDocument();
     });
 
     it('should handle empty worst10 array', () => {
@@ -69,9 +76,14 @@ describe('ShowingResultsPhase', () => {
         },
       };
 
-      render(<ShowingResultsPhase gameState={gameStateWithEmptyWorst10} />);
+      const { container } = render(
+        <ShowingResultsPhase gameState={gameStateWithEmptyWorst10} socket={mockSocket as any} />
+      );
 
-      expect(screen.getByText('No entries')).toBeInTheDocument();
+      // Should still render worst10 section but with no entries
+      expect(screen.getByText('早押しワースト10')).toBeInTheDocument();
+      const rankingEntries = container.querySelector('.ranking-entries');
+      expect(rankingEntries?.children.length).toBe(0);
     });
   });
 
@@ -86,28 +98,30 @@ describe('ShowingResultsPhase', () => {
       },
     };
 
-    it('should render top 10 section header', () => {
-      render(<ShowingResultsPhase gameState={periodFinalGameState} />);
+    it('should render BOTH worst 10 and top 10 sections', () => {
+      render(<ShowingResultsPhase gameState={periodFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.getByText(/Top 10 \(Fastest Correct\)/i)).toBeInTheDocument();
-    });
-
-    it('should NOT render worst 10 section header', () => {
-      render(<ShowingResultsPhase gameState={periodFinalGameState} />);
-
-      expect(screen.queryByText(/Worst 10 \(Slowest\/Incorrect\)/i)).not.toBeInTheDocument();
+      expect(screen.getByText('早押しワースト10')).toBeInTheDocument();
+      expect(screen.getByText('早押しトップ10')).toBeInTheDocument();
     });
 
     it('should display all top 10 entries with names and times', () => {
-      render(<ShowingResultsPhase gameState={periodFinalGameState} />);
+      render(<ShowingResultsPhase gameState={periodFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.getByText(/1\.\s*Alice/)).toBeInTheDocument();
-      expect(screen.getByText(/2\.\s*Bob/)).toBeInTheDocument();
-      expect(screen.getByText(/3\.\s*Charlie/)).toBeInTheDocument();
+      expect(screen.getByText('Alice')).toBeInTheDocument();
+      expect(screen.getByText('Bob')).toBeInTheDocument();
+      expect(screen.getByText('Charlie')).toBeInTheDocument();
+      expect(screen.getByText('1.50')).toBeInTheDocument();
+      expect(screen.getByText('2.00')).toBeInTheDocument();
+      expect(screen.getByText('2.50')).toBeInTheDocument();
+    });
 
-      expect(screen.getByText('1.50s')).toBeInTheDocument();
-      expect(screen.getByText('2.00s')).toBeInTheDocument();
-      expect(screen.getByText('2.50s')).toBeInTheDocument();
+    it('should display worst 10 entries even when top 10 is shown', () => {
+      render(<ShowingResultsPhase gameState={periodFinalGameState} socket={mockSocket as any} />);
+
+      // Verify worst 10 is also rendered
+      expect(screen.getByText('David')).toBeInTheDocument();
+      expect(screen.getByText('Eve')).toBeInTheDocument();
     });
 
     it('should handle empty top10 array', () => {
@@ -119,22 +133,40 @@ describe('ShowingResultsPhase', () => {
         },
       };
 
-      render(<ShowingResultsPhase gameState={gameStateWithEmptyTop10} />);
+      render(<ShowingResultsPhase gameState={gameStateWithEmptyTop10} socket={mockSocket as any} />);
 
-      expect(screen.getByText('No correct answers')).toBeInTheDocument();
+      // Should render worst10 but not top10 (since top10 is empty)
+      expect(screen.getByText('早押しワースト10')).toBeInTheDocument();
+      expect(screen.queryByText('早押しトップ10')).not.toBeInTheDocument();
     });
 
     it('should display period champion badge', () => {
-      render(<ShowingResultsPhase gameState={periodFinalGameState} />);
+      render(<ShowingResultsPhase gameState={periodFinalGameState} socket={mockSocket as any} />);
 
-      // Check for crown emoji
-      expect(screen.getByText('👑')).toBeInTheDocument();
+      // Check for star badge (period champion indicator)
+      expect(screen.getByText('★')).toBeInTheDocument();
     });
 
-    it('should display period label in title', () => {
-      render(<ShowingResultsPhase gameState={periodFinalGameState} />);
+    it('should display period label based on results', () => {
+      render(<ShowingResultsPhase gameState={periodFinalGameState} socket={mockSocket as any} />);
 
-      expect(screen.getByText(/First Half Final/i)).toBeInTheDocument();
+      // Period label should be '前半' for 'first-half'
+      expect(screen.getByText('前半')).toBeInTheDocument();
+    });
+
+    it('should handle second-half period correctly', () => {
+      const secondHalfGameState: GameState = {
+        ...periodFinalGameState,
+        results: {
+          ...periodFinalGameState.results!,
+          period: 'second-half',
+        },
+      };
+
+      render(<ShowingResultsPhase gameState={secondHalfGameState} socket={mockSocket as any} />);
+
+      // Period label should be '後半' for 'second-half'
+      expect(screen.getByText('後半')).toBeInTheDocument();
     });
 
     it('should handle multiple period champions (tied fastest)', () => {
@@ -148,81 +180,32 @@ describe('ShowingResultsPhase', () => {
         },
       };
 
-      render(<ShowingResultsPhase gameState={gameStateWithTiedChampions} />);
+      render(<ShowingResultsPhase gameState={gameStateWithTiedChampions} socket={mockSocket as any} />);
 
-      // Should have 3 crown emojis
-      const crowns = screen.getAllByText('👑');
-      expect(crowns).toHaveLength(3);
-    });
-
-    it('should display second-half period label correctly', () => {
-      const secondHalfGameState: GameState = {
-        ...periodFinalGameState,
-        results: {
-          top10: periodFinalGameState.results!.top10,
-          worst10: periodFinalGameState.results!.worst10,
-          periodChampions: periodFinalGameState.results!.periodChampions,
-          period: 'second-half',
-        },
-      };
-
-      render(<ShowingResultsPhase gameState={secondHalfGameState} />);
-
-      expect(screen.getByText(/Second Half Final/i)).toBeInTheDocument();
+      // Should have 3 star badges
+      const stars = screen.getAllByText('★');
+      expect(stars).toHaveLength(3);
     });
   });
 
-  it('should show error when results is null', () => {
-    const gameStateWithoutResults: GameState = {
-      ...mockGameState,
-      results: null,
-    };
+  it('should render TV branding with live badge', () => {
+    render(<ShowingResultsPhase gameState={mockGameState} socket={mockSocket as any} />);
 
-    render(<ShowingResultsPhase gameState={gameStateWithoutResults} />);
-
-    expect(screen.getByText('Error: No results data available')).toBeInTheDocument();
+    expect(screen.getByText('生放送')).toBeInTheDocument();
   });
 
-  it('should display ranking error warning when rankingError is true', () => {
-    const gameStateWithRankingError: GameState = {
-      ...mockGameState,
-      results: {
-        ...mockResults,
-        rankingError: true,
-      },
-    };
+  it('should render with null socket gracefully', () => {
+    const { container } = render(<ShowingResultsPhase gameState={mockGameState} socket={null} />);
 
-    render(<ShowingResultsPhase gameState={gameStateWithRankingError} />);
-
-    expect(screen.getByText('Warning: Ranking calculation incomplete')).toBeInTheDocument();
+    expect(container.querySelector('.tv-ranking-container')).toBeTruthy();
   });
 
-  it('should not display ranking error warning when rankingError is false', () => {
-    const gameStateWithoutRankingError: GameState = {
-      ...mockGameState,
-      results: {
-        ...mockResults,
-        rankingError: false,
-      },
-    };
+  it('should delegate to TVRankingDisplay component', () => {
+    const { container } = render(<ShowingResultsPhase gameState={mockGameState} socket={mockSocket as any} />);
 
-    render(<ShowingResultsPhase gameState={gameStateWithoutRankingError} />);
-
-    expect(screen.queryByText('Warning: Ranking calculation incomplete')).not.toBeInTheDocument();
-  });
-
-  it('should format response times correctly to 2 decimal places', () => {
-    const gameStateWithPreciseTime: GameState = {
-      ...mockGameState,
-      isGongActive: true, // Show top 10
-      results: {
-        top10: [{ guestId: 'g1', guestName: 'Alice', responseTimeMs: 1234 }],
-        worst10: [],
-      },
-    };
-
-    render(<ShowingResultsPhase gameState={gameStateWithPreciseTime} />);
-
-    expect(screen.getByText('1.23s')).toBeInTheDocument();
+    // Verify key TV ranking components are rendered
+    expect(container.querySelector('.tv-background-container')).toBeTruthy();
+    expect(container.querySelector('.tv-branding')).toBeTruthy();
+    expect(container.querySelector('.ranking-list')).toBeTruthy();
   });
 });
