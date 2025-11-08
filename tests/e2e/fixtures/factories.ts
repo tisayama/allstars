@@ -16,6 +16,49 @@ export class QuestionFactory {
   private static counter = 0;
 
   /**
+   * Create a general question with custom options
+   * This is the most flexible factory method
+   */
+  static createGeneral(options: {
+    questionText: string;
+    options: string[]; // Array of choice letters like ['A', 'B', 'C', 'D']
+    correctAnswer: string; // Letter of correct answer like 'A' or 'B'
+    questionNumber?: number;
+    period?: GamePeriod;
+    skipAttributes?: string[];
+  }): TestQuestion {
+    const {
+      questionText,
+      options: choiceLetters,
+      correctAnswer,
+      questionNumber = ++this.counter,
+      period = 'first-half',
+      skipAttributes = [],
+    } = options;
+
+    // Build choices from the provided letters
+    const choices = choiceLetters.map((letter, index) => ({
+      index,
+      text: `${letter}. Choice ${letter}`,
+    }));
+
+    // Find the correct choice based on the letter
+    const correctChoiceText = choices.find(
+      (choice) => choice.text.startsWith(correctAnswer)
+    )?.text || `${correctAnswer}. Choice ${correctAnswer}`;
+
+    return {
+      testId: `Q${questionNumber}_GENERAL`,
+      questionText,
+      choices,
+      correctAnswer: correctChoiceText,
+      period,
+      questionNumber,
+      skipAttributes,
+    };
+  }
+
+  /**
    * Create a 4-choice question with specified parameters
    */
   static create4Choice(options: {
