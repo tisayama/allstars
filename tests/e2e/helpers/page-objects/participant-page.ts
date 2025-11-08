@@ -4,7 +4,7 @@
  * Encapsulates all interactions with the participant-app UI.
  * Uses data-testid attributes for reliable element selection.
  *
- * URL: http://work-ubuntu:5173
+ * URL: http://work-ubuntu:5180
  *
  * Key Responsibilities:
  * - Joining the game
@@ -21,7 +21,7 @@ export class ParticipantPage {
   private page: Page;
 
   // Base URL (work-ubuntu hostname)
-  private readonly baseUrl = 'http://work-ubuntu:5173';
+  private readonly baseUrl = 'http://work-ubuntu:5180';
 
   // Locators (using data-testid for reliability)
   private readonly nameInput: Locator;

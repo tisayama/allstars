@@ -36,11 +36,11 @@ export interface GameSettingsData {
 
 /**
  * Page Object Model for admin-app
- * Base URL: http://work-ubuntu:5176
+ * Base URL: http://work-ubuntu:5170
  */
 export class AdminPage {
   readonly page: Page;
-  readonly baseUrl: string = 'http://work-ubuntu:5176';
+  readonly baseUrl: string = 'http://work-ubuntu:5170';
 
   // Navigation selectors
   readonly navQuestions: Locator;

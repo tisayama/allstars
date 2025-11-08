@@ -4,7 +4,7 @@
  * Encapsulates all interactions with the host-app UI.
  * Uses data-testid attributes for reliable element selection.
  *
- * URL: http://work-ubuntu:5174
+ * URL: http://work-ubuntu:5175
  *
  * Key Responsibilities:
  * - Starting questions
@@ -23,7 +23,7 @@ export class HostPage {
   private page: Page;
 
   // Base URL (work-ubuntu hostname)
-  private readonly baseUrl = 'http://work-ubuntu:5174';
+  private readonly baseUrl = 'http://work-ubuntu:5175';
 
   // Locators (using data-testid for reliability)
   private readonly questionSelector: Locator;

@@ -4,7 +4,7 @@
  * Encapsulates all interactions with the projector-app UI.
  * Uses data-testid attributes for reliable element selection.
  *
- * URL: http://work-ubuntu:5175
+ * URL: http://work-ubuntu:5185
  *
  * Key Responsibilities:
  * - Displaying questions with timers
@@ -33,7 +33,7 @@ export class ProjectorPage {
   private page: Page;
 
   // Base URL (work-ubuntu hostname)
-  private readonly baseUrl = 'http://work-ubuntu:5175';
+  private readonly baseUrl = 'http://work-ubuntu:5185';
 
   // Locators (using data-testid for reliability)
   private readonly questionContainer: Locator;
