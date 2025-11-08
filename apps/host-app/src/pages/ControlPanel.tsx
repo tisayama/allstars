@@ -100,7 +100,7 @@ export function ControlPanel(): ReactElement {
                     // Handle both Firebase Timestamp and plain object from API
                     const millis = typeof timestamp.toMillis === 'function'
                       ? timestamp.toMillis()
-                      : (timestamp._seconds || timestamp.seconds || 0) * 1000;
+                      : (timestamp.seconds || 0) * 1000;
                     return new Date(millis).toLocaleTimeString();
                   })()}
                 </p>

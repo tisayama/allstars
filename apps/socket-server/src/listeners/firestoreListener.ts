@@ -33,7 +33,8 @@ export function initializeFirestoreListener(callback: (data: any) => void): () =
         const data = snapshot.data();
         callback(data);
       } else {
-        logger.warn('gameState/live document does not exist');
+        // Document doesn't exist yet - this is expected during initial setup
+        logger.debug('gameState/live document does not exist (waiting for game initialization)');
         callback(null);
       }
     },
