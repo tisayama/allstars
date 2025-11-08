@@ -122,12 +122,14 @@ export function GuestsPage() {
               )}
               <button
                 onClick={handleUploadCSV}
+                data-testid="import-csv-btn"
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
                 Upload CSV
               </button>
               <button
                 onClick={handleAddGuest}
+                data-testid="add-guest-btn"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Add Guest

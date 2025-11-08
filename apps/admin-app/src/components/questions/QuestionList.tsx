@@ -42,7 +42,7 @@ export function QuestionList({ questions, onEdit, onDelete, loading }: QuestionL
   }, {} as Record<string, Question[]>);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="question-list">
       {Object.entries(groupedQuestions).map(([period, periodQuestions]) => (
         <div key={period} className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -85,7 +85,7 @@ function QuestionItem({ question, onEdit, onDelete }: QuestionItemProps) {
   };
 
   return (
-    <div className="px-6 py-4 hover:bg-gray-50">
+    <div className="px-6 py-4 hover:bg-gray-50" data-testid="question-list-row">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
@@ -96,19 +96,24 @@ function QuestionItem({ question, onEdit, onDelete }: QuestionItemProps) {
           </div>
           <div className="ml-11 space-y-2">
             <div className="flex flex-wrap gap-2">
-              {question.choices.map((choice, index) => (
-                <span
-                  key={index}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    choice === question.correctAnswer
-                      ? 'bg-green-100 text-green-800 font-medium'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {choice}
-                  {choice === question.correctAnswer && ' ✓'}
-                </span>
-              ))}
+              {question.choices.map((choice, index) => {
+                const isCorrect = choice === question.correctAnswer;
+                const choiceLabel = ['A', 'B', 'C', 'D', 'E', 'F'][index];
+                return (
+                  <span
+                    key={index}
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      isCorrect
+                        ? 'bg-green-100 text-green-800 font-medium'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                    {...(isCorrect && { 'data-testid': `question-${question.questionNumber}-correct-answer` })}
+                  >
+                    {choice}
+                    {isCorrect && ` ✓ (${choiceLabel})`}
+                  </span>
+                );
+              })}
             </div>
             {question.skipAttributes.length > 0 && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -125,12 +130,14 @@ function QuestionItem({ question, onEdit, onDelete }: QuestionItemProps) {
         <div className="flex items-center gap-2 ml-4">
           <button
             onClick={() => onEdit(question)}
+            data-testid={`edit-question-${question.questionNumber}-btn`}
             className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           >
             Edit
           </button>
           <button
             onClick={handleDelete}
+            data-testid={`delete-question-${question.questionNumber}-btn`}
             className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
           >
             Delete

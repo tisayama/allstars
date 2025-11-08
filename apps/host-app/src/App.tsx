@@ -11,20 +11,22 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 function App(): ReactElement {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/control"
-          element={
-            <ProtectedRoute>
-              <ControlPanel />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <div data-testid="host-app">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/control"
+            element={
+              <ProtectedRoute>
+                <ControlPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 }
 

@@ -49,19 +49,25 @@ export function ControlPanel(): ReactElement {
         )}
 
         {gameState && (
-          <div className={styles.gameStateSection}>
+          <div className={styles.gameStateSection} data-testid="game-state-container">
             <div className={styles.gameState}>
               <div className={styles.stateCard}>
                 <h3>Current Phase</h3>
-                <p className={styles.phaseValue}>{gameState.currentPhase}</p>
+                <p className={styles.phaseValue} data-testid="current-phase" data-phase={gameState.currentPhase}>
+                  {gameState.currentPhase}
+                </p>
               </div>
 
               <div className={styles.stateCard}>
                 <h3>Current Question</h3>
                 <p className={styles.questionValue}>
-                  {gameState.currentQuestion
-                    ? `Q${gameState.currentQuestion.questionNumber}: ${gameState.currentQuestion.questionText}`
-                    : 'No active question'}
+                  {gameState.currentQuestion ? (
+                    <>
+                      Q<span data-testid="question-number">{gameState.currentQuestion.questionNumber}</span>: {gameState.currentQuestion.questionText}
+                    </>
+                  ) : (
+                    'No active question'
+                  )}
                 </p>
               </div>
 

@@ -4,6 +4,7 @@ import { RankingEntry } from '../../../../src/components/rankings/RankingEntry';
 
 describe('RankingEntry', () => {
   const defaultProps = {
+    guestId: 'guest-1',
     rank: 1,
     displayName: '太郎(チームA)',
     responseTime: 1.5,
@@ -11,6 +12,7 @@ describe('RankingEntry', () => {
     isPeriodChampion: false,
     shouldAnimate: false,
     animationDelay: 0,
+    isWorst10: false,
   };
 
   it('should render without errors', () => {
@@ -19,8 +21,9 @@ describe('RankingEntry', () => {
   });
 
   it('should display rank number', () => {
-    const { getByText } = render(<RankingEntry {...defaultProps} />);
-    expect(getByText('1')).toBeTruthy();
+    const { container } = render(<RankingEntry {...defaultProps} />);
+    const rankElement = container.querySelector('.rank-number');
+    expect(rankElement?.textContent).toBe('1');
   });
 
   it('should display participant name', () => {

@@ -17,7 +17,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     collectionPrefix,
   }) => {
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
 
     // Wait for admin-app to load
     await page.waitForLoadState('networkidle');
@@ -53,7 +53,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // await expect(page.locator('[data-testid="question-1-correct-answer"]')).toHaveText('C');
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS2: Admin edits existing question', async ({
@@ -69,7 +69,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     await seeder.seedQuestions([existingQuestion], collectionPrefix);
 
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented:
@@ -99,7 +99,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // expect(questionDoc.questionText).toBe(updatedText);
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS3: Admin imports 50 guests from CSV', async ({
@@ -108,7 +108,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     collectionPrefix,
   }) => {
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented:
@@ -140,7 +140,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // await expect(page.locator('[data-testid="guest-list"]')).toContainText('Guest 50');
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS4: Admin manually adds single guest', async ({
@@ -149,7 +149,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     collectionPrefix,
   }) => {
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented:
@@ -182,7 +182,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // await expect(page.locator('[data-testid="guest-taro-yamada-status"]')).toHaveText('active');
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS5: Admin configures game settings (ranking rule, dropout rule)', async ({
@@ -191,7 +191,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     collectionPrefix,
   }) => {
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented:
@@ -226,7 +226,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // expect(settings.dropoutRule).toBe('worst_one');
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS6: Admin data persists after navigation', async ({
@@ -242,7 +242,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     await seeder.seedGuests(testGuests, collectionPrefix);
 
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented:
@@ -279,7 +279,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // await expect(guestRows).toHaveCount(5);
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 
   test('AS7: Complete admin setup flow - questions, guests, settings', async ({
@@ -291,7 +291,7 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // Combines all previous acceptance scenarios into a realistic end-to-end flow
 
     // Navigate to admin-app
-    await page.goto('http://work-ubuntu:5176');
+    await page.goto('http://work-ubuntu:5170');
     await page.waitForLoadState('networkidle');
 
     // TODO: Once admin-app UI is implemented, this will validate:
@@ -322,6 +322,6 @@ test.describe('@P1 Admin Setup Flow - Game Configuration (User Story 1)', () => 
     // - Game can be started from host-app
 
     // PLACEHOLDER: Test structure ready, awaiting admin-app implementation
-    expect(page.url()).toContain('work-ubuntu:5176');
+    expect(page.url()).toContain('work-ubuntu:5170');
   });
 });

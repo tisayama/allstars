@@ -62,7 +62,7 @@ export function TVRankingDisplay({
   const top10Config = results.top10?.length > 0 ? createTop10Config(results) : null;
 
   return (
-    <div className="tv-ranking-container">
+    <div className="tv-ranking-container" data-testid="rankings-container" data-animated={shouldAnimate ? 'true' : 'false'}>
       <TVBackground animationsEnabled={animationsEnabled} />
 
       <TVBranding
@@ -73,11 +73,11 @@ export function TVRankingDisplay({
 
       <div className="rankings-content">
         {/* Worst 10 Rankings - Always shown */}
-        <RankingList config={worst10Config} animationsEnabled={shouldAnimate} />
+        <RankingList config={worst10Config} animationsEnabled={shouldAnimate} isWorst10={true} />
 
         {/* Top 10 Rankings - Only shown when gong is active */}
         {isGongActive && top10Config && (
-          <RankingList config={top10Config} animationsEnabled={shouldAnimate} />
+          <RankingList config={top10Config} animationsEnabled={shouldAnimate} isWorst10={false} />
         )}
       </div>
 

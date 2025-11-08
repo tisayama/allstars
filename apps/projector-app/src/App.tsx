@@ -130,15 +130,17 @@ function App() {
   };
 
   return (
-    <>
-      {renderPhase()}
+    <div data-testid="projector-app">
+      <div data-testid="current-phase" data-phase={gameState.currentPhase}>
+        {renderPhase()}
+      </div>
       <ConnectionStatus
         firestoreConnected={connectionStatus.firestore}
         websocketConnected={websocketConnected}
         websocketAuthenticated={websocketAuthenticated}
         error={websocketError || gameStateError}
       />
-    </>
+    </div>
   );
 }
 

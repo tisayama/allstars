@@ -37,7 +37,7 @@ export function GuestList({ guests, onEdit, onDelete, loading }: GuestListProps)
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-lg shadow overflow-hidden" data-testid="guest-list">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -57,7 +57,7 @@ export function GuestList({ guests, onEdit, onDelete, loading }: GuestListProps)
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {guests.map((guest) => (
-            <tr key={guest.id} className="hover:bg-gray-50">
+            <tr key={guest.id} className="hover:bg-gray-50" data-testid="guest-list-row">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">{guest.name}</div>
               </td>

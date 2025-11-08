@@ -52,10 +52,19 @@ export function AppShell({ children }: AppShellProps) {
           <nav className="mt-5 px-2">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
+              // Map navigation items to data-testid values
+              const getTestId = (href: string) => {
+                if (href === '/quizzes') return 'nav-questions';
+                if (href === '/guests') return 'nav-guests';
+                if (href === '/settings') return 'nav-settings';
+                return undefined;
+              };
+              const testId = getTestId(item.href);
               return (
                 <Link
                   key={item.name}
                   to={item.href}
+                  {...(testId && { 'data-testid': testId })}
                   className={`
                     group flex items-center px-3 py-2 text-sm font-medium rounded-md mb-1
                     ${

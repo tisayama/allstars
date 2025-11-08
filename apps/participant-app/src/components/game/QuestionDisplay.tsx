@@ -19,7 +19,7 @@ export function QuestionDisplay({ question }: QuestionDisplayProps) {
   }[question.period];
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6" data-testid="question-container">
       {/* Question metadata */}
       <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
         <span className="font-semibold">{periodLabel}</span>
@@ -30,7 +30,7 @@ export function QuestionDisplay({ question }: QuestionDisplayProps) {
 
       {/* Question text */}
       <div className="text-center">
-        <p className="text-xl font-bold text-gray-900 leading-relaxed">{question.questionText}</p>
+        <p className="text-xl font-bold text-gray-900 leading-relaxed" data-testid="question-text">{question.questionText}</p>
       </div>
     </div>
   );

@@ -100,6 +100,7 @@ export function ControlButtons({ currentPhase }: ControlButtonsProps): ReactElem
             isLoading={isLoading}
             variant="primary"
             fullWidth
+            data-testid="start-question-button"
           >
             Start Question
           </ActionButton>
@@ -124,6 +125,7 @@ export function ControlButtons({ currentPhase }: ControlButtonsProps): ReactElem
             isLoading={isLoading}
             variant="primary"
             fullWidth
+            data-testid="reveal-answer-button"
           >
             Show Correct Answer
           </ActionButton>
@@ -136,6 +138,7 @@ export function ControlButtons({ currentPhase }: ControlButtonsProps): ReactElem
             isLoading={isLoading}
             variant="primary"
             fullWidth
+            data-testid="show-rankings-button"
           >
             Show Results
           </ActionButton>
@@ -160,6 +163,7 @@ export function ControlButtons({ currentPhase }: ControlButtonsProps): ReactElem
             isLoading={isLoading}
             variant="primary"
             fullWidth
+            data-testid="revive-all-button"
           >
             Revive All Participants
           </ActionButton>

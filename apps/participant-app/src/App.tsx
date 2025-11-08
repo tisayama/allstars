@@ -11,8 +11,9 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
  */
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <div data-testid="participant-app">
+      <BrowserRouter>
+        <Routes>
         {/* Public routes */}
         <Route path="/join" element={<QRScanPage />} />
 
@@ -33,6 +34,7 @@ function App() {
         <Route path="*" element={<Navigate to="/join" replace />} />
       </Routes>
     </BrowserRouter>
+    </div>
   );
 }
 

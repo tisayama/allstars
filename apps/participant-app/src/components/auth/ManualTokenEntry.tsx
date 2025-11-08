@@ -61,6 +61,7 @@ export function ManualTokenEntry({ onTokenSubmit, loading = false }: ManualToken
             onChange={handleChange}
             placeholder="Enter your token"
             disabled={loading}
+            data-testid="participant-name-input"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             style={{ minHeight: '44px', fontSize: '16px' }} // 16px prevents zoom on iOS
             autoComplete="off"
@@ -80,6 +81,7 @@ export function ManualTokenEntry({ onTokenSubmit, loading = false }: ManualToken
         <button
           type="submit"
           disabled={loading || !token.trim()}
+          data-testid="join-button"
           className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           style={{ minHeight: '44px' }}
         >
