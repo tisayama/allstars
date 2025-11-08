@@ -55,6 +55,7 @@ function App() {
 
   // Connect to WebSocket for real-time events
   const {
+    socket,
     isConnected: websocketConnected,
     isAuthenticated: websocketAuthenticated,
     error: websocketError,
@@ -109,7 +110,7 @@ function App() {
         return <ShowingCorrectAnswerPhase gameState={gameState} />;
 
       case 'showing_results':
-        return <ShowingResultsPhase gameState={gameState} />;
+        return <ShowingResultsPhase gameState={gameState} socket={socket} />;
 
       case 'all_revived':
         return <AllRevivedPhase gameState={gameState} />;
