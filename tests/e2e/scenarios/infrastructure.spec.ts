@@ -103,8 +103,8 @@ test.describe('Test Infrastructure and Automation', () => {
     const configContent = await fs.readFile(playwrightConfigPath, 'utf-8');
     expect(configContent).toContain('work-ubuntu');
 
-    // Verify page can navigate to work-ubuntu URLs
-    await page.goto('http://work-ubuntu:5173');
+    // Verify page can navigate to work-ubuntu URLs (using admin-app port)
+    await page.goto('http://work-ubuntu:5170');
     expect(page.url()).toContain('work-ubuntu');
     expect(page.url()).not.toContain('localhost');
 
@@ -185,9 +185,11 @@ test.describe('Test Infrastructure and Automation', () => {
     expect(configContent).toContain('reporter');
     expect(configContent).toContain('html');
 
-    // Verify HTML report directory is configured
+    // Verify HTML report directory is configured (check for various formats)
     const hasReportConfig =
-      configContent.includes('playwright-report') || configContent.includes("reporter: 'html'");
+      configContent.includes('playwright-report') ||
+      configContent.includes("reporter: 'html'") ||
+      configContent.includes("['html'");
     expect(hasReportConfig).toBe(true);
 
     // Verify .gitignore excludes HTML reports
