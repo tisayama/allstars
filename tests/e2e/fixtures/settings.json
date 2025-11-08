@@ -1,0 +1,30 @@
+{
+  "time_based_competitive": {
+    "defaultRankingRule": "time",
+    "defaultDropoutRule": "worst_one",
+    "showRankings": true,
+    "allowLateJoin": false,
+    "questionTransitionDelay": 3
+  },
+  "accuracy_based_casual": {
+    "defaultRankingRule": "accuracy",
+    "defaultDropoutRule": "none",
+    "showRankings": true,
+    "allowLateJoin": true,
+    "questionTransitionDelay": 2
+  },
+  "tournament_mode": {
+    "defaultRankingRule": "time",
+    "defaultDropoutRule": "worst_two",
+    "showRankings": true,
+    "allowLateJoin": false,
+    "questionTransitionDelay": 5
+  },
+  "default": {
+    "defaultRankingRule": "time",
+    "defaultDropoutRule": "worst_one",
+    "showRankings": true,
+    "allowLateJoin": false,
+    "questionTransitionDelay": 3
+  }
+}

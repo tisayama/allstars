@@ -34,8 +34,8 @@ export default defineConfig({
 
   // Shared settings for all projects
   use: {
-    // Base URL for navigating to apps
-    baseURL: process.env.BASE_URL || 'http://localhost',
+    // Base URL for navigating to apps (MUST use work-ubuntu per constitution)
+    baseURL: process.env.BASE_URL || 'http://work-ubuntu',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',

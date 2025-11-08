@@ -105,7 +105,7 @@ export class TestDataSeeder {
       seededGuests.push({
         guestId,
         joinToken,
-        joinUrl: `http://localhost:5173/join?token=${joinToken}`,
+        joinUrl: `http://work-ubuntu:5173/join?token=${joinToken}`,
       });
     }
 

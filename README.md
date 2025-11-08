@@ -131,3 +131,44 @@ firebase emulators:start
 
 **Note**: Ports 5170, 5175, 5180, and 5185 are fixed and will not automatically fall back to other ports if unavailable. This ensures consistent URLs for development and testing.
 
+### 4. Running E2E Tests
+
+The project includes a comprehensive End-to-End test suite that validates the complete system across all four applications.
+
+**Run all E2E tests with a single command:**
+```bash
+pnpm run e2e
+```
+
+This command automatically:
+1. Starts Firebase Emulator Suite (Firestore + Auth)
+2. Launches all 4 applications (admin, host, participant, projector)
+3. Runs complete E2E test scenarios
+4. Generates HTML test report
+5. Cleans up all processes
+
+**E2E Test Coverage:**
+- **Admin Setup Flow**: Questions, Guests, and Settings CRUD operations
+- **Participant Flow**: Joining games, submitting answers, receiving feedback
+- **Projector Display**: Question display, rankings, period champions
+- **Host Control**: Game progression, phase transitions, special events
+- **Infrastructure**: Emulator lifecycle, hostname configuration, artifacts
+
+**View Test Results:**
+```bash
+# Open interactive HTML report
+pnpm exec playwright show-report
+
+# Run specific test file
+pnpm exec playwright test tests/e2e/scenarios/admin-setup.spec.ts
+
+# Run tests in debug mode
+pnpm exec playwright test --debug
+```
+
+**Requirements:**
+- Hostname `work-ubuntu` must resolve to `127.0.0.1` (add to `/etc/hosts` if needed)
+- Ports 5173-5176 (apps) and 8080, 9099 (emulators) must be available
+
+See [E2E Test Quick Start Guide](specs/001-system-e2e-tests/quickstart.md) for detailed instructions.
+
