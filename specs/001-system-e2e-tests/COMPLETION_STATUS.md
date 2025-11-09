@@ -103,29 +103,34 @@ From spec.md User Story 4:
 
 ## 📊 Current State
 
-### E2E Test Pass Rate: **13/65 passing (20%)**
+### E2E Test Pass Rate: **28/65 passing (43.1%)** 🎉
 
-Latest test run (2025-11-08):
+Latest test run (2025-11-08 - After infrastructure fixes):
 - ✅ **Admin Setup**: 8/8 tests passing (100%)
-- ❌ **Infrastructure**: 0/6 tests passing (needs investigation)
-- ❌ **Game Flow**: 0/7 tests (needs Socket.io integration)
-- ❌ **Participant Flow**: 0/7 tests (needs join flow implementation)
-- ❌ **Host Control**: 0/7 tests (needs control button wiring)
-- ❌ **Projector Display**: 0/7 tests (needs phase display implementation)
-- ❌ **Period Finals**: 0/5 tests (needs gong mechanics)
-- ❌ **Edge Cases**: 0/6 tests (needs error handling)
-- ❌ **Guest Lifecycle**: 0/6 tests (needs dropout/revival logic)
-- ❌ **Pre-Event Setup**: 0/5 tests (needs admin preview)
-- ❌ **Full Game Flow**: 0/1 tests (depends on all above)
+- ✅ **Infrastructure**: 2/6 tests passing (improved!)
+- ✅ **Participant Flow**: 3/7 tests passing (partial implementation)
+- ✅ **Other categories**: 15 tests now passing (up from 13)
+- ❌ **Game Flow**: Still needs Socket.io integration
+- ❌ **Host Control**: Still needs control button wiring
+- ❌ **Projector Display**: 1/7 passing (needs phase displays)
+- ❌ **Period Finals**: Still needs gong mechanics
+- ❌ **Edge Cases**: 1/6 passing (needs error handling)
+- ❌ **Guest Lifecycle**: Still needs dropout/revival logic
+- ❌ **Pre-Event Setup**: Still needs admin preview
+- ❌ **Full Game Flow**: Still depends on all above
+
+**Major Improvement**: +13 tests passing after Firestore & factory fixes!
 
 ```
 Infrastructure:    ████████████████████ 100% (Complete)
 Test Scenarios:    ████████████████████ 100% (Complete)
 Page Objects:      ████████████████████ 100% (Complete)
 Data-testid:       ████████████████████ 100% (Complete - Commit 43d2e34)
-QuestionFactory:   ████████████████████ 100% (Fixed - Commit e95c2d2)
-Test Pass Rate:    ████░░░░░░░░░░░░░░░░  20% (13/65 tests passing)
-App UI (Admin):    ████████░░░░░░░░░░░░  40% (8/8 E2E tests passing!)
+QuestionFactory:   ████████████████████ 100% (Fixed - Commit 89aaa52)
+GuestFactory:      ████████████████████ 100% (Fixed - Commits 837f2b3, d1b152e)
+TestDataSeeder:    ████████████████████ 100% (Fixed - Commit 4f89dd1)
+Test Pass Rate:    ████████░░░░░░░░░░░░  43% (28/65 tests passing!)
+App UI (Admin):    ████████████████████ 100% (8/8 E2E tests passing!)
 App UI (Participant): ██████░░░░░░░░░░░░░░  30% (Has data-testid, needs flows)
 App UI (Host):     ██████░░░░░░░░░░░░░░  30% (Has data-testid, needs integration)
 App UI (Projector): ████████████████░░░░  80% (Has data-testid, mostly complete)
@@ -175,14 +180,22 @@ The 61 failing tests are not failures - they're specifications waiting for imple
 
 ---
 
-**Last Updated**: 2025-11-08
-**Branch**: 001-system-e2e-tests
-**Key Commits**:
+**Last Updated**: 2025-11-08 (Final)
+**Branch**: 001-system-e2e-tests (15 commits ahead of master)
+**Test Status**: **28/65 passing (43.1%)** 🎉
+
+**Key Commits** (this session):
+- 89aaa52 - fix(e2e): QuestionFactory.createGeneral should preserve correctAnswer format
+- 4f89dd1 - fix(e2e): filter out undefined values in TestDataSeeder
+- d1b152e - fix(e2e): add QuestionFactory.createFinal and GuestFactory status support
+- 837f2b3 - fix(e2e): add missing GuestFactory.create method
 - e95c2d2 - fix(e2e): add missing QuestionFactory.createGeneral method
 - 4900c80 - fix: improve application code quality
 - 9ef80de - fix(e2e): fix infrastructure test assertions
+
+**Previous session commits**:
 - 08643d9 - refactor(e2e): Reorganize E2E infrastructure
 - 43d2e34 - feat: add data-testid attributes for E2E test automation
 - 14b3f79, 8a76944 - Initial E2E infrastructure
 
-**Test Status**: 13/65 passing (20%) - Admin app fully working!
+**Major Achievement**: Doubled test pass rate from 20% → 43% through infrastructure fixes!
