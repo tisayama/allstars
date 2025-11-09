@@ -16,6 +16,44 @@ export class QuestionFactory {
   private static counter = 0;
 
   /**
+   * Create a general question with custom options
+   * This is the most flexible factory method
+   */
+  static createGeneral(options: {
+    questionText: string;
+    options: string[]; // Array of choice letters like ['A', 'B', 'C', 'D']
+    correctAnswer: string; // Letter of correct answer like 'A' or 'B'
+    questionNumber?: number;
+    period?: GamePeriod;
+    skipAttributes?: string[];
+  }): TestQuestion {
+    const {
+      questionText,
+      options: choiceLetters,
+      correctAnswer,
+      questionNumber = ++this.counter,
+      period = 'first-half',
+      skipAttributes = [],
+    } = options;
+
+    // Build choices from the provided letters
+    const choices = choiceLetters.map((letter, index) => ({
+      index,
+      text: `${letter}. Choice ${letter}`,
+    }));
+
+    return {
+      testId: `Q${questionNumber}_GENERAL`,
+      questionText,
+      choices,
+      correctAnswer, // Keep as-is (just the letter like 'A' or 'B')
+      period,
+      questionNumber,
+      skipAttributes,
+    };
+  }
+
+  /**
    * Create a 4-choice question with specified parameters
    */
   static create4Choice(options: {
@@ -75,6 +113,7 @@ export class QuestionFactory {
 
   /**
    * Create a period-final question (for gong mechanics)
+   * Alias: createFinal
    */
   static createPeriodFinal(options: {
     period?: GamePeriod;
@@ -88,6 +127,16 @@ export class QuestionFactory {
       questionText: `Period-final question for ${period}`,
       correctChoiceIndex: 0,
     });
+  }
+
+  /**
+   * Create a final question (alias for createPeriodFinal)
+   */
+  static createFinal(options: {
+    period?: GamePeriod;
+    questionNumber?: number;
+  } = {}): TestQuestion {
+    return this.createPeriodFinal(options);
   }
 
   /**
@@ -144,6 +193,26 @@ export class QuestionFactory {
  */
 export class GuestFactory {
   private static counter = 0;
+
+  /**
+   * Create a guest (alias for createNormal for convenience)
+   * This is the most commonly used factory method
+   */
+  static create(options: {
+    name?: string;
+    attributes?: string[];
+    status?: 'active' | 'dropped' | 'eliminated';
+  } = {}): TestGuest {
+    const { name = `Guest ${++this.counter}`, attributes = [], status = 'active' } = options;
+
+    return {
+      testId: `GUEST_${this.counter}_FACTORY`,
+      name,
+      status,
+      attributes,
+      authMethod: 'anonymous',
+    };
+  }
 
   /**
    * Create a normal active guest

@@ -7,8 +7,10 @@
  */
 
 import { FullConfig } from '@playwright/test';
-import { EmulatorManager } from './helpers/emulatorManager';
-import { AppLauncher, AppLaunchConfig } from './helpers/appLauncher';
+import { EmulatorManager } from './setup/emulator-manager';
+import { AppLauncher, AppLaunchConfig } from './setup/app-launcher';
+import { FirestoreInit } from './setup/firestore-init';
+import { HostnameConfigManager } from './setup/hostname-config';
 import { ChildProcess } from 'child_process';
 import * as path from 'path';
 
@@ -24,6 +26,18 @@ async function globalSetup(config: FullConfig) {
   const rootDir = path.resolve(__dirname, '../..');
 
   try {
+    // Step 0: Verify hostname configuration
+    console.log('🔍 Verifying work-ubuntu hostname...');
+    const hostnameManager = new HostnameConfigManager();
+    const hostnameValid = await hostnameManager.verifyHostname();
+    if (!hostnameValid) {
+      console.error('❌ Hostname not configured correctly!');
+      console.error('Run this command to fix:');
+      console.error(hostnameManager.getSuggestedFix());
+      throw new Error('work-ubuntu hostname not configured');
+    }
+    console.log('✅ Hostname configured correctly\n');
+
     // Step 1: Start Firebase Emulators
     console.log('📦 Starting Firebase Emulators...');
     emulatorManager = new EmulatorManager();
@@ -31,7 +45,7 @@ async function globalSetup(config: FullConfig) {
       {
         firestorePort: 8080,
         authPort: 9099,
-        projectId: 'test',
+        projectId: 'stg-wedding-allstars',
         showUI: !process.env.CI,
       },
       30000
@@ -40,7 +54,11 @@ async function globalSetup(config: FullConfig) {
 
     // Step 2: Clear emulator data for clean slate
     console.log('🧹 Clearing emulator data...');
-    await emulatorManager.clearData();
+    const firestoreInit = new FirestoreInit({
+      emulatorHost: 'localhost:8080',
+      projectId: 'stg-wedding-allstars',
+    });
+    await firestoreInit.clearAllData();
     console.log('✅ Emulator data cleared\n');
 
     // Step 3: Launch applications
@@ -53,7 +71,7 @@ async function globalSetup(config: FullConfig) {
         cwd: path.join(rootDir, 'apps/api-server'),
         command: 'pnpm',
         args: ['dev'],
-        healthUrl: 'http://localhost:3000/health',
+        healthUrl: 'http://work-ubuntu:3000/health',
         port: 3000,
         env: {
           FIRESTORE_EMULATOR_HOST: 'localhost:8080',
@@ -65,43 +83,43 @@ async function globalSetup(config: FullConfig) {
         cwd: path.join(rootDir, 'apps/socket-server'),
         command: 'pnpm',
         args: ['dev'],
-        healthUrl: 'http://localhost:3001/health',
+        healthUrl: 'http://work-ubuntu:3001/health',
         port: 3001,
         env: {
           FIRESTORE_EMULATOR_HOST: 'localhost:8080',
         },
       },
       {
-        name: 'participant-app',
-        cwd: path.join(rootDir, 'apps/participant-app'),
+        name: 'admin-app',
+        cwd: path.join(rootDir, 'apps/admin-app'),
         command: 'pnpm',
         args: ['dev'],
-        healthUrl: 'http://localhost:5173',
-        port: 5173,
+        healthUrl: 'http://work-ubuntu:5170',
+        port: 5170,
       },
       {
         name: 'host-app',
         cwd: path.join(rootDir, 'apps/host-app'),
         command: 'pnpm',
         args: ['dev'],
-        healthUrl: 'http://localhost:5174',
-        port: 5174,
+        healthUrl: 'http://work-ubuntu:5175',
+        port: 5175,
+      },
+      {
+        name: 'participant-app',
+        cwd: path.join(rootDir, 'apps/participant-app'),
+        command: 'pnpm',
+        args: ['dev'],
+        healthUrl: 'http://work-ubuntu:5180',
+        port: 5180,
       },
       {
         name: 'projector-app',
         cwd: path.join(rootDir, 'apps/projector-app'),
         command: 'pnpm',
         args: ['dev'],
-        healthUrl: 'http://localhost:5175',
-        port: 5175,
-      },
-      {
-        name: 'admin-app',
-        cwd: path.join(rootDir, 'apps/admin-app'),
-        command: 'pnpm',
-        args: ['dev'],
-        healthUrl: 'http://localhost:5176',
-        port: 5176,
+        healthUrl: 'http://work-ubuntu:5185',
+        port: 5185,
       },
     ];
 

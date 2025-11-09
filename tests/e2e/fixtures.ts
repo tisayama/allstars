@@ -6,8 +6,8 @@
  */
 
 import { test as base } from '@playwright/test';
-import { CollectionPrefixGenerator } from './helpers/collectionPrefix';
-import { TestDataSeeder } from './helpers/testDataSeeder';
+import { CollectionPrefixGenerator } from './helpers/collection-prefix';
+import { TestDataSeeder } from './helpers/test-data-seeder';
 
 // Extend base test with custom fixtures
 export interface E2EFixtures {

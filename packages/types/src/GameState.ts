@@ -135,7 +135,7 @@ export function hasPeriodChampions(results: GameResults): boolean {
  * @returns 'top10' for period-final questions, 'worst10' for non-final questions
  */
 export function getDisplayRanking(
-  results: GameResults,
+  _results: GameResults,
   isGongActive: boolean
 ): 'top10' | 'worst10' {
   return isGongActive ? 'top10' : 'worst10';

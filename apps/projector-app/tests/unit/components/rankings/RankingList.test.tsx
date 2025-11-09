@@ -41,21 +41,21 @@ describe('RankingList', () => {
 
   it('should render without errors', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     expect(container.querySelector('.ranking-list')).toBeTruthy();
   });
 
   it('should display vertical title', () => {
     const { getByText } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     expect(getByText('早押しワースト10')).toBeTruthy();
   });
 
   it('should apply ranking-label class for vertical layout', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     const label = container.querySelector('.ranking-label');
     expect(label).toBeTruthy();
@@ -65,7 +65,7 @@ describe('RankingList', () => {
 
   it('should render all ranking entries', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry');
     expect(entries.length).toBe(3);
@@ -73,7 +73,7 @@ describe('RankingList', () => {
 
   it('should pass correct props to RankingEntry components', () => {
     const { getByText } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     expect(getByText('太郎(チームA)')).toBeTruthy();
     expect(getByText('花子(チームB)')).toBeTruthy();
@@ -82,7 +82,7 @@ describe('RankingList', () => {
 
   it('should enable animations when animationsEnabled is true', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={true} />
+      <RankingList config={mockConfig} animationsEnabled={true} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry.animate-fade-in-up');
     expect(entries.length).toBe(3);
@@ -90,7 +90,7 @@ describe('RankingList', () => {
 
   it('should disable animations when animationsEnabled is false', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry.animate-fade-in-up');
     expect(entries.length).toBe(0);
@@ -98,7 +98,7 @@ describe('RankingList', () => {
 
   it('should apply staggered animation delays when animations enabled', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={true} />
+      <RankingList config={mockConfig} animationsEnabled={true} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry') as NodeListOf<HTMLElement>;
 
@@ -133,7 +133,7 @@ describe('RankingList', () => {
     };
 
     const { container } = render(
-      <RankingList config={shortConfig} animationsEnabled={false} />
+      <RankingList config={shortConfig} animationsEnabled={false} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry');
     expect(entries.length).toBe(1);
@@ -160,14 +160,14 @@ describe('RankingList', () => {
     };
 
     const { container } = render(
-      <RankingList config={championConfig} animationsEnabled={false} />
+      <RankingList config={championConfig} animationsEnabled={false} isWorst10={false} />
     );
     expect(container.querySelector('.champion-badge')).toBeTruthy();
   });
 
   it('should apply highlighting to specified entries', () => {
     const { container } = render(
-      <RankingList config={mockConfig} animationsEnabled={false} />
+      <RankingList config={mockConfig} animationsEnabled={false} isWorst10={false} />
     );
     const entries = container.querySelectorAll('.ranking-entry') as NodeListOf<HTMLElement>;
 

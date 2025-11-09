@@ -129,6 +129,7 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
           id="text"
           rows={3}
           {...register('text')}
+          data-testid="question-text-input"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter your question..."
         />
@@ -143,25 +144,30 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
           Answer Choices
         </label>
         <div className="space-y-2">
-          {choices.map((_, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                {...register(`choices.${index}`)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={`Choice ${index + 1}`}
-              />
-              {choices.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeChoice(index)}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
+          {choices.map((_, index) => {
+            const choiceLabels = ['a', 'b', 'c', 'd', 'e', 'f'];
+            const testId = `choice-${choiceLabels[index]}-input`;
+            return (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  {...register(`choices.${index}`)}
+                  data-testid={testId}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={`Choice ${index + 1}`}
+                />
+                {choices.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeChoice(index)}
+                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         {errors.choices && (
           <p className="mt-1 text-sm text-red-600">
@@ -187,6 +193,7 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
         <select
           id="correctAnswer"
           {...register('correctAnswer')}
+          data-testid="correct-answer-select"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Select correct answer</option>
@@ -210,6 +217,7 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
           id="deadline"
           type="datetime-local"
           {...register('deadline')}
+          data-testid="time-limit-input"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {errors.deadline && (
@@ -250,6 +258,7 @@ export function QuestionForm({ question, onSubmit, onCancel }: QuestionFormProps
         <button
           type="submit"
           disabled={isSubmitting}
+          data-testid="submit-question-btn"
           className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
           {isSubmitting ? 'Saving...' : question ? 'Update Question' : 'Create Question'}

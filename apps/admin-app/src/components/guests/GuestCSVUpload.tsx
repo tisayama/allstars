@@ -80,6 +80,7 @@ export function GuestCSVUpload({ onImport, onCancel }: GuestCSVUploadProps) {
           type="file"
           accept=".csv"
           onChange={handleFileChange}
+          data-testid="csv-file-input"
           className="block w-full text-sm text-gray-500
             file:mr-4 file:py-2 file:px-4
             file:rounded-md file:border-0
@@ -105,11 +106,11 @@ export function GuestCSVUpload({ onImport, onCancel }: GuestCSVUploadProps) {
       {parseResult && !parsing && (
         <div>
           {parseResult.valid ? (
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="bg-green-50 border border-green-200 rounded-md p-4" data-testid="import-success-message">
               <h4 className="text-sm font-medium text-green-900 mb-2">
                 ✓ Valid CSV File
               </h4>
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-green-700" data-testid="import-count">
                 Found {parseResult.guests.length} valid guest{parseResult.guests.length !== 1 ? 's' : ''}
               </p>
               <div className="mt-3 text-xs text-green-600 space-y-1">
@@ -152,6 +153,7 @@ export function GuestCSVUpload({ onImport, onCancel }: GuestCSVUploadProps) {
           type="button"
           onClick={handleImport}
           disabled={!parseResult || !parseResult.valid || importing}
+          data-testid="process-import-btn"
           className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {importing ? `Importing ${parseResult?.guests.length || 0} guests...` : 'Import Guests'}

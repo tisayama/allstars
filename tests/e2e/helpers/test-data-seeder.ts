@@ -105,7 +105,7 @@ export class TestDataSeeder {
       seededGuests.push({
         guestId,
         joinToken,
-        joinUrl: `http://localhost:5173/join?token=${joinToken}`,
+        joinUrl: `http://work-ubuntu:5173/join?token=${joinToken}`,
       });
     }
 
@@ -124,8 +124,34 @@ export class TestDataSeeder {
     const collectionName = `${collectionPrefix}gameState`;
     const { testId, description, ...gameStateData } = gameState;
 
+    // Remove undefined values (Firestore doesn't accept undefined)
+    const cleanData = this.removeUndefinedValues(gameStateData);
+
     // GameState is typically a singleton document
-    await this.db.collection(collectionName).doc('current').set(gameStateData);
+    await this.db.collection(collectionName).doc('current').set(cleanData);
+  }
+
+  /**
+   * Remove undefined values from an object (Firestore doesn't accept undefined)
+   * @param obj - Object to clean
+   * @returns Object without undefined values
+   */
+  private removeUndefinedValues(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.removeUndefinedValues(item));
+    }
+
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = this.removeUndefinedValues(value);
+      }
+    }
+    return cleaned;
   }
 
   /**

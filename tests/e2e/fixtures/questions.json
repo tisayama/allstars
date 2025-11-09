@@ -1,0 +1,164 @@
+{
+  "general_knowledge": [
+    {
+      "id": "q_geo_001",
+      "questionText": "What is the capital of France?",
+      "correctAnswer": "A",
+      "options": {
+        "A": "Paris",
+        "B": "London",
+        "C": "Berlin",
+        "D": "Madrid"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_sci_001",
+      "questionText": "What is the speed of light?",
+      "correctAnswer": "C",
+      "options": {
+        "A": "299,000 km/s",
+        "B": "300,000 km/s",
+        "C": "299,792 km/s",
+        "D": "298,000 km/s"
+      },
+      "timeLimit": 45,
+      "pointValue": 100
+    },
+    {
+      "id": "q_hist_001",
+      "questionText": "In which year did World War II end?",
+      "correctAnswer": "B",
+      "options": {
+        "A": "1944",
+        "B": "1945",
+        "C": "1946",
+        "D": "1943"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_geo_002",
+      "questionText": "What is the largest ocean on Earth?",
+      "correctAnswer": "D",
+      "options": {
+        "A": "Atlantic Ocean",
+        "B": "Indian Ocean",
+        "C": "Arctic Ocean",
+        "D": "Pacific Ocean"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_sci_002",
+      "questionText": "What is the chemical symbol for gold?",
+      "correctAnswer": "A",
+      "options": {
+        "A": "Au",
+        "B": "Ag",
+        "C": "Fe",
+        "D": "Cu"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_lit_001",
+      "questionText": "Who wrote 'To Kill a Mockingbird'?",
+      "correctAnswer": "C",
+      "options": {
+        "A": "Ernest Hemingway",
+        "B": "F. Scott Fitzgerald",
+        "C": "Harper Lee",
+        "D": "John Steinbeck"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_math_001",
+      "questionText": "What is the square root of 144?",
+      "correctAnswer": "B",
+      "options": {
+        "A": "11",
+        "B": "12",
+        "C": "13",
+        "D": "14"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_geo_003",
+      "questionText": "Which country has the most time zones?",
+      "correctAnswer": "A",
+      "options": {
+        "A": "France",
+        "B": "Russia",
+        "C": "United States",
+        "D": "China"
+      },
+      "timeLimit": 45,
+      "pointValue": 100
+    },
+    {
+      "id": "q_sci_003",
+      "questionText": "What is the smallest planet in our solar system?",
+      "correctAnswer": "D",
+      "options": {
+        "A": "Mars",
+        "B": "Venus",
+        "C": "Earth",
+        "D": "Mercury"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    },
+    {
+      "id": "q_art_001",
+      "questionText": "Who painted the Mona Lisa?",
+      "correctAnswer": "B",
+      "options": {
+        "A": "Michelangelo",
+        "B": "Leonardo da Vinci",
+        "C": "Raphael",
+        "D": "Donatello"
+      },
+      "timeLimit": 30,
+      "pointValue": 100
+    }
+  ],
+  "final_questions": [
+    {
+      "id": "q_final_001",
+      "questionText": "FINAL QUESTION: Who wrote 'Romeo and Juliet'?",
+      "correctAnswer": "B",
+      "options": {
+        "A": "Charles Dickens",
+        "B": "William Shakespeare",
+        "C": "Jane Austen",
+        "D": "Mark Twain"
+      },
+      "timeLimit": 60,
+      "isFinalQuestion": true,
+      "pointValue": 500
+    },
+    {
+      "id": "q_final_002",
+      "questionText": "FINAL QUESTION: What is the capital of Australia?",
+      "correctAnswer": "C",
+      "options": {
+        "A": "Sydney",
+        "B": "Melbourne",
+        "C": "Canberra",
+        "D": "Brisbane"
+      },
+      "timeLimit": 60,
+      "isFinalQuestion": true,
+      "pointValue": 500
+    }
+  ]
+}

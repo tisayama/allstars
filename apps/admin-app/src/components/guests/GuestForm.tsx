@@ -64,6 +64,7 @@ export function GuestForm({ guest, onSubmit, onCancel }: GuestFormProps) {
           id="name"
           type="text"
           {...register('name')}
+          data-testid="guest-name-input"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter guest name..."
         />
@@ -121,6 +122,7 @@ export function GuestForm({ guest, onSubmit, onCancel }: GuestFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
+          data-testid="submit-guest-btn"
           className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
           {isSubmitting ? 'Saving...' : guest ? 'Update Guest' : 'Add Guest'}

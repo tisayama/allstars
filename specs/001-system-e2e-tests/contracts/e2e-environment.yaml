@@ -1,0 +1,374 @@
+# E2E Test Environment Contract
+
+# This contract defines the required environment configuration for running
+# AllStars E2E tests. All components must adhere to these specifications.
+
+version: "1.0"
+feature: "system-e2e-tests"
+created: "2025-11-08"
+
+# =============================================================================
+# NETWORK CONFIGURATION
+# =============================================================================
+
+network:
+  hostname: "work-ubuntu"
+  description: "Custom hostname for all inter-app communication"
+  requirements:
+    - "MUST resolve to 127.0.0.1"
+    - "MUST be configured via /etc/hosts or DNS"
+    - "MUST NOT use 'localhost' in any test scenarios"
+  verification:
+    - command: "ping -c 1 work-ubuntu"
+      expected: "Successful ping to 127.0.0.1"
+
+# =============================================================================
+# APPLICATION PORTS
+# =============================================================================
+
+applications:
+  participant-app:
+    port: 5173
+    base_url: "http://work-ubuntu:5173"
+    health_endpoint: "/health"
+    startup_timeout: 30
+    description: "Guest's smartphone client"
+
+  host-app:
+    port: 5174
+    base_url: "http://work-ubuntu:5174"
+    health_endpoint: "/health"
+    startup_timeout: 30
+    description: "Host's control panel"
+
+  projector-app:
+    port: 5175
+    base_url: "http://work-ubuntu:5175"
+    health_endpoint: "/health"
+    startup_timeout: 30
+    description: "Main broadcast screen"
+
+  admin-app:
+    port: 5176
+    base_url: "http://work-ubuntu:5176"
+    health_endpoint: "/health"
+    startup_timeout: 30
+    description: "Admin dashboard"
+
+# =============================================================================
+# FIREBASE EMULATOR CONFIGURATION
+# =============================================================================
+
+emulators:
+  firestore:
+    port: 8080
+    host: "localhost"
+    project_id: "stg-wedding-allstars"
+    startup_timeout: 60
+    health_check:
+      url: "http://localhost:8080"
+      method: "GET"
+      expected_status: 200
+    environment_variables:
+      FIRESTORE_EMULATOR_HOST: "localhost:8080"
+
+  auth:
+    port: 9099
+    host: "localhost"
+    project_id: "stg-wedding-allstars"
+    startup_timeout: 60
+    health_check:
+      url: "http://localhost:9099"
+      method: "GET"
+      expected_status: 200
+    environment_variables:
+      FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099"
+
+  ui:
+    port: 4000
+    enabled: false  # Disabled on CI
+    description: "Emulator UI for local debugging"
+
+# =============================================================================
+# TEST EXECUTION CONFIGURATION
+# =============================================================================
+
+test_execution:
+  framework: "Playwright Test"
+  version: "1.56.1+"
+  parallel_execution: true
+  workers:
+    local: "auto"  # CPU cores
+    ci: 2
+
+  retries:
+    local: 1
+    ci: 2
+
+  timeout:
+    global: 30000  # 30 seconds
+    expect: 5000   # 5 seconds
+    test: 300000   # 5 minutes (per spec requirement)
+
+  artifacts:
+    screenshots: "only-on-failure"
+    videos: "retain-on-failure"
+    traces: "on-first-retry"
+    report_dir: "playwright-report"
+    results_dir: "test-results"
+
+# =============================================================================
+# DATA ISOLATION STRATEGY
+# =============================================================================
+
+data_isolation:
+  strategy: "collection-prefix"
+  description: "Each test uses unique collection prefix to prevent data conflicts"
+  prefix_format: "test_{randomString}_{collectionName}"
+  example: "test_abc123_questions"
+
+  cleanup:
+    when: "before-each-test"
+    method: "emulator-clear-data"
+    rationale: "Clean slate faster than teardown, fail-safe"
+
+  collections:
+    - questions
+    - guests
+    - gameState
+    - answers
+    - settings
+    - rankings
+
+# =============================================================================
+# SHELL COMMAND SAFETY (CONSTITUTION REQUIREMENT)
+# =============================================================================
+
+shell_commands:
+  requirement: "All shell commands MUST use timeout mechanisms"
+
+  timeouts:
+    emulator_start: 60  # seconds
+    emulator_stop: 10   # seconds
+    app_start: 30       # seconds per app
+    app_stop: 10        # seconds
+    test_execution: 300 # seconds (5 minutes per spec)
+
+  examples:
+    - command: "timeout 60 firebase emulators:start --only firestore,auth"
+      purpose: "Start Firebase emulators"
+    - command: "timeout 30 pnpm run dev"
+      purpose: "Start application"
+    - command: "timeout 300 pnpm run test:e2e"
+      purpose: "Execute E2E tests"
+
+# =============================================================================
+# BROWSER CONFIGURATION
+# =============================================================================
+
+browsers:
+  chromium:
+    enabled: true
+    viewport:
+      default: { width: 1280, height: 720 }
+      mobile: { width: 390, height: 844 }
+      projector: { width: 1920, height: 1080 }
+
+  firefox:
+    enabled: true
+    viewport:
+      default: { width: 1280, height: 720 }
+
+  webkit:
+    enabled: false  # Optional, can be enabled for broader coverage
+    viewport:
+      default: { width: 1280, height: 720 }
+
+# =============================================================================
+# TEST DATA REQUIREMENTS
+# =============================================================================
+
+test_data:
+  questions:
+    max_per_test: 100
+    fixture_file: "tests/e2e/fixtures/questions.json"
+    validation:
+      - "questionText must not be empty"
+      - "correctAnswer must be A, B, C, or D"
+      - "options must have exactly 4 entries"
+      - "timeLimit must be positive integer"
+
+  guests:
+    max_per_test: 100
+    fixture_file: "tests/e2e/fixtures/guests.csv"
+    validation:
+      - "name must not be empty"
+      - "joinToken must be unique"
+      - "status must be active or eliminated"
+
+  answers:
+    max_per_test: 1000
+    validation:
+      - "questionId must exist in questions collection"
+      - "guestId must exist in guests collection"
+      - "answer must be A, B, C, or D"
+      - "responseTime must be positive"
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+
+environment_variables:
+  required:
+    FIRESTORE_EMULATOR_HOST: "localhost:8080"
+    FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099"
+    NODE_ENV: "test"
+
+  optional:
+    CI: "true"  # Set in CI environment
+    BASE_URL: "http://work-ubuntu"  # Override base URL
+    TEST_HOST: "work-ubuntu"  # Override hostname
+    DEBUG: "playwright:*"  # Enable Playwright debug logs
+
+# =============================================================================
+# HEALTH CHECK CONFIGURATION
+# =============================================================================
+
+health_checks:
+  emulator_readiness:
+    url: "http://localhost:8080"
+    method: "GET"
+    max_retries: 30
+    retry_interval: 1000  # milliseconds
+    timeout: 5000
+
+  app_readiness:
+    method: "GET"
+    max_retries: 20
+    retry_interval: 1000  # milliseconds
+    timeout: 5000
+    expected_status: 200
+
+# =============================================================================
+# PERFORMANCE REQUIREMENTS
+# =============================================================================
+
+performance:
+  state_propagation:
+    max_latency: 500  # milliseconds
+    description: "Real-time state changes propagate within 500ms"
+
+  test_suite_execution:
+    max_duration: 300  # seconds (5 minutes)
+    description: "Complete E2E test suite executes in under 5 minutes"
+
+  concurrent_participants:
+    target: 50
+    description: "System handles 50 concurrent participants without data loss"
+
+# =============================================================================
+# CI/CD INTEGRATION
+# =============================================================================
+
+ci_cd:
+  artifacts_upload:
+    - "playwright-report/**"
+    - "test-results/**"
+
+  environment_setup:
+    - "Install Node.js 18+"
+    - "Install pnpm"
+    - "Install Playwright browsers"
+    - "Configure /etc/hosts for work-ubuntu hostname"
+    - "Start Firebase emulators"
+
+  cleanup:
+    - "Stop Firebase emulators"
+    - "Kill application processes"
+    - "Remove temporary files"
+
+# =============================================================================
+# VERIFICATION CHECKLIST
+# =============================================================================
+
+verification:
+  hostname:
+    - command: "ping -c 1 work-ubuntu"
+      expected: "Resolves to 127.0.0.1"
+
+  emulators:
+    - command: "curl http://localhost:8080"
+      expected: "HTTP 200 response"
+    - command: "curl http://localhost:9099"
+      expected: "HTTP 200 response"
+
+  applications:
+    - command: "curl http://work-ubuntu:5173/health"
+      expected: "participant-app health OK"
+    - command: "curl http://work-ubuntu:5174/health"
+      expected: "host-app health OK"
+    - command: "curl http://work-ubuntu:5175/health"
+      expected: "projector-app health OK"
+    - command: "curl http://work-ubuntu:5176/health"
+      expected: "admin-app health OK"
+
+  framework:
+    - command: "pnpm exec playwright --version"
+      expected: "Version 1.56.1 or higher"
+
+# =============================================================================
+# TROUBLESHOOTING
+# =============================================================================
+
+troubleshooting:
+  "Emulator not starting":
+    - "Check port 8080/9099 are not in use: lsof -i :8080"
+    - "Ensure Firebase CLI is installed: firebase --version"
+    - "Check firebase.json exists in project root"
+
+  "work-ubuntu not resolving":
+    - "Add to /etc/hosts: echo '127.0.0.1 work-ubuntu' | sudo tee -a /etc/hosts"
+    - "Verify with ping: ping -c 1 work-ubuntu"
+    - "Clear DNS cache if needed"
+
+  "Applications not starting":
+    - "Check pnpm is installed: pnpm --version"
+    - "Verify node modules installed: ls node_modules"
+    - "Check port availability: lsof -i :[port]"
+
+  "Tests hanging":
+    - "Verify timeout mechanisms in place"
+    - "Check for infinite loops in test code"
+    - "Review globalSetup/globalTeardown logs"
+
+# =============================================================================
+# CONTRACT COMPLIANCE
+# =============================================================================
+
+compliance:
+  mandatory:
+    - "work-ubuntu hostname configuration"
+    - "Firebase Emulator Suite running on specified ports"
+    - "All 4 applications running and healthy"
+    - "Shell command timeout mechanisms"
+    - "Clean Firestore state before each test run"
+    - "Collection prefix isolation strategy"
+
+  optional:
+    - "Emulator UI for debugging"
+    - "WebKit browser testing"
+    - "Extended timeout values for slow environments"
+
+# =============================================================================
+# VERSION HISTORY
+# =============================================================================
+
+version_history:
+  "1.0":
+    date: "2025-11-08"
+    changes:
+      - "Initial contract definition"
+      - "Network, emulator, and application configuration"
+      - "Shell command safety requirements"
+      - "Data isolation strategy"
+      - "Performance requirements"

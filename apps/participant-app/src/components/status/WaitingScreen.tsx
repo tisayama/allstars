@@ -18,7 +18,7 @@ export function WaitingScreen({
   clockSyncError = null,
 }: WaitingScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary to-primary-dark flex flex-col items-center justify-center p-6 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary to-primary-dark flex flex-col items-center justify-center p-6 text-white" data-testid="waiting-screen">
       {/* Welcome message */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Welcome!</h1>
@@ -62,7 +62,7 @@ export function WaitingScreen({
                 </svg>
               </div>
               <p className="text-lg font-semibold">You&apos;re all set!</p>
-              <p className="text-sm opacity-90 mt-1">Waiting for the quiz to start</p>
+              <p className="text-sm opacity-90 mt-1" data-testid="waiting-message">Waiting for the quiz to start</p>
             </div>
           </div>
 

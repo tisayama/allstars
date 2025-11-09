@@ -61,12 +61,15 @@ export function AnswerButtons({
   };
 
   return (
-    <div className="space-y-3">
-      {choices.map((choice) => (
+    <div className="space-y-3" data-testid="answer-options">
+      {choices.map((choice) => {
+        const choiceLetter = String.fromCharCode(65 + choice.index);
+        return (
         <button
           key={choice.index}
           onClick={() => onSelectAnswer(choice.index)}
           disabled={locked}
+          data-testid={`answer-option-${choiceLetter}`}
           className={`
             w-full text-left px-6 py-4 rounded-lg border-2 font-semibold
             transition-all duration-200
@@ -106,7 +109,7 @@ export function AnswerButtons({
             )}
           </div>
         </button>
-      ))}
+      )})}
     </div>
   );
 }

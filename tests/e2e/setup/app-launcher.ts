@@ -6,7 +6,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { HealthChecker } from './healthChecker';
+import { HealthChecker } from '../helpers/health-checker';
 
 export type AppName =
   | 'admin-app'
@@ -56,7 +56,7 @@ export class AppLauncher {
     const { name, cwd, command, args = [], env = {}, healthUrl } = config;
 
     // Spawn app process
-    const process = spawn(command, args, {
+    const childProcess = spawn(command, args, {
       cwd,
       env: {
         ...process.env,
@@ -66,16 +66,16 @@ export class AppLauncher {
     });
 
     // Log output for debugging
-    process.stdout?.on('data', (data) => {
+    childProcess.stdout?.on('data', (data) => {
       console.log(`[${name}] ${data.toString()}`);
     });
 
-    process.stderr?.on('data', (data) => {
+    childProcess.stderr?.on('data', (data) => {
       console.error(`[${name}] ERROR: ${data.toString()}`);
     });
 
     // Handle process errors
-    process.on('error', (error) => {
+    childProcess.on('error', (error) => {
       throw new Error(`Failed to start ${name}: ${error.message}`);
     });
 
@@ -84,13 +84,13 @@ export class AppLauncher {
       await this.healthChecker.waitForReady({ url: healthUrl, timeoutMs });
     } catch (error) {
       // Kill process if health check fails
-      process.kill('SIGTERM');
+      childProcess.kill('SIGTERM');
       throw new Error(
         `App ${name} failed health check within ${timeoutMs}ms. Check app logs for errors.`
       );
     }
 
-    return process;
+    return childProcess;
   }
 
   /**

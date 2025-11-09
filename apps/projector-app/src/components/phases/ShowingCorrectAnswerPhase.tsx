@@ -18,6 +18,7 @@ export function ShowingCorrectAnswerPhase({ gameState }: ShowingCorrectAnswerPha
 
   return (
     <div
+      data-testid="answer-reveal-container"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -40,6 +41,8 @@ export function ShowingCorrectAnswerPhase({ gameState }: ShowingCorrectAnswerPha
       </h2>
 
       <div
+        data-testid="correct-answer-container"
+        data-prominent="true"
         style={{
           backgroundColor: '#2a2a2a',
           padding: '3rem 5rem',
@@ -47,12 +50,16 @@ export function ShowingCorrectAnswerPhase({ gameState }: ShowingCorrectAnswerPha
           border: '4px solid #4ade80',
         }}
       >
-        <p style={{ fontSize: '3rem', fontWeight: 'bold', color: '#4ade80' }}>
+        <p
+          data-testid="correct-answer-letter"
+          style={{ fontSize: '3rem', fontWeight: 'bold', color: '#4ade80' }}
+        >
           {currentQuestion.correctAnswer}
         </p>
       </div>
 
       <div
+        data-testid="correct-answer-text"
         style={{
           marginTop: '3rem',
           maxWidth: '800px',

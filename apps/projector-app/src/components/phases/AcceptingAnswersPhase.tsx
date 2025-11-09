@@ -20,6 +20,7 @@ export function AcceptingAnswersPhase({ gameState }: AcceptingAnswersPhaseProps)
 
   return (
     <div
+      data-testid="question-container"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -31,11 +32,15 @@ export function AcceptingAnswersPhase({ gameState }: AcceptingAnswersPhaseProps)
         padding: '2rem',
       }}
     >
-      <div style={{ marginBottom: '2rem', fontSize: '1.25rem', color: '#4a9eff' }}>
+      <div
+        data-testid="question-number"
+        style={{ marginBottom: '2rem', fontSize: '1.25rem', color: '#4a9eff' }}
+      >
         {currentQuestion.period.toUpperCase()} Period - Question {currentQuestion.questionNumber}
       </div>
 
       <h2
+        data-testid="question-text"
         style={{
           fontSize: '2.5rem',
           marginBottom: '3rem',
@@ -90,6 +95,7 @@ export function AcceptingAnswersPhase({ gameState }: AcceptingAnswersPhaseProps)
       </div>
 
       <div
+        data-testid="timer-display"
         style={{
           marginTop: '3rem',
           fontSize: '1.125rem',
@@ -98,6 +104,20 @@ export function AcceptingAnswersPhase({ gameState }: AcceptingAnswersPhaseProps)
       >
         Countdown: {/* TODO: Implement countdown timer */}
         Time remaining...
+      </div>
+
+      <div
+        data-testid="submission-progress"
+        style={{
+          marginTop: '2rem',
+          fontSize: '1rem',
+          color: '#888',
+        }}
+      >
+        <span data-testid="submission-count">{answerCounts ? Object.values(answerCounts).reduce((sum, count) => sum + count, 0) : 0}</span>
+        {' / '}
+        <span data-testid="total-participants">{gameState.participantCount || 0}</span>
+        {' submitted'}
       </div>
     </div>
   );
