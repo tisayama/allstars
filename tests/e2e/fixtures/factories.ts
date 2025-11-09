@@ -189,6 +189,17 @@ export class GuestFactory {
   private static counter = 0;
 
   /**
+   * Create a guest (alias for createNormal for convenience)
+   * This is the most commonly used factory method
+   */
+  static create(options: {
+    name?: string;
+    attributes?: string[];
+  } = {}): TestGuest {
+    return this.createNormal(options);
+  }
+
+  /**
    * Create a normal active guest
    */
   static createNormal(options: {
