@@ -42,16 +42,11 @@ export class QuestionFactory {
       text: `${letter}. Choice ${letter}`,
     }));
 
-    // Find the correct choice based on the letter
-    const correctChoiceText = choices.find(
-      (choice) => choice.text.startsWith(correctAnswer)
-    )?.text || `${correctAnswer}. Choice ${correctAnswer}`;
-
     return {
       testId: `Q${questionNumber}_GENERAL`,
       questionText,
       choices,
-      correctAnswer: correctChoiceText,
+      correctAnswer, // Keep as-is (just the letter like 'A' or 'B')
       period,
       questionNumber,
       skipAttributes,
