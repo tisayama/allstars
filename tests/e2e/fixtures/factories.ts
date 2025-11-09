@@ -118,6 +118,7 @@ export class QuestionFactory {
 
   /**
    * Create a period-final question (for gong mechanics)
+   * Alias: createFinal
    */
   static createPeriodFinal(options: {
     period?: GamePeriod;
@@ -131,6 +132,16 @@ export class QuestionFactory {
       questionText: `Period-final question for ${period}`,
       correctChoiceIndex: 0,
     });
+  }
+
+  /**
+   * Create a final question (alias for createPeriodFinal)
+   */
+  static createFinal(options: {
+    period?: GamePeriod;
+    questionNumber?: number;
+  } = {}): TestQuestion {
+    return this.createPeriodFinal(options);
   }
 
   /**
@@ -195,8 +206,17 @@ export class GuestFactory {
   static create(options: {
     name?: string;
     attributes?: string[];
+    status?: 'active' | 'dropped' | 'eliminated';
   } = {}): TestGuest {
-    return this.createNormal(options);
+    const { name = `Guest ${++this.counter}`, attributes = [], status = 'active' } = options;
+
+    return {
+      testId: `GUEST_${this.counter}_FACTORY`,
+      name,
+      status,
+      attributes,
+      authMethod: 'anonymous',
+    };
   }
 
   /**
