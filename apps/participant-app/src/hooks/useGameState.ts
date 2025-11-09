@@ -33,8 +33,8 @@ export interface GameStateData {
  * Manages question state, answer submission, and timing calculations.
  * Listens to WebSocket events and handles answer queue processing.
  */
-export function useGameState(guestId: string | null) {
-  const { on, isConnected } = useWebSocket(guestId);
+export function useGameState(guestId: string | null, firebaseUser: any) {
+  const { on, isConnected } = useWebSocket(guestId, firebaseUser);
   const { clockOffset, isSynced } = useClockSync();
 
   const [gameState, setGameState] = useState<GameStateData>({

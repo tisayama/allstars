@@ -17,7 +17,7 @@ import { DroppedOutPage } from './DroppedOutPage';
  * - ended: Game over
  */
 export function GamePage() {
-  const { guestProfile } = useAuth();
+  const { guestProfile, user } = useAuth();
   const { syncing, error: syncError } = useClockSync();
   const {
     phase,
@@ -29,7 +29,7 @@ export function GamePage() {
     error: gameError,
     submitAnswer,
     isReady,
-  } = useGameState(guestProfile?.guestId ?? null);
+  } = useGameState(guestProfile?.guestId ?? null, user);
   const { isDropped, rank, totalPoints, correctAnswers } = useGuestStatus(
     guestProfile?.guestId ?? null
   );
