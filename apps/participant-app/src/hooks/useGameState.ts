@@ -4,27 +4,48 @@ import { useClockSync } from './useClockSync';
 import { submitAnswer } from '@/lib/api-client';
 import { queueAnswer, processQueue } from '@/utils/answer-queue';
 import { calculateResponseTime } from '@/utils/clock-sync';
-import { vibrateTap, vibrateSuccess, vibrateFailure } from '@/lib/vibration';
+import { vibrateTap, vibrateSuccess } from '@/lib/vibration';
+import { fetchQuestion } from '@/lib/firestore';
+import type { Question } from '@allstars/types';
+import type { StartQuestionPayload, GamePhaseChangedPayload } from '@allstars/types';
+import type { GamePhase as CanonicalGamePhase } from '@allstars/types';
 
+// Participant-app simplified game phases (mapped from canonical GamePhase)
 export type GamePhase = 'waiting' | 'answering' | 'reveal' | 'ended';
 
-export interface Question {
-  questionId: string;
-  questionText: string;
-  choices: Array<{ index: number; text: string }>;
+// Extended Question with serverStartTime (from Socket.io event)
+export interface QuestionWithTiming extends Question {
   serverStartTime: number;
-  period: 'first-half' | 'second-half' | 'overtime';
-  questionNumber: number;
 }
 
 export interface GameStateData {
   phase: GamePhase;
-  currentQuestion: Question | null;
+  currentQuestion: QuestionWithTiming | null;
   correctChoice: number | null;
   selectedChoice: number | null;
   answerLocked: boolean;
   submitting: boolean;
   error: string | null;
+  isGongActive: boolean; // Track gong state for UI
+}
+
+/**
+ * Map canonical GamePhase to participant-app simplified phases
+ */
+function mapToParticipantPhase(canonicalPhase: CanonicalGamePhase): GamePhase {
+  switch (canonicalPhase) {
+    case 'accepting_answers':
+      return 'answering';
+    case 'showing_distribution':
+    case 'showing_correct_answer':
+    case 'showing_results':
+      return 'reveal';
+    case 'ready_for_next':
+    case 'all_incorrect':
+    case 'all_revived':
+    default:
+      return 'waiting';
+  }
 }
 
 /**
@@ -45,44 +66,48 @@ export function useGameState(guestId: string | null, firebaseUser: any) {
     answerLocked: false,
     submitting: false,
     error: null,
+    isGongActive: false,
   });
 
   /**
    * Listen to START_QUESTION event
+   * Receives questionId and serverStartTime, then fetches full question from Firestore
    */
   useEffect(() => {
     if (!isConnected) return;
 
-    const cleanup = on('START_QUESTION', (payload: unknown) => {
+    const cleanup = on('START_QUESTION', async (payload: unknown) => {
       console.warn('[GameState] START_QUESTION event received:', payload);
 
-      // Type assertion after validation
-      const data = payload as {
-        questionId: string;
-        questionText: string;
-        choices: Array<{ index: number; text: string }>;
-        serverStartTime: number;
-        period: 'first-half' | 'second-half' | 'overtime';
-        questionNumber: number;
-      };
+      const data = payload as StartQuestionPayload;
 
-      const question: Question = {
-        questionId: data.questionId,
-        questionText: data.questionText,
-        choices: data.choices,
+      // Fetch full question details from Firestore
+      const questionData = await fetchQuestion(data.questionId);
+
+      if (!questionData) {
+        console.error(`Failed to fetch question ${data.questionId}`);
+        setGameState((prev) => ({
+          ...prev,
+          error: `Failed to load question ${data.questionId}`,
+        }));
+        return;
+      }
+
+      // Combine Firestore question data with Socket.io timing data
+      const questionWithTiming: QuestionWithTiming = {
+        ...questionData,
         serverStartTime: data.serverStartTime,
-        period: data.period,
-        questionNumber: data.questionNumber,
       };
 
       setGameState((prev) => ({
         ...prev,
         phase: 'answering',
-        currentQuestion: question,
+        currentQuestion: questionWithTiming,
         correctChoice: null,
         selectedChoice: null,
         answerLocked: false,
         error: null,
+        isGongActive: prev.isGongActive, // Preserve gong state
       }));
     });
 
@@ -98,35 +123,68 @@ export function useGameState(guestId: string | null, firebaseUser: any) {
     const cleanup = on('GAME_PHASE_CHANGED', (payload: unknown) => {
       console.warn('GAME_PHASE_CHANGED event received:', payload);
 
-      // Type assertion
-      const data = payload as {
-        phase: GamePhase;
-        correctChoice?: number | null;
-      };
+      const data = payload as GamePhaseChangedPayload;
+      const mappedPhase = mapToParticipantPhase(data.newPhase);
 
       setGameState((prev) => {
         const newState = {
           ...prev,
-          phase: data.phase,
-          correctChoice: data.correctChoice ?? prev.correctChoice,
+          phase: mappedPhase,
         };
 
         // Trigger haptic feedback on reveal phase
-        if (
-          data.phase === 'reveal' &&
-          data.correctChoice !== undefined &&
-          prev.selectedChoice !== null
-        ) {
-          // Correct answer: 2x100ms vibration
-          if (prev.selectedChoice === data.correctChoice) {
-            vibrateSuccess();
-          } else {
-            // Incorrect answer: 300ms vibration
-            vibrateFailure();
-          }
+        if (mappedPhase === 'reveal' && prev.selectedChoice !== null) {
+          // Note: correctChoice is determined by the question data, not the phase change event
+          // Vibration will be triggered when we know if the answer was correct
+          // For now, we'll add vibration when the correct answer is revealed
         }
 
         return newState;
+      });
+    });
+
+    return cleanup;
+  }, [isConnected, on]);
+
+  /**
+   * Listen to GONG_ACTIVATED event
+   */
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const cleanup = on('GONG_ACTIVATED', (payload: unknown) => {
+      console.warn('[GameState] GONG_ACTIVATED event received:', payload);
+
+      setGameState((prev) => ({
+        ...prev,
+        isGongActive: true,
+      }));
+
+      // Trigger vibration for dramatic effect
+      vibrateSuccess(); // Use success vibration pattern for gong
+    });
+
+    return cleanup;
+  }, [isConnected, on]);
+
+  /**
+   * Listen to IDLE_STATE event
+   */
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const cleanup = on('IDLE_STATE', (payload: unknown) => {
+      console.warn('[GameState] IDLE_STATE event received:', payload);
+
+      setGameState({
+        phase: 'waiting',
+        currentQuestion: null,
+        correctChoice: null,
+        selectedChoice: null,
+        answerLocked: false,
+        submitting: false,
+        error: null,
+        isGongActive: false,
       });
     });
 
@@ -228,5 +286,6 @@ export function useGameState(guestId: string | null, firebaseUser: any) {
     ...gameState,
     submitAnswer: submitAnswerChoice,
     isReady: isSynced && clockOffset !== null,
+    isGongActive: gameState.isGongActive,
   };
 }

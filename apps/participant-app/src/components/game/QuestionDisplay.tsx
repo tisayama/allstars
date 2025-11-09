@@ -1,7 +1,7 @@
-import { Question } from '@/hooks/useGameState';
+import type { QuestionWithTiming } from '@/hooks/useGameState';
 
 interface QuestionDisplayProps {
-  question: Question;
+  question: QuestionWithTiming;
 }
 
 /**
