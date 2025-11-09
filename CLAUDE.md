@@ -64,6 +64,31 @@ When extending `GameResults` type from `@allstars/types`:
 - Add optional period field: `period?: GamePeriod`
 - Add optional error flags: `rankingError?: boolean`
 - Use spread operator with conditional inclusion: `...(field && { field })`
+
+### Firestore Initialization Scripts (002-firestore-init)
+When creating scripts that initialize Firestore data:
+- **Production Safety**: ALWAYS check `FIRESTORE_EMULATOR_HOST` env var before connecting
+  ```typescript
+  if (!process.env.FIRESTORE_EMULATOR_HOST) {
+    console.error('✗ FIRESTORE_EMULATOR_HOST not set - refusing to run against production');
+    process.exit(1);
+  }
+  ```
+- **Idempotency**: Check document existence before creation to enable safe re-runs
+  ```typescript
+  const doc = await gameStateRef.get();
+  if (doc.exists) {
+    console.log('✓ gameState/live already exists, skipping initialization');
+    return;
+  }
+  ```
+- **Clear Error Messages**: Provide actionable guidance for common failures (ECONNREFUSED, timeout)
+  ```typescript
+  console.error('  Hint: Ensure Firestore emulator is running on localhost:8080');
+  console.error('  Start with: firebase emulators:start --only firestore');
+  ```
+- **Status Indicators**: Use ✓ for success, ✗ for errors to improve readability
+- **NPM Script**: Expose via package.json with timeout: `"init:dev": "timeout 10 tsx scripts/init-firestore-dev.ts"`
 <!-- MANUAL ADDITIONS END -->
 
 ## E2E Testing Patterns (008-e2e-playwright-tests)
