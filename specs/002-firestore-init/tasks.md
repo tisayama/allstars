@@ -142,7 +142,7 @@ This document provides a dependency-ordered task breakdown for implementing the 
 - [X] [POLISH-004] [--] [--] Verify error detection occurs within 2 seconds (SC-004) with manual test (stop emulator)
 - [X] [POLISH-005] [--] [--] Manual verification: Start clean emulator, run `pnpm run init:dev`, start projector-app, verify no errors
 - [X] [POLISH-006] [--] [--] Manual verification: Run `pnpm run init:dev` twice, verify second run skips gracefully
-- [ ] [POLISH-007] [--] [--] Update CLAUDE.md with any new patterns or learnings (if applicable)
+- [X] [POLISH-007] [--] [--] Update CLAUDE.md with any new patterns or learnings (if applicable)
 
 **Dependencies**: All US1, US2, US3 tasks complete
 **Validation**: All success criteria (SC-001 through SC-006) verified
