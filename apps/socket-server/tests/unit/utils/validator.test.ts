@@ -20,16 +20,16 @@ describe('GameState Validator (T041)', () => {
       expect(result.isGongActive).toBe(false);
     });
 
-    it('should accept valid GameState with idle phase', () => {
+    it('should accept valid GameState with ready_for_next phase', () => {
       const data = {
-        currentPhase: 'idle',
+        currentPhase: 'ready_for_next',
         isGongActive: false,
         participants: [],
       };
 
       const result = validateGameState(data);
 
-      expect(result.currentPhase).toBe('idle');
+      expect(result.currentPhase).toBe('ready_for_next');
     });
 
     it('should accept GameState with default isGongActive', () => {

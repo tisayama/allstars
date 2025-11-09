@@ -35,9 +35,9 @@ describe('GAME_PHASE_CHANGED Contract Test (T054)', () => {
       expect(isGamePhaseChangedPayload(payload)).toBe(true);
     });
 
-    it('should accept valid payload with idle phase', () => {
+    it('should accept valid payload with ready_for_next phase', () => {
       const payload: GamePhaseChangedPayload = {
-        newPhase: 'idle',
+        newPhase: 'ready_for_next',
       };
 
       expect(isGamePhaseChangedPayload(payload)).toBe(true);
