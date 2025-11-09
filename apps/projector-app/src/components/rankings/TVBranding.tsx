@@ -72,12 +72,7 @@ export function TVBranding({ logoUrl, showLiveBadge, period }: TVBrandingProps) 
         {logoError ? (
           <FallbackLogo />
         ) : (
-          <img
-            src={logoUrl}
-            alt="Show Logo"
-            className="show-logo"
-            onError={handleLogoError}
-          />
+          <img src={logoUrl} alt="Show Logo" className="show-logo" onError={handleLogoError} />
         )}
       </div>
 

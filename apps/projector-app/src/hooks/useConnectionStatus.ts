@@ -17,9 +17,7 @@ interface ConnectionStatusResult {
  * @param socket - Socket.io client instance
  * @returns {ConnectionStatusResult} Connection state
  */
-export function useConnectionStatus(
-  socket: Socket | null | undefined
-): ConnectionStatusResult {
+export function useConnectionStatus(socket: Socket | null | undefined): ConnectionStatusResult {
   const [isConnected, setIsConnected] = useState(socket?.connected ?? false);
   const [showIndicator, setShowIndicator] = useState(false);
   const indicatorTimerRef = useRef<NodeJS.Timeout | null>(null);

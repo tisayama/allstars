@@ -46,7 +46,9 @@ export function initializeFirebase(): FirebaseApp {
       connectFirestoreEmulator(firestore, emulatorHost, 8080);
       connectStorageEmulator(storage, emulatorHost, 9199);
       connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
-      console.log(`Connected to Firebase emulators at ${emulatorHost} (Firestore: 8080, Storage: 9199, Auth: 9099)`);
+      console.log(
+        `Connected to Firebase emulators at ${emulatorHost} (Firestore: 8080, Storage: 9199, Auth: 9099)`
+      );
     } catch (error) {
       // Emulator connection may fail if already connected
       console.warn('Firebase emulator connection warning:', error);

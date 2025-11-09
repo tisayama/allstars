@@ -45,14 +45,8 @@ export function TVRankingDisplay({
     return (
       <div className="tv-ranking-container">
         <TVBackground animationsEnabled={animationsEnabled} />
-        <TVBranding
-          logoUrl="/assets/show-logo.svg"
-          showLiveBadge={true}
-          period={undefined}
-        />
-        <div className="rankings-content">
-          {/* Empty state - no results */}
-        </div>
+        <TVBranding logoUrl="/assets/show-logo.svg" showLiveBadge={true} period={undefined} />
+        <div className="rankings-content">{/* Empty state - no results */}</div>
       </div>
     );
   }
@@ -62,14 +56,14 @@ export function TVRankingDisplay({
   const top10Config = results.top10?.length > 0 ? createTop10Config(results) : null;
 
   return (
-    <div className="tv-ranking-container" data-testid="rankings-container" data-animated={shouldAnimate ? 'true' : 'false'}>
+    <div
+      className="tv-ranking-container"
+      data-testid="rankings-container"
+      data-animated={shouldAnimate ? 'true' : 'false'}
+    >
       <TVBackground animationsEnabled={animationsEnabled} />
 
-      <TVBranding
-        logoUrl="/assets/show-logo.svg"
-        showLiveBadge={true}
-        period={results.period}
-      />
+      <TVBranding logoUrl="/assets/show-logo.svg" showLiveBadge={true} period={results.period} />
 
       <div className="rankings-content">
         {/* Worst 10 Rankings - Always shown */}

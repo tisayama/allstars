@@ -43,12 +43,8 @@ interface UseRankingAnimationResult {
  * @param questionId - Current question ID
  * @returns {UseRankingAnimationResult} Animation state and control
  */
-export function useRankingAnimation(
-  questionId: string | undefined
-): UseRankingAnimationResult {
-  const [playedQuestions, setPlayedQuestions] = useState<Set<string>>(() =>
-    loadPlayedQuestions()
-  );
+export function useRankingAnimation(questionId: string | undefined): UseRankingAnimationResult {
+  const [playedQuestions, setPlayedQuestions] = useState<Set<string>>(() => loadPlayedQuestions());
 
   // Determine if current question should animate
   const shouldAnimate = questionId ? !playedQuestions.has(questionId) : false;

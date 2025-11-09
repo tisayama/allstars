@@ -114,7 +114,9 @@ export function AcceptingAnswersPhase({ gameState }: AcceptingAnswersPhaseProps)
           color: '#888',
         }}
       >
-        <span data-testid="submission-count">{answerCounts ? Object.values(answerCounts).reduce((sum, count) => sum + count, 0) : 0}</span>
+        <span data-testid="submission-count">
+          {answerCounts ? Object.values(answerCounts).reduce((sum, count) => sum + count, 0) : 0}
+        </span>
         {' / '}
         <span data-testid="total-participants">{gameState.participantCount || 0}</span>
         {' submitted'}

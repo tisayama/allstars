@@ -46,8 +46,7 @@ export function useFPSMonitor(): FPSMonitorResult {
       // Calculate average FPS
       if (frameTimesRef.current.length >= 10) {
         const avgDelta =
-          frameTimesRef.current.reduce((sum, d) => sum + d, 0) /
-          frameTimesRef.current.length;
+          frameTimesRef.current.reduce((sum, d) => sum + d, 0) / frameTimesRef.current.length;
         const currentFps = 1000 / avgDelta;
         setFps(Math.round(currentFps));
 
@@ -55,10 +54,7 @@ export function useFPSMonitor(): FPSMonitorResult {
         if (currentFps < FPS_DEGRADATION_THRESHOLD) {
           if (degradationStartRef.current === null) {
             degradationStartRef.current = currentTime;
-          } else if (
-            currentTime - degradationStartRef.current >=
-            THRESHOLD_DURATION_MS
-          ) {
+          } else if (currentTime - degradationStartRef.current >= THRESHOLD_DURATION_MS) {
             setIsDegraded(true);
           }
           // Reset recovery tracking
@@ -66,10 +62,7 @@ export function useFPSMonitor(): FPSMonitorResult {
         } else if (currentFps > FPS_RECOVERY_THRESHOLD && isDegraded) {
           if (recoveryStartRef.current === null) {
             recoveryStartRef.current = currentTime;
-          } else if (
-            currentTime - recoveryStartRef.current >=
-            THRESHOLD_DURATION_MS
-          ) {
+          } else if (currentTime - recoveryStartRef.current >= THRESHOLD_DURATION_MS) {
             setIsDegraded(false);
           }
           // Reset degradation tracking

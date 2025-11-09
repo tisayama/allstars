@@ -37,11 +37,7 @@ export function msToSeconds(ms: number): number {
 /**
  * Determine if ranking entry should be highlighted
  */
-export function shouldHighlight(
-  index: number,
-  total: number,
-  type: 'worst10' | 'top10'
-): boolean {
+export function shouldHighlight(index: number, total: number, type: 'worst10' | 'top10'): boolean {
   if (type === 'worst10') {
     return index === total - 1; // Last entry (slowest)
   } else {
@@ -90,10 +86,7 @@ export function createWorst10Config(results: GameResults): RankingDisplayConfig 
       answer,
       index + 1,
       shouldHighlight(index, results.worst10.length, 'worst10'),
-      getHighlightColor(
-        'worst10',
-        shouldHighlight(index, results.worst10.length, 'worst10')
-      ),
+      getHighlightColor('worst10', shouldHighlight(index, results.worst10.length, 'worst10')),
       results.periodChampions || []
     )
   );
@@ -117,10 +110,7 @@ export function createTop10Config(results: GameResults): RankingDisplayConfig {
       answer,
       index + 1,
       shouldHighlight(index, results.top10.length, 'top10'),
-      getHighlightColor(
-        'top10',
-        shouldHighlight(index, results.top10.length, 'top10')
-      ),
+      getHighlightColor('top10', shouldHighlight(index, results.top10.length, 'top10')),
       results.periodChampions || []
     )
   );
@@ -129,7 +119,8 @@ export function createTop10Config(results: GameResults): RankingDisplayConfig {
     title: '早押しトップ10',
     entries,
     period: results.period,
-    showPeriodChampions: Array.isArray(results.periodChampions) && results.periodChampions.length > 0,
+    showPeriodChampions:
+      Array.isArray(results.periodChampions) && results.periodChampions.length > 0,
     periodChampions: results.periodChampions || [],
     type: 'top10',
   };

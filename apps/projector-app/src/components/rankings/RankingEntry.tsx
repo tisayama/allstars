@@ -52,11 +52,25 @@ export function RankingEntry({
       }}
     >
       <div className="rank-number">{rank}</div>
-      <div className="participant-name" data-testid={nameTestId}>{displayName}</div>
-      <div className="score" data-testid={scoreTestId}>{rank}</div>
-      <div className="response-time" data-testid={timeTestId}>{responseTime.toFixed(2)}</div>
-      {isFastest && <div className="fastest-badge" data-testid="fastest-badge">⚡</div>}
-      {isPeriodChampion && <div className="champion-badge" data-testid="period-champion-badge">★</div>}
+      <div className="participant-name" data-testid={nameTestId}>
+        {displayName}
+      </div>
+      <div className="score" data-testid={scoreTestId}>
+        {rank}
+      </div>
+      <div className="response-time" data-testid={timeTestId}>
+        {responseTime.toFixed(2)}
+      </div>
+      {isFastest && (
+        <div className="fastest-badge" data-testid="fastest-badge">
+          ⚡
+        </div>
+      )}
+      {isPeriodChampion && (
+        <div className="champion-badge" data-testid="period-champion-badge">
+          ★
+        </div>
+      )}
     </div>
   );
 }
