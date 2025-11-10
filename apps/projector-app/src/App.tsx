@@ -130,7 +130,7 @@ function App() {
   };
 
   return (
-    <div data-testid="projector-app">
+    <div data-testid="app-container">
       <div data-testid="current-phase" data-phase={gameState.currentPhase}>
         {renderPhase()}
       </div>
