@@ -353,7 +353,7 @@ export class ProjectorPage {
    */
   async waitForReady(): Promise<void> {
     // Wait for the app container to be visible
-    await this.page.waitForSelector('[data-testid="projector-app"]', {
+    await this.page.waitForSelector('[data-testid="app-container"]', {
       state: 'visible',
       timeout: 10000,
     });

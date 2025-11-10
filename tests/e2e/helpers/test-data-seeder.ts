@@ -24,12 +24,22 @@ export class TestDataSeeder {
   constructor() {
     // Initialize Firebase Admin if not already initialized
     if (!admin.apps.length) {
+      // Set emulator host for test process
+      process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
+      process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
+
       admin.initializeApp({
-        projectId: 'test',
+        projectId: 'stg-wedding-allstars',
       });
     }
 
     this.db = admin.firestore();
+
+    // Explicitly set emulator settings
+    this.db.settings({
+      host: 'localhost:8080',
+      ssl: false,
+    });
   }
 
   /**
@@ -115,20 +125,21 @@ export class TestDataSeeder {
   /**
    * Set initial game state in Firestore
    * @param gameState - Initial game state
-   * @param collectionPrefix - Collection prefix for isolation
+   * @param collectionPrefix - Collection prefix for isolation (not used, kept for API compatibility)
    */
   async seedGameState(
     gameState: TestGameState,
     collectionPrefix: string
   ): Promise<void> {
-    const collectionName = `${collectionPrefix}gameState`;
+    // Apps expect gameState/live (no prefix)
+    // Collection prefix is not used because apps are hardcoded to listen to gameState/live
     const { testId, description, ...gameStateData } = gameState;
 
     // Remove undefined values (Firestore doesn't accept undefined)
     const cleanData = this.removeUndefinedValues(gameStateData);
 
-    // GameState is typically a singleton document
-    await this.db.collection(collectionName).doc('current').set(cleanData);
+    // Write to standard gameState/live path that apps expect
+    await this.db.collection('gameState').doc('live').set(cleanData);
   }
 
   /**
