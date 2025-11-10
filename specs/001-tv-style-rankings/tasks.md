@@ -284,10 +284,10 @@ Each user story phase includes acceptance criteria that can be verified independ
 
 ### Tasks
 
-- [X] T072 [P] Write e2e test for Scenario 1 (Worst 10 Rankings) in `apps/projector-app/tests/e2e/rankings-worst10.spec.ts` ✅
-- [X] T073 [P] Write e2e test for Scenario 2 (Top 10 Rankings) in `apps/projector-app/tests/e2e/rankings-top10.spec.ts` ✅
-- [X] T074 [P] Write e2e test for Scenario 3 (Visual Transitions) in `apps/projector-app/tests/e2e/rankings-animations.spec.ts` ✅
-- [~] T075 Run e2e tests with Playwright - BLOCKED: Tests need Firebase emulator integration (see /tests/e2e/)
+- [X] T072 [P] Write e2e test for Scenario 1 (Worst 10 Rankings) in `tests/e2e/scenarios/tv-rankings.spec.ts` ✅
+- [X] T073 [P] Write e2e test for Scenario 2 (Top 10 Rankings) in `tests/e2e/scenarios/tv-rankings.spec.ts` ✅
+- [X] T074 [P] Write e2e test for Scenario 3 (Visual Transitions) in `tests/e2e/scenarios/tv-rankings.spec.ts` ✅
+- [X] T075 Run e2e tests with Playwright ✅ Integrated with main E2E infrastructure, tests executing (see /tests/e2e/)
 - [ ] T076 Capture visual regression screenshots for baseline comparison
 
 ---
