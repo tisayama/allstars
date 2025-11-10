@@ -299,9 +299,9 @@ Each user story phase includes acceptance criteria that can be verified independ
 ### Tasks
 
 - [ ] T077 [P] Run full test suite (unit + integration + e2e) and verify 100% pass rate
-- [ ] T078 [P] Run linter and fix any issues (`pnpm run lint:fix`)
-- [ ] T079 [P] Run formatter and verify code style (`pnpm run format`)
-- [ ] T080 Build projector-app and verify no TypeScript errors (`pnpm run build`)
+- [X] T078 [P] Run linter and fix any issues (`pnpm run lint:fix`)
+- [X] T079 [P] Run formatter and verify code style (`pnpm run format`)
+- [X] T080 Build projector-app and verify no TypeScript errors (`pnpm run build`)
 - [ ] T081 Manual test on actual projection hardware (1920x1080, verify readability from 15m)
 - [ ] T082 Performance validation: Verify 30+ FPS with animations enabled (Chrome DevTools FPS meter)
 - [ ] T083 Performance validation: Test FPS degradation triggers correctly at <25 FPS
