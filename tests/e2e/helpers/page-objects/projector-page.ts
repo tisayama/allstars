@@ -201,7 +201,8 @@ export class ProjectorPage {
    * Get all rankings data
    */
   async getRankings(): Promise<RankingEntry[]> {
-    await this.rankingsList.waitFor({ state: 'visible' });
+    // Wait for any ranking entry to be visible
+    await this.page.locator('[data-testid^="ranking-entry-"]').first().waitFor({ state: 'visible' });
     const rankingElements = await this.page.locator('[data-testid^="ranking-entry-"]').all();
 
     const rankings: RankingEntry[] = [];
@@ -338,8 +339,9 @@ export class ProjectorPage {
    */
   async isPeriodChampionHighlighted(participantName: string): Promise<boolean> {
     try {
+      // Find the ranking entry element that has data-period-champion="true" and contains the participant name
       const championElement = this.page.locator(
-        `[data-testid="ranking-name"]:has-text("${participantName}") >> xpath=.. >> [data-period-champion="true"]`
+        `[data-testid^="ranking-entry-"][data-period-champion="true"]:has([data-testid="ranking-name"]:has-text("${participantName}"))`
       );
       await championElement.waitFor({ state: 'visible', timeout: 2000 });
       return true;
@@ -353,7 +355,7 @@ export class ProjectorPage {
    */
   async waitForReady(): Promise<void> {
     // Wait for the app container to be visible
-    await this.page.waitForSelector('[data-testid="projector-app"]', {
+    await this.page.waitForSelector('[data-testid="app-container"]', {
       state: 'visible',
       timeout: 10000,
     });

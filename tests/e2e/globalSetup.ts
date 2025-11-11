@@ -120,6 +120,9 @@ async function globalSetup(config: FullConfig) {
         args: ['dev'],
         healthUrl: 'http://work-ubuntu:5185',
         port: 5185,
+        env: {
+          VITE_USE_EMULATORS: 'true',
+        },
       },
     ];
 
