@@ -35,11 +35,15 @@ export class TestDataSeeder {
 
     this.db = admin.firestore();
 
-    // Explicitly set emulator settings
-    this.db.settings({
-      host: 'localhost:8080',
-      ssl: false,
-    });
+    // Explicitly set emulator settings (only if not already set)
+    try {
+      this.db.settings({
+        host: 'localhost:8080',
+        ssl: false,
+      });
+    } catch (error) {
+      // Ignore error if settings were already called (serial test execution)
+    }
   }
 
   /**

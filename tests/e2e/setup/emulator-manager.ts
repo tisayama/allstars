@@ -7,6 +7,7 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import * as admin from 'firebase-admin';
+import * as http from 'http';
 
 export interface EmulatorConfig {
   /** Firestore emulator port (default: 8080) */
@@ -128,18 +129,27 @@ export class EmulatorManager {
    * @returns true if both Firestore and Auth emulators are responsive
    */
   async isReady(): Promise<boolean> {
+    const checkPort = (port: number): Promise<boolean> => {
+      return new Promise((resolve) => {
+        const req = http.get(`http://localhost:${port}`, (res) => {
+          resolve(res.statusCode === 200);
+        });
+        req.on('error', () => resolve(false));
+        req.setTimeout(1000, () => {
+          req.destroy();
+          resolve(false);
+        });
+      });
+    };
+
     try {
-      // Check Firestore health
-      const firestoreResponse = await fetch(
-        `http://localhost:${this.config.firestorePort}`
-      );
+      // Check both Firestore and Auth health
+      const [firestoreReady, authReady] = await Promise.all([
+        checkPort(this.config.firestorePort),
+        checkPort(this.config.authPort),
+      ]);
 
-      // Check Auth health (auth emulator typically responds on port + 1)
-      const authResponse = await fetch(
-        `http://localhost:${this.config.authPort}`
-      );
-
-      return firestoreResponse.ok && authResponse.ok;
+      return firestoreReady && authReady;
     } catch (error) {
       return false;
     }
