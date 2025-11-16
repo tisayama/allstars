@@ -37,6 +37,16 @@ function getSocketServerUrl(): string {
 }
 
 /**
+ * WebSocket reconnection configuration
+ */
+const RECONNECT_OPTIONS = {
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000, // Initial delay: 1 second
+  reconnectionDelayMax: 60000, // Max delay: 60 seconds
+  randomizationFactor: 0.5, // Jitter: ±50% to prevent thundering herd
+};
+
+/**
  * Hook for managing WebSocket connection to socket-server
  *
  * Handles:
@@ -84,12 +94,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   useEffect(() => {
     const socketUrl = getSocketServerUrl();
 
-    // Create socket connection
+    // Create socket connection with exponential backoff
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
       autoConnect: false,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      ...RECONNECT_OPTIONS,
     });
 
     socketRef.current = socket;
@@ -105,6 +114,26 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       console.log('WebSocket disconnected:', reason);
       setIsConnected(false);
       setIsAuthenticated(false);
+    });
+
+    // Socket.IO reconnection events (via socket.io for type safety)
+    socket.io.on('reconnect_attempt', (attemptNumber: number) => {
+      console.log(`WebSocket reconnection attempt ${attemptNumber}`);
+    });
+
+    socket.io.on('reconnect', (attemptNumber: number) => {
+      console.log(`WebSocket reconnected after ${attemptNumber} attempts`);
+      setIsConnected(true);
+      setError(null);
+    });
+
+    socket.io.on('reconnect_error', (error: Error) => {
+      console.error('WebSocket reconnection error:', error.message);
+    });
+
+    socket.io.on('reconnect_failed', () => {
+      console.error('WebSocket reconnection failed after all attempts');
+      setError('Failed to reconnect to server');
     });
 
     // Authentication event handlers
@@ -149,6 +178,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       console.log('Cleaning up WebSocket connection');
       socket.off('connect');
       socket.off('disconnect');
+      socket.io.off('reconnect_attempt');
+      socket.io.off('reconnect');
+      socket.io.off('reconnect_error');
+      socket.io.off('reconnect_failed');
       socket.off('AUTH_REQUIRED');
       socket.off('AUTH_SUCCESS');
       socket.off('AUTH_FAILED');

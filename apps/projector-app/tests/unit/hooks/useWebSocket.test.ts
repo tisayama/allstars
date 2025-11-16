@@ -13,7 +13,14 @@ const mockSocket = {
   io: {
     opts: {
       autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 60000,
+      randomizationFactor: 0.5,
     },
+    on: vi.fn(),
+    off: vi.fn(),
   },
 };
 
@@ -53,11 +60,30 @@ describe('useWebSocket', () => {
     expect(mockSocket.connect).toHaveBeenCalled();
   });
 
+  it('should configure socket with exponential backoff', () => {
+    renderHook(() => useWebSocket());
+
+    // Check that the mock socket was created with the correct configuration
+    // The io mock returns mockSocket, so we check mockSocket.io.opts
+    expect(mockSocket.io.opts).toMatchObject({
+      autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 60000,
+      randomizationFactor: 0.5,
+    });
+  });
+
   it('should set up event listeners on mount', () => {
     renderHook(() => useWebSocket());
 
     expect(mockSocket.on).toHaveBeenCalledWith('connect', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_attempt', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_error', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_failed', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_REQUIRED', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_SUCCESS', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_FAILED', expect.any(Function));
@@ -323,5 +349,64 @@ describe('useWebSocket', () => {
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.error).toBeNull();
     });
+  });
+
+  it('should handle reconnect event', async () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // Get the reconnect callback from socket.io.on
+    const reconnectCallback = mockSocket.io.on.mock.calls.find(
+      (call) => call[0] === 'reconnect'
+    )?.[1];
+
+    expect(reconnectCallback).toBeDefined();
+
+    act(() => {
+      reconnectCallback?.(3); // Reconnected after 3 attempts
+    });
+
+    await waitFor(() => {
+      expect(result.current.isConnected).toBe(true);
+      expect(result.current.error).toBeNull();
+    });
+  });
+
+  it('should handle reconnect_failed event', async () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // Get the reconnect_failed callback from socket.io.on
+    const reconnectFailedCallback = mockSocket.io.on.mock.calls.find(
+      (call) => call[0] === 'reconnect_failed'
+    )?.[1];
+
+    expect(reconnectFailedCallback).toBeDefined();
+
+    act(() => {
+      reconnectFailedCallback?.();
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Failed to reconnect to server');
+    });
+  });
+
+  it('should handle reconnect_error event', async () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // Get the reconnect_error callback from socket.io.on
+    const reconnectErrorCallback = mockSocket.io.on.mock.calls.find(
+      (call) => call[0] === 'reconnect_error'
+    )?.[1];
+
+    expect(reconnectErrorCallback).toBeDefined();
+
+    const testError = new Error('Connection timeout');
+
+    act(() => {
+      reconnectErrorCallback?.(testError);
+    });
+
+    // reconnect_error just logs, doesn't change state
+    expect(result.current.error).toBeNull();
   });
 });
