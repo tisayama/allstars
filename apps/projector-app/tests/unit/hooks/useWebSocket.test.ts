@@ -19,6 +19,8 @@ const mockSocket = {
       reconnectionDelayMax: 60000,
       randomizationFactor: 0.5,
     },
+    on: vi.fn(),
+    off: vi.fn(),
   },
 };
 
@@ -78,10 +80,10 @@ describe('useWebSocket', () => {
 
     expect(mockSocket.on).toHaveBeenCalledWith('connect', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
-    expect(mockSocket.on).toHaveBeenCalledWith('reconnect_attempt', expect.any(Function));
-    expect(mockSocket.on).toHaveBeenCalledWith('reconnect', expect.any(Function));
-    expect(mockSocket.on).toHaveBeenCalledWith('reconnect_error', expect.any(Function));
-    expect(mockSocket.on).toHaveBeenCalledWith('reconnect_failed', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_attempt', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_error', expect.any(Function));
+    expect(mockSocket.io.on).toHaveBeenCalledWith('reconnect_failed', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_REQUIRED', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_SUCCESS', expect.any(Function));
     expect(mockSocket.on).toHaveBeenCalledWith('AUTH_FAILED', expect.any(Function));
@@ -352,8 +354,8 @@ describe('useWebSocket', () => {
   it('should handle reconnect event', async () => {
     const { result } = renderHook(() => useWebSocket());
 
-    // Get the reconnect callback
-    const reconnectCallback = mockSocket.on.mock.calls.find(
+    // Get the reconnect callback from socket.io.on
+    const reconnectCallback = mockSocket.io.on.mock.calls.find(
       (call) => call[0] === 'reconnect'
     )?.[1];
 
@@ -372,8 +374,8 @@ describe('useWebSocket', () => {
   it('should handle reconnect_failed event', async () => {
     const { result } = renderHook(() => useWebSocket());
 
-    // Get the reconnect_failed callback
-    const reconnectFailedCallback = mockSocket.on.mock.calls.find(
+    // Get the reconnect_failed callback from socket.io.on
+    const reconnectFailedCallback = mockSocket.io.on.mock.calls.find(
       (call) => call[0] === 'reconnect_failed'
     )?.[1];
 
@@ -391,8 +393,8 @@ describe('useWebSocket', () => {
   it('should handle reconnect_error event', async () => {
     const { result } = renderHook(() => useWebSocket());
 
-    // Get the reconnect_error callback
-    const reconnectErrorCallback = mockSocket.on.mock.calls.find(
+    // Get the reconnect_error callback from socket.io.on
+    const reconnectErrorCallback = mockSocket.io.on.mock.calls.find(
       (call) => call[0] === 'reconnect_error'
     )?.[1];
 

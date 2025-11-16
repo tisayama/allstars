@@ -37,6 +37,16 @@ function getSocketServerUrl(): string {
 }
 
 /**
+ * WebSocket reconnection configuration
+ */
+const RECONNECT_OPTIONS = {
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000, // Initial delay: 1 second
+  reconnectionDelayMax: 60000, // Max delay: 60 seconds
+  randomizationFactor: 0.5, // Jitter: ±50% to prevent thundering herd
+};
+
+/**
  * Hook for managing WebSocket connection to socket-server
  *
  * Handles:
@@ -88,10 +98,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
       autoConnect: false,
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000, // Initial delay: 1 second
-      reconnectionDelayMax: 60000, // Max delay: 60 seconds
-      randomizationFactor: 0.5, // Jitter: ±50% to prevent thundering herd
+      ...RECONNECT_OPTIONS,
     });
 
     socketRef.current = socket;
@@ -109,26 +116,22 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       setIsAuthenticated(false);
     });
 
-    // Socket.IO reconnection events (use 'as any' for internal Socket.IO events)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any).on('reconnect_attempt', (attemptNumber: number) => {
+    // Socket.IO reconnection events (via socket.io for type safety)
+    socket.io.on('reconnect_attempt', (attemptNumber: number) => {
       console.log(`WebSocket reconnection attempt ${attemptNumber}`);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any).on('reconnect', (attemptNumber: number) => {
+    socket.io.on('reconnect', (attemptNumber: number) => {
       console.log(`WebSocket reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
       setError(null);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any).on('reconnect_error', (error: Error) => {
+    socket.io.on('reconnect_error', (error: Error) => {
       console.error('WebSocket reconnection error:', error.message);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any).on('reconnect_failed', () => {
+    socket.io.on('reconnect_failed', () => {
       console.error('WebSocket reconnection failed after all attempts');
       setError('Failed to reconnect to server');
     });
@@ -175,14 +178,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       console.log('Cleaning up WebSocket connection');
       socket.off('connect');
       socket.off('disconnect');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (socket as any).off('reconnect_attempt');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (socket as any).off('reconnect');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (socket as any).off('reconnect_error');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (socket as any).off('reconnect_failed');
+      socket.io.off('reconnect_attempt');
+      socket.io.off('reconnect');
+      socket.io.off('reconnect_error');
+      socket.io.off('reconnect_failed');
       socket.off('AUTH_REQUIRED');
       socket.off('AUTH_SUCCESS');
       socket.off('AUTH_FAILED');
