@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { initializeFirebase } from '@/lib/firebase';
+import { useCallback } from 'react';
+import { useProjectorAuth } from '@/hooks/useProjectorAuth';
 import { useGameState } from '@/hooks/useGameState';
 import { usePhaseAudio } from '@/hooks/usePhaseAudio';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -16,21 +16,10 @@ import { AllIncorrectPhase } from '@/components/phases/AllIncorrectPhase';
 import type { GamePhase } from '@/types';
 
 function App() {
-  const [initError, setInitError] = useState<string | null>(null);
+  // Use projector authentication hook
+  const { isLoading: isAuthLoading, error: authError } = useProjectorAuth();
 
-  // Initialize Firebase on mount
-  useEffect(() => {
-    try {
-      initializeFirebase();
-      console.log('Firebase initialized successfully');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setInitError(message);
-      console.error('Firebase initialization failed:', error);
-    }
-  }, []);
-
-  // Use the game state hook (only after Firebase is initialized)
+  // Use the game state hook
   const { gameState, connectionStatus, error: gameStateError } = useGameState();
 
   // Automatically play phase-based background music
@@ -65,15 +54,20 @@ function App() {
     onGamePhaseChanged: handleGamePhaseChanged,
   });
 
-  // Show error screen if Firebase init failed
-  if (initError) {
+  // Show error screen if authentication failed
+  if (authError) {
     return (
       <ErrorScreen
-        title="Initialization Error"
-        message="Failed to initialize Firebase"
-        details={initError}
+        title="Authentication Error"
+        message="Failed to authenticate with Firebase"
+        details={authError}
       />
     );
+  }
+
+  // Show loading indicator while waiting for authentication
+  if (isAuthLoading) {
+    return <LoadingIndicator message="Authenticating..." />;
   }
 
   // Show error screen if gameState listener failed
