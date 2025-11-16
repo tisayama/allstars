@@ -12,6 +12,7 @@ export * from './SocketEvents';
 export * from './GameSettings';
 export * from './Choice';
 export * from './HostApi';
+export * from './ProjectorAuth';
 
 // Validators
 export * from './validators/question';

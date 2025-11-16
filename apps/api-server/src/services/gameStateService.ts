@@ -106,14 +106,18 @@ export async function advanceGame(action: GameActionInput): Promise<GameState> {
     const newState = await processAction(currentState, action, transaction);
 
     // Update game state in transaction
-    transaction.set(gameStateRef, {
-      currentPhase: newState.currentPhase,
-      currentQuestion: newState.currentQuestion,
-      isGongActive: newState.isGongActive,
-      lastUpdate: FieldValue.serverTimestamp(),
-      results: newState.results,
-      prizeCarryover: newState.prizeCarryover,
-    }, { merge: true });
+    transaction.set(
+      gameStateRef,
+      {
+        currentPhase: newState.currentPhase,
+        currentQuestion: newState.currentQuestion,
+        isGongActive: newState.isGongActive,
+        lastUpdate: FieldValue.serverTimestamp(),
+        results: newState.results,
+        prizeCarryover: newState.prizeCarryover,
+      },
+      { merge: true }
+    );
 
     return newState;
   });

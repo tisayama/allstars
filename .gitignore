@@ -30,6 +30,11 @@ pnpm-debug.log*
 emulator-data/
 firebase-debug.log
 
+# Firebase Service Account Credentials
+service-account*.json
+*-service-account.json
+firebase-adminsdk*.json
+
 # IDE
 .vscode/
 .idea/

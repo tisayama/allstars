@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: Projector Authentication API
+  description: |
+    API endpoints for projector-app WebSocket authentication.
+
+    This API provides custom Firebase token generation for projector instances,
+    enabling secure, unattended WebSocket authentication without user interaction.
+
+    **Authentication Flow**:
+    1. Projector-app calls POST /api/projector/auth-token with static API key
+    2. API server generates Firebase custom token with projector role
+    3. Projector-app uses custom token to sign in to Firebase Auth
+    4. Projector-app uses Firebase ID token to authenticate WebSocket connection
+
+    **Security Model**:
+    - Static API key (VITE_PROJECTOR_API_KEY) for token endpoint access
+    - Rate limiting: 10 requests/minute per IP address
+    - Custom tokens expire after 1 hour
+    - Service account credentials never exposed to client
+  version: 1.0.0
+  contact:
+    name: AllStars Platform Team
+servers:
+  - url: http://localhost:5001/stg-wedding-allstars/us-central1/api
+    description: Local development (Firebase Emulator)
+  - url: https://us-central1-stg-wedding-allstars.cloudfunctions.net/api
+    description: Staging environment
+  - url: https://us-central1-wedding-allstars.cloudfunctions.net/api
+    description: Production environment
+
+tags:
+  - name: projector
+    description: Projector-app authentication endpoints
+
+paths:
+  /projector/auth-token:
+    post:
+      tags:
+        - projector
+      summary: Generate custom authentication token for projector instance
+      description: |
+        Generates a Firebase custom token for projector-app authentication.
+
+        **Usage**:
+        - Called by projector-app on startup and before reconnection attempts
+        - Requires X-API-Key header with static projector API key
+        - Rate limited to 10 requests/minute per IP address
+
+        **Token Lifecycle**:
+        - Generated token valid for 1 hour
+        - Can be used to create Firebase Auth session via signInWithCustomToken
+        - Each token includes unique UID and 'projector' role claim
+
+        **Error Handling**:
+        - 401: Invalid or missing API key
+        - 429: Rate limit exceeded (retry after 60 seconds)
+        - 500: Firebase Admin SDK error (check server logs)
+      operationId: generateProjectorToken
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Custom token generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenGenerationResponse'
+              examples:
+                success:
+                  summary: Successful token generation
+                  value:
+                    token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJwcm9qZWN0b3ItYWJjZDEyMzQiLCJyb2xlIjoicHJvamVjdG9yIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature
+                    expiresAt: 1700003600000
+                    uid: projector-abcd1234
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingKey:
+                  summary: Missing API key
+                  value:
+                    error: UNAUTHORIZED
+                    message: API key is required in X-API-Key header
+                    statusCode: 401
+                invalidKey:
+                  summary: Invalid API key
+                  value:
+                    error: UNAUTHORIZED
+                    message: Invalid API key
+                    statusCode: 401
+        '429':
+          description: Too Many Requests - Rate limit exceeded
+          headers:
+            Retry-After:
+              description: Seconds until rate limit resets
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rateLimited:
+                  summary: Rate limit exceeded
+                  value:
+                    error: RATE_LIMIT_EXCEEDED
+                    message: Token generation rate limit exceeded. Try again in 60 seconds.
+                    statusCode: 429
+        '500':
+          description: Internal Server Error - Firebase Admin SDK failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                firebaseError:
+                  summary: Firebase Admin SDK error
+                  value:
+                    error: INTERNAL_ERROR
+                    message: Failed to generate custom token. Please contact support.
+                    statusCode: 500
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        Static API key for projector token generation.
+
+        **Configuration**:
+        - Stored in projector-app: VITE_PROJECTOR_API_KEY environment variable
+        - Validated by api-server against PROJECTOR_API_KEY environment variable
+        - Minimum 32 characters (secure random string)
+        - Same key can be used by multiple projector instances
+
+        **Security Notes**:
+        - This is a limited-scope key (only for token generation)
+        - Does NOT provide access to other API endpoints
+        - Can be rotated without updating projector-app code (only .env change)
+
+  schemas:
+    TokenGenerationResponse:
+      type: object
+      required:
+        - token
+        - expiresAt
+        - uid
+      properties:
+        token:
+          type: string
+          description: Firebase custom token (JWT format)
+          minLength: 100
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJwcm9qZWN0b3ItYWJjZDEyMzQiLCJyb2xlIjoicHJvamVjdG9yIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature
+        expiresAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (milliseconds) when token expires
+          example: 1700003600000
+        uid:
+          type: string
+          description: Unique identifier for this projector instance
+          pattern: '^projector-[a-f0-9-]+$'
+          example: projector-abcd1234-5678-90ef-ghij-klmnopqrstuv
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - statusCode
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - UNAUTHORIZED
+            - RATE_LIMIT_EXCEEDED
+            - INTERNAL_ERROR
+          example: UNAUTHORIZED
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid API key
+        statusCode:
+          type: integer
+          description: HTTP status code
+          enum: [401, 429, 500]
+          example: 401
+        details:
+          type: object
+          description: Optional additional error context
+          additionalProperties: true
+          example:
+            requestId: req-1234-5678
+            timestamp: 1700000000000

@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { initializeFirebase, getFirebaseAuth } from '@/lib/firebase';
-import { signInAnonymously } from 'firebase/auth';
+import { initializeFirebase } from '@/lib/firebase';
 import { useGameState } from '@/hooks/useGameState';
 import { usePhaseAudio } from '@/hooks/usePhaseAudio';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -20,17 +19,14 @@ function App() {
   const [initError, setInitError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
-  // Initialize Firebase and sign in anonymously on mount
+  // Initialize Firebase on mount
+  // Note: Authentication is now handled automatically by useProjectorAuth hook
+  // via useWebSocket integration (Feature: 001-projector-auth)
   useEffect(() => {
     async function initializeApp() {
       try {
         initializeFirebase();
         console.log('Firebase initialized successfully');
-
-        // Sign in anonymously for WebSocket authentication
-        const auth = getFirebaseAuth();
-        await signInAnonymously(auth);
-        console.log('Anonymous authentication successful');
         setAuthReady(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -152,10 +148,10 @@ function App() {
         {renderPhase()}
       </div>
       <ConnectionStatus
-        firestoreConnected={connectionStatus.firestore}
-        websocketConnected={websocketConnected}
-        websocketAuthenticated={websocketAuthenticated}
+        isConnected={websocketConnected}
+        isAuthenticated={websocketAuthenticated}
         error={websocketError || gameStateError}
+        firestoreConnected={connectionStatus.firestore}
       />
     </div>
   );

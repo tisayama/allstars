@@ -24,6 +24,7 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Firebase Firestore (read-only listeners for gameState), Browser localStorage (not applicable for this feature) (001-tv-style-rankings)
 - TypeScript 5.3+ / Node.js 18+ (test execution environment) + Playwright Test 1.56.1+ (E2E framework), Firebase Admin SDK 13.5.0 (emulator management), Firebase Emulators (001-system-e2e-tests)
 - Firebase Firestore Emulator (localhost:8080, project: stg-wedding-allstars) - clean state per test run (001-system-e2e-tests)
+- TypeScript 5.3+ with Node.js >=18.0.0 (api-server, socket-server) and ES2020+ browser runtime (projector-app) (001-projector-auth)
 
 - TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime) + Express.js 4.x, Firebase Admin SDK 11.x, firebase-functions 4.x (001-api-server)
 
@@ -43,12 +44,62 @@ npm test && npm run lint
 TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime): Follow standard conventions
 
 ## Recent Changes
+- 001-projector-auth: Added Firebase custom token authentication for projector-app with automatic token refresh, exponential backoff reconnection, and API key-based token generation
+- 001-projector-auth: Added environment variable security validation, token rotation procedures, and audit logging for authentication events
 - 001-system-e2e-tests: Added TypeScript 5.3+ / Node.js 18+ (test execution environment) + Playwright Test 1.56.1+ (E2E framework), Firebase Admin SDK 13.5.0 (emulator management), Firebase Emulators
-- 001-tv-style-rankings: Added TypeScript 5.3+ with React 18.2+ (browser runtime ES2020+) + React 18.2, Vite 5.0, Firebase SDK 10.x (Firestore), socket.io-client 4.x, Web Audio API
-- 002-firestore-init: Added TypeScript 5.3+ with Node.js >=18.0.0 (existing monorepo standard) + Firebase Admin SDK 13.5.0 (already in devDependencies), tsx (for TypeScript execution), @allstars/types (workspace package)
 
 
 <!-- MANUAL ADDITIONS START -->
+## Projector Authentication Patterns (001-projector-auth)
+
+### Token Refresh for Long-Running Sessions
+Projector apps require 8+ hour unattended operation. Implement automatic token refresh:
+- **Refresh Timing**: Refresh 5 minutes before token expiration (for 1-hour tokens)
+- **Short-Lived Tokens**: For tokens <10 min lifetime, refresh at 80% of lifetime
+- **Automatic Scheduling**: Use `setTimeout` to schedule refresh, re-schedule after each refresh
+- **Manual Refresh**: Expose `refreshToken()` method for testing/debugging
+- **Example**: `useProjectorAuth` hook in `apps/projector-app/src/hooks/useProjectorAuth.ts:75-121`
+
+### Exponential Backoff for WebSocket Reconnection
+Configure Socket.IO with exponential backoff to prevent thundering herd:
+- **Initial Delay**: 1 second
+- **Max Delay**: 60 seconds
+- **Attempts**: 10 reconnection attempts
+- **Jitter**: ±50% randomization factor to distribute reconnections
+- **Example**: `createProjectorSocket()` in `apps/projector-app/src/services/socketService.ts:51-61`
+
+### API Key Security Best Practices
+Projector apps use static API keys for server-to-server auth:
+- **Environment Variables**: Store as `VITE_PROJECTOR_API_KEY` (client-side is acceptable for static keys)
+- **Server Validation**: API server validates `X-API-Key` header in `apiKeyAuth` middleware
+- **Rotation**: Follow dual-key strategy during rotation (support old+new for 24-48h)
+- **Documentation**: See `specs/001-projector-auth/ROTATION.md` for rotation procedures
+- **Never Commit**: Add `.env` to `.gitignore`, use `.env.example` for templates
+
+### Token Rotation Procedures
+When rotating projector API keys:
+- **Generate**: Use `openssl rand -base64 32` for cryptographically secure keys
+- **Dual-Key Period**: Support both old and new keys during transition (24-48 hours)
+- **Verification**: Monitor audit logs for successful token generation with new key
+- **Removal**: Only remove old key after all projector instances updated
+- **Rollback**: Keep old key available for quick rollback if issues arise
+- **Audit Logging**: Track all token generation/validation in `auditLogger.ts`
+
+### Environment Variable Validation
+Prevent accidental exposure of sensitive credentials:
+- **Security Checks**: Validate `VITE_*` variables don't contain private keys or service account credentials
+- **Patterns to Block**: Firebase private keys, service account JSON, client email addresses
+- **Implementation**: `validateEnvironmentSecurity()` in `apps/projector-app/src/utils/envValidator.ts`
+- **Runtime Assertion**: Call `assertEnvironmentSecurity()` in `main.tsx` before app starts
+- **Example**:
+  ```typescript
+  // ✅ ALLOWED: Static API key for projector
+  VITE_PROJECTOR_API_KEY=abc123xyz789
+
+  // ❌ BLOCKED: Private key should be server-side only
+  VITE_FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+  ```
+
 ## Error Handling Patterns
 
 ### Retry Logic for Transient Failures (007-ranking-display-logic)

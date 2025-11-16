@@ -5,7 +5,7 @@ This repository contains the source code for a real-time, interactive quiz platf
 ## 🌟 Key Features
 
 * **Real-time Participation:** Guests join using their smartphones via a simple web browser. No app install required.
-* **Secure & Simple Auth:** Guests use **Firebase Anonymous Login**, while hosts and admins use secure **Google Login**.
+* **Secure & Simple Auth:** Guests use **Firebase Anonymous Login**, hosts and admins use secure **Google Login**, and projectors use **Firebase Custom Tokens** with automatic refresh for 8+ hour unattended operation.
 * **Broadcast Screen:** A dedicated `projector-app` displays questions, answer distributions, and rankings, mimicking the TV show's broadcast.
 * **Host Control:** A `host-app` (designed for a tablet) gives the newly-weds full control over the show's pacing, including triggering questions, sounds, and the "Period Gong."
 * **Advanced Quiz Logic:** Implements precise "fastest-press" time tracking (with client-server clock synchronization), "drop-out" (予選落ち) rules, and real-time leaderboards.
@@ -21,7 +21,7 @@ This project is structured as a **monorepo** using `pnpm workspaces` to share co
 |
 |-- /apps/ (Deployable applications)
 |   |-- /participant-app   (Frontend: Guest's client, **Auth: Anonymous Login**)
-|   |-- /projector-app     (Frontend: Main broadcast screen, **Auth: None**)
+|   |-- /projector-app     (Frontend: Main broadcast screen, **Auth: Firebase Custom Tokens**)
 |   |-- /host-app          (Frontend: Host's control panel, **Auth: Google Login**)
 |   |-- /admin-app         (Frontend: Dashboard for managing quizzes, **Auth: Google Login**)
 |   |-- /api-server        (Backend: Game logic running on Cloud Functions)
@@ -80,8 +80,43 @@ This project is structured as a **monorepo** using `pnpm workspaces` to share co
     ```
 
 4.  Set up environment variables:
-    * Configure your frontend apps (in their respective `.env` files) with the Firebase client-side config.
+
+    **Projector App Authentication (Required for projector-app):**
+
+    Generate a secure API key for projector authentication:
+    ```bash
+    # Generate a 32-character API key
+    openssl rand -base64 32
+    ```
+
+    Configure API server (`apps/api-server/.env`):
+    ```bash
+    PROJECTOR_API_KEY=<generated-key>
+    ```
+
+    Configure projector app (`apps/projector-app/.env`):
+    ```bash
+    # API Server Configuration
+    VITE_API_BASE_URL=http://localhost:5001/api
+    VITE_PROJECTOR_API_KEY=<same-key-as-above>
+
+    # Socket Server Configuration
+    VITE_SOCKET_SERVER_URL=http://localhost:3001
+
+    # Firebase Configuration
+    VITE_FIREBASE_API_KEY=<from-firebase-console>
+    VITE_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+    VITE_FIREBASE_PROJECT_ID=<project-id>
+    VITE_FIREBASE_STORAGE_BUCKET=<project-id>.appspot.com
+    VITE_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
+    VITE_FIREBASE_APP_ID=<app-id>
+    ```
+
+    **Other Apps:**
+    * Configure your other frontend apps (in their respective `.env` files) with the Firebase client-side config.
     * Ensure your backend apps (`api-server`, `socket-server`) are configured to receive Firebase credentials via their runtime environment (Cloud Functions/Cloud Run).
+
+    **Important**: Never commit `.env` files to version control. Use `.env.example` files as templates.
 
 ### 2. Running in Development Mode (with Emulators)
 

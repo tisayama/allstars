@@ -1,110 +1,112 @@
 /**
  * ConnectionStatus component displays real-time connection indicators
- * for Firestore and WebSocket connections
+ * Feature: 001-projector-auth [US1]
+ *
+ * Enhanced with 5-10% height status bar visible from 3 meters
  */
 
 interface ConnectionStatusProps {
-  firestoreConnected: boolean;
-  websocketConnected: boolean;
-  websocketAuthenticated: boolean;
+  isConnected?: boolean;
+  isAuthenticated?: boolean;
   error?: string | null;
+  // Legacy props for backward compatibility
+  firestoreConnected?: boolean;
+  websocketConnected?: boolean;
+  websocketAuthenticated?: boolean;
 }
 
 export function ConnectionStatus({
+  isConnected,
+  isAuthenticated,
+  error,
   firestoreConnected,
   websocketConnected,
   websocketAuthenticated,
-  error,
 }: ConnectionStatusProps) {
-  // Determine WebSocket status text
-  const getWebSocketStatus = () => {
-    if (!websocketConnected) return 'Disconnected';
-    if (!websocketAuthenticated) return 'Authenticating...';
+  // Use new props if provided, otherwise fall back to legacy props
+  const connected = isConnected ?? websocketConnected ?? false;
+  const authenticated = isAuthenticated ?? websocketAuthenticated ?? false;
+
+  // Determine connection status
+  const getConnectionStatus = () => {
+    if (error) return 'Error';
+    if (!connected) return 'Connecting...';
+    if (!authenticated) return 'Authenticating...';
     return 'Connected';
   };
 
-  const websocketStatus = getWebSocketStatus();
+  const getConnectionColor = () => {
+    if (error) return 'bg-red-500';
+    if (!connected) return 'bg-yellow-500';
+    if (!authenticated) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const status = getConnectionStatus();
+  const colorClass = getConnectionColor();
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed',
-        bottom: '16px',
-        right: '16px',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '7vh', // 7% of viewport height
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
         color: 'white',
-        padding: '12px 16px',
-        borderRadius: '8px',
-        fontSize: '14px',
-        fontFamily: 'system-ui, sans-serif',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '16px',
         zIndex: 9999,
-        minWidth: '200px',
+        fontFamily: 'system-ui, sans-serif',
       }}
     >
-      <div style={{ marginBottom: '8px' }}>
+      {/* Connection indicator dot */}
+      <div
+        data-testid="connection-indicator"
+        className={colorClass}
+        style={{
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+        }}
+      />
+
+      {/* Status text - large for 3m visibility */}
+      <span
+        data-testid="connection-status-text"
+        style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
+        }}
+      >
+        {error || status}
+      </span>
+
+      {/* Legacy Firestore indicator (if provided) */}
+      {firestoreConnected !== undefined && (
         <div
-          className={firestoreConnected ? 'connected' : 'disconnected'}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
+            marginLeft: '32px',
+            fontSize: '20px',
           }}
         >
           <div
             style={{
-              width: '8px',
-              height: '8px',
+              width: '16px',
+              height: '16px',
               borderRadius: '50%',
               backgroundColor: firestoreConnected ? '#4ade80' : '#ef4444',
             }}
           />
           <span>Firestore: {firestoreConnected ? 'Connected' : 'Disconnected'}</span>
-        </div>
-      </div>
-
-      <div>
-        <div
-          className={
-            websocketConnected && websocketAuthenticated
-              ? 'connected'
-              : websocketConnected
-                ? 'authenticating'
-                : 'disconnected'
-          }
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <div
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor:
-                websocketConnected && websocketAuthenticated
-                  ? '#4ade80'
-                  : websocketConnected
-                    ? '#fbbf24'
-                    : '#ef4444',
-            }}
-          />
-          <span>WebSocket: {websocketStatus}</span>
-        </div>
-      </div>
-
-      {error && (
-        <div
-          style={{
-            marginTop: '8px',
-            paddingTop: '8px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#fca5a5',
-            fontSize: '12px',
-          }}
-        >
-          {error}
         </div>
       )}
     </div>

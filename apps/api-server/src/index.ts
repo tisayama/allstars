@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import adminRoutes from "./routes/admin";
 import participantRoutes from "./routes/participant";
 import hostRoutes from "./routes/host";
+import projectorAuthRoutes from "./routes/projectorAuthRoutes";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get("/health", (req, res) => {
 app.use("/admin", adminRoutes);
 app.use("/participant", participantRoutes);
 app.use("/host", hostRoutes);
+app.use("/projector", projectorAuthRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

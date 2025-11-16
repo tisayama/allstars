@@ -6,6 +6,7 @@ import * as admin from 'firebase-admin';
 import { httpServer, io } from './server';
 import { logger } from './utils/logger';
 import { setupGameStateListener } from './listeners/firestoreListener';
+import { setupProjectorNamespace } from './namespaces/projectorNamespace';
 
 const PORT = process.env.PORT || 8080;
 
@@ -73,6 +74,10 @@ function main(): void {
   try {
     initializeFirebase();
     setupGracefulShutdown();
+
+    // Set up projector namespace for dedicated projector connections
+    setupProjectorNamespace(io);
+    logger.info('Projector namespace (/projector-socket) initialized');
 
     // Set up Firestore listener for game state changes
     const unsubscribe = setupGameStateListener(io);

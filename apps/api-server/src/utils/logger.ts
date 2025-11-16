@@ -3,7 +3,7 @@
  * Outputs JSON-formatted logs compatible with Cloud Logging and external monitoring tools
  */
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
   [key: string]: unknown;
@@ -33,7 +33,7 @@ export function logStructured(
   const logEntry = {
     timestamp: new Date().toISOString(),
     level,
-    component: context?.component || 'unknown',
+    component: context?.component || "unknown",
     message,
     ...(context && { context }),
   };
@@ -69,15 +69,18 @@ export function logError(
   error: Error | unknown,
   context?: LogContext
 ): void {
-  const errorDetails = error instanceof Error ? {
-    message: error.message,
-    stack: error.stack,
-    name: error.name,
-  } : {
-    message: String(error),
-  };
+  const errorDetails =
+    error instanceof Error
+      ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        }
+      : {
+          message: String(error),
+        };
 
-  logStructured('error', message, {
+  logStructured("error", message, {
     component,
     ...context,
     error: errorDetails,

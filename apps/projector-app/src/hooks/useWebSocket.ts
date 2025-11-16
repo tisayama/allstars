@@ -1,6 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { useState, useEffect, useRef } from 'react';
+import { Socket } from 'socket.io-client';
+import { useProjectorAuth } from './useProjectorAuth';
+import {
+  createProjectorSocket,
+  getSocketServerUrl,
+  getProjectorNamespace,
+} from '../services/socketService';
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -29,19 +34,15 @@ export interface UseWebSocketReturn {
 }
 
 /**
- * Get socket server URL from environment variables
- */
-function getSocketServerUrl(): string {
-  return import.meta.env.VITE_SOCKET_SERVER_URL || 'http://localhost:3001';
-}
-
-/**
- * Hook for managing WebSocket connection to socket-server
+ * Hook for managing WebSocket connection to /projector-socket namespace
+ *
+ * Feature: 001-projector-auth [US1]
  *
  * Handles:
- * - Connection lifecycle (connect, disconnect, reconnect)
- * - Firebase authentication flow
+ * - Automatic authentication with useProjectorAuth
+ * - Connection to /projector-socket namespace
  * - Event listeners for game events
+ * - Reconnection with Firebase ID token refresh
  *
  * @param options - Optional event handlers for game events
  * @returns Connection state and authentication status
@@ -49,47 +50,38 @@ function getSocketServerUrl(): string {
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
   const { onGongActivated, onStartQuestion, onGamePhaseChanged } = options;
 
+  // Use projector auth hook for automatic authentication
+  const {
+    isAuthenticated: isFirebaseAuthenticated,
+    firebaseToken,
+    error: authError,
+  } = useProjectorAuth();
+
   const [isConnected, setIsConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
 
-  /**
-   * Authenticate with the socket server using Firebase ID token
-   */
-  const authenticate = useCallback(async () => {
-    try {
-      const auth = getFirebaseAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        setError('No Firebase user available for authentication');
-        return;
-      }
-
-      const token = await user.getIdToken();
-
-      if (!token) {
-        setError('Failed to get Firebase ID token');
-        return;
-      }
-
-      socketRef.current?.emit('authenticate', { token });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(`Authentication error: ${message}`);
-    }
-  }, []);
-
   useEffect(() => {
-    const socketUrl = getSocketServerUrl();
+    // Wait for Firebase authentication to complete
+    if (!isFirebaseAuthenticated || !firebaseToken) {
+      if (authError) {
+        setError(`Authentication failed: ${authError}`);
+      }
+      return;
+    }
 
-    // Create socket connection
-    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
+    const socketUrl = getSocketServerUrl();
+    const namespace = getProjectorNamespace();
+
+    // Create socket connection to /projector-socket namespace with Firebase token
+    const socket = createProjectorSocket({
+      url: socketUrl,
+      namespace,
+      firebaseToken,
       autoConnect: false,
-      reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
     });
 
@@ -97,7 +89,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 
     // Connection event handlers
     socket.on('connect', () => {
-      console.log('WebSocket connected');
+      console.log('WebSocket connected to /projector-socket');
       setIsConnected(true);
       setError(null);
     });
@@ -108,20 +100,15 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       setIsAuthenticated(false);
     });
 
-    // Authentication event handlers
-    socket.on('AUTH_REQUIRED', (payload) => {
-      console.log('Authentication required, timeout:', payload.timeout);
-      authenticate();
-    });
-
+    // Projector-specific authentication events
     socket.on('AUTH_SUCCESS', (payload) => {
-      console.log('Authentication successful, userId:', payload.userId);
+      console.log('Projector authenticated, userId:', payload.userId);
       setIsAuthenticated(true);
       setError(null);
     });
 
     socket.on('AUTH_FAILED', (payload) => {
-      console.error('Authentication failed:', payload.reason);
+      console.error('Projector authentication failed:', payload.reason);
       setIsAuthenticated(false);
       setError(`Authentication failed: ${payload.reason}`);
     });
@@ -150,7 +137,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       console.log('Cleaning up WebSocket connection');
       socket.off('connect');
       socket.off('disconnect');
-      socket.off('AUTH_REQUIRED');
       socket.off('AUTH_SUCCESS');
       socket.off('AUTH_FAILED');
       socket.off('GONG_ACTIVATED');
@@ -158,7 +144,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       socket.off('GAME_PHASE_CHANGED');
       socket.disconnect();
     };
-  }, [authenticate, onGongActivated, onStartQuestion, onGamePhaseChanged]);
+  }, [
+    isFirebaseAuthenticated,
+    firebaseToken,
+    authError,
+    onGongActivated,
+    onStartQuestion,
+    onGamePhaseChanged,
+  ]);
 
   return {
     socket: socketRef.current,
