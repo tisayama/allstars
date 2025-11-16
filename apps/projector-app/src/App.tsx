@@ -17,7 +17,7 @@ import type { GamePhase } from '@/types';
 
 function App() {
   // Use projector authentication hook
-  const { isLoading: isAuthLoading, error: authError } = useProjectorAuth();
+  const { user, isLoading: isAuthLoading, error: authError } = useProjectorAuth();
 
   // Use the game state hook
   const { gameState, connectionStatus, error: gameStateError } = useGameState();
@@ -49,6 +49,7 @@ function App() {
     isAuthenticated: websocketAuthenticated,
     error: websocketError,
   } = useWebSocket({
+    user,
     onGongActivated: handleGongActivated,
     onStartQuestion: handleStartQuestion,
     onGamePhaseChanged: handleGamePhaseChanged,

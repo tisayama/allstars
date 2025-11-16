@@ -21,15 +21,13 @@ vi.mock('socket.io-client', () => ({
   io: vi.fn(() => mockSocket as any),
 }));
 
-// Mock Firebase auth
+// Mock Firebase user
 const mockGetIdToken = vi.fn();
-vi.mock('@/lib/firebase', () => ({
-  getFirebaseAuth: vi.fn(() => ({
-    currentUser: {
-      getIdToken: mockGetIdToken,
-    },
-  })),
-}));
+const mockUser = {
+  uid: 'test-uid',
+  isAnonymous: true,
+  getIdToken: mockGetIdToken,
+};
 
 describe('useWebSocket', () => {
   beforeEach(() => {
@@ -88,8 +86,8 @@ describe('useWebSocket', () => {
     });
   });
 
-  it('should handle AUTH_REQUIRED and send authentication', async () => {
-    renderHook(() => useWebSocket());
+  it('should handle AUTH_REQUIRED and send authentication with user from useProjectorAuth', async () => {
+    renderHook(() => useWebSocket({ user: mockUser as any }));
 
     // Get the AUTH_REQUIRED callback
     const authRequiredCallback = mockSocket.on.mock.calls.find(
@@ -260,10 +258,27 @@ describe('useWebSocket', () => {
     expect(mockSocket.off).toHaveBeenCalled();
   });
 
+  it('should handle authentication failure when user is not provided', async () => {
+    const { result } = renderHook(() => useWebSocket({ user: null }));
+
+    // Get the AUTH_REQUIRED callback
+    const authRequiredCallback = mockSocket.on.mock.calls.find(
+      (call) => call[0] === 'AUTH_REQUIRED'
+    )?.[1];
+
+    await act(async () => {
+      authRequiredCallback?.({ timeout: 10000 });
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toContain('No Firebase user available');
+    });
+  });
+
   it('should handle authentication failure when Firebase token is unavailable', async () => {
     mockGetIdToken.mockResolvedValue(null);
 
-    const { result } = renderHook(() => useWebSocket());
+    const { result } = renderHook(() => useWebSocket({ user: mockUser as any }));
 
     // Get the AUTH_REQUIRED callback
     const authRequiredCallback = mockSocket.on.mock.calls.find(
