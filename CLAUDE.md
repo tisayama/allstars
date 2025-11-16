@@ -24,6 +24,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-02
 - Firebase Firestore (read-only listeners for gameState), Browser localStorage (not applicable for this feature) (001-tv-style-rankings)
 - TypeScript 5.3+ / Node.js 18+ (test execution environment) + Playwright Test 1.56.1+ (E2E framework), Firebase Admin SDK 13.5.0 (emulator management), Firebase Emulators (001-system-e2e-tests)
 - Firebase Firestore Emulator (localhost:8080, project: stg-wedding-allstars) - clean state per test run (001-system-e2e-tests)
+- TypeScript 5.3+ / Node.js 18+ (development), ES2020+ (browser runtime) + React 18.2, Vite 5.0, Firebase SDK 10.x (Auth + Firestore), Socket.io Client 4.x (001-projector-anonymous-auth)
+- Browser localStorage (session persistence), Firestore (read-only access to gameState, questions, guests) (001-projector-anonymous-auth)
 
 - TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime) + Express.js 4.x, Firebase Admin SDK 11.x, firebase-functions 4.x (001-api-server)
 
@@ -43,9 +45,9 @@ npm test && npm run lint
 TypeScript 5.x / Node.js 18+ (Firebase Cloud Functions 2nd gen runtime): Follow standard conventions
 
 ## Recent Changes
+- 001-projector-anonymous-auth: Added TypeScript 5.3+ / Node.js 18+ (development), ES2020+ (browser runtime) + React 18.2, Vite 5.0, Firebase SDK 10.x (Auth + Firestore), Socket.io Client 4.x
 - 001-system-e2e-tests: Added TypeScript 5.3+ / Node.js 18+ (test execution environment) + Playwright Test 1.56.1+ (E2E framework), Firebase Admin SDK 13.5.0 (emulator management), Firebase Emulators
 - 001-tv-style-rankings: Added TypeScript 5.3+ with React 18.2+ (browser runtime ES2020+) + React 18.2, Vite 5.0, Firebase SDK 10.x (Firestore), socket.io-client 4.x, Web Audio API
-- 002-firestore-init: Added TypeScript 5.3+ with Node.js >=18.0.0 (existing monorepo standard) + Firebase Admin SDK 13.5.0 (already in devDependencies), tsx (for TypeScript execution), @allstars/types (workspace package)
 
 
 <!-- MANUAL ADDITIONS START -->
