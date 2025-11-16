@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useProjectorAuth } from '@/hooks/useProjectorAuth';
-import { useGameState } from '@/hooks/useGameState';
 import { usePhaseAudio } from '@/hooks/usePhaseAudio';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useDualChannelUpdates } from '@/hooks/useDualChannelUpdates';
 import { ErrorScreen } from '@/components/ErrorScreen';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
@@ -18,12 +18,6 @@ import type { GamePhase } from '@/types';
 function App() {
   // Use projector authentication hook
   const { user, isLoading: isAuthLoading, error: authError } = useProjectorAuth();
-
-  // Use the game state hook
-  const { gameState, connectionStatus, error: gameStateError } = useGameState();
-
-  // Automatically play phase-based background music
-  usePhaseAudio(gameState?.currentPhase ?? null);
 
   // WebSocket event handlers
   const handleGongActivated = useCallback(() => {
@@ -54,6 +48,15 @@ function App() {
     onStartQuestion: handleStartQuestion,
     onGamePhaseChanged: handleGamePhaseChanged,
   });
+
+  // Use dual-channel updates (WebSocket + Firestore with deduplication)
+  const { gameState, connectionStatus, error: gameStateError } = useDualChannelUpdates({
+    socket,
+    isWebSocketAuthenticated: websocketAuthenticated,
+  });
+
+  // Automatically play phase-based background music
+  usePhaseAudio(gameState?.currentPhase ?? null);
 
   // Show error screen if authentication failed
   if (authError) {
