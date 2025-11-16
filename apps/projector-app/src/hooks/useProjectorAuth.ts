@@ -66,10 +66,10 @@ export function useProjectorAuth(): ProjectorAuthState {
           setIsLoading(false);
           setError(null);
         } catch (err) {
-          const authError = err as Error;
-          console.error('Projector auth: Anonymous sign-in failed', authError);
+          const message = err instanceof Error ? err.message : 'Anonymous sign-in failed';
+          console.error('Projector auth: Anonymous sign-in failed', err);
 
-          setError(authError.message);
+          setError(message);
           setUser(null);
           setIsLoading(false);
         }

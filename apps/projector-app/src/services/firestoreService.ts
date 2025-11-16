@@ -56,15 +56,10 @@ export async function readGameState(): Promise<GameState> {
 
     return data;
   } catch (error) {
-    const firestoreError = error as Error & { code?: string };
-
-    console.error('Firestore: Failed to read gameState', {
-      error: firestoreError.message,
-      code: firestoreError.code,
-    });
+    console.error('Firestore: Failed to read gameState', error);
 
     // Re-throw with context
-    throw firestoreError;
+    throw error;
   }
 }
 
