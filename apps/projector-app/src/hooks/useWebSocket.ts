@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getFirebaseAuth } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -13,6 +13,7 @@ import type {
  * Options for useWebSocket hook
  */
 export interface UseWebSocketOptions {
+  user?: User | null;
   onGongActivated?: (payload: GongActivatedPayload) => void;
   onStartQuestion?: (payload: StartQuestionPayload) => void;
   onGamePhaseChanged?: (payload: GamePhaseChangedPayload) => void;
@@ -40,14 +41,14 @@ function getSocketServerUrl(): string {
  *
  * Handles:
  * - Connection lifecycle (connect, disconnect, reconnect)
- * - Firebase authentication flow
+ * - Firebase authentication flow using provided user
  * - Event listeners for game events
  *
- * @param options - Optional event handlers for game events
+ * @param options - Optional user object from useProjectorAuth and event handlers
  * @returns Connection state and authentication status
  */
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
-  const { onGongActivated, onStartQuestion, onGamePhaseChanged } = options;
+  const { user, onGongActivated, onStartQuestion, onGamePhaseChanged } = options;
 
   const [isConnected, setIsConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -57,12 +58,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 
   /**
    * Authenticate with the socket server using Firebase ID token
+   * Uses the user object passed from useProjectorAuth
    */
   const authenticate = useCallback(async () => {
     try {
-      const auth = getFirebaseAuth();
-      const user = auth.currentUser;
-
       if (!user) {
         setError('No Firebase user available for authentication');
         return;
@@ -80,7 +79,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(`Authentication error: ${message}`);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const socketUrl = getSocketServerUrl();
