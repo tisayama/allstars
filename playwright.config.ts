@@ -22,8 +22,8 @@ export default defineConfig({
   // Retry on CI only (2 retries = 3 total attempts)
   retries: process.env.CI ? 2 : 1,
 
-  // Opt out of parallel tests on CI (resource constraints)
-  workers: process.env.CI ? 2 : undefined,
+  // Parallel execution: 4 workers locally, 2 on CI (resource constraints)
+  workers: process.env.CI ? 2 : 4,
 
   // Reporter to use
   reporter: [

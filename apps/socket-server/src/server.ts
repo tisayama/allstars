@@ -92,4 +92,40 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+/**
+ * Test endpoint: Disconnect a specific socket client
+ * Used by E2E tests to simulate network disconnections
+ *
+ * SECURITY: This endpoint is ONLY available in non-production environments
+ *
+ * @param clientId - Socket.IO client ID to disconnect
+ * @returns 200 if client disconnected, 404 if client not found
+ */
+if (process.env.NODE_ENV !== 'production') {
+  app.post('/test/disconnect/:clientId', (req: Request, res: Response) => {
+    const { clientId } = req.params;
+
+    const socket = io.sockets.sockets.get(clientId);
+
+    if (!socket) {
+      logger.debug(`Test disconnect: Client ${clientId} not found`);
+      return res.status(404).json({
+        error: 'Client not found',
+        clientId
+      });
+    }
+
+    logger.debug(`Test disconnect: Forcing disconnect of client ${clientId}`);
+    socket.disconnect(true);
+
+    return res.status(200).json({
+      success: true,
+      clientId,
+      message: 'Client disconnected'
+    });
+  });
+
+  logger.info('Test endpoints enabled (non-production environment)');
+}
+
 logger.info('Server setup complete');

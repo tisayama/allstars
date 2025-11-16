@@ -143,7 +143,60 @@ tests/e2e/
 | US3: Period Finals | `period-finals.spec.ts` | 6 | P1 | ✅ |
 | US4: Guest Lifecycle | `guest-lifecycle.spec.ts` | 6 | P2 | ✅ |
 | US5: Infrastructure | `infrastructure.spec.ts` | 2 | P2 | ✅ |
-| **TOTAL** | **5 files** | **26** | - | **✅** |
+| **Projector Auth** | `projector-auth.spec.ts` | 5 | P1 | ⏳ |
+| **Projector Reconnection** | `projector-reconnection.spec.ts` | 5 | P1 | ⏳ |
+| **Projector Fallback** | `projector-fallback.spec.ts` | 6 | P2 | ⏳ |
+| **TOTAL** | **8 files** | **42** | - | **✅** |
+
+### Projector Authentication E2E Tests (Feature: 001-projector-auth-e2e)
+
+**Test Suites:**
+- **projector-auth.spec.ts**: Browser-based Firebase authentication flow (5 scenarios)
+  - TC-AUTH-001: Initial authentication completes within 3 seconds
+  - TC-AUTH-002: Authentication persists across page reload
+  - TC-AUTH-003: Invalid API key shows user-friendly error
+  - TC-AUTH-004: Network failure during authentication shows retry behavior
+  - TC-AUTH-005: Token automatically refreshes before expiration
+
+- **projector-reconnection.spec.ts**: WebSocket reconnection with exponential backoff (5 scenarios)
+  - TC-RECON-001: WebSocket reconnection follows exponential backoff timing
+  - TC-RECON-002: WebSocket reconnects within 10 seconds after network restoration
+  - TC-RECON-003: UI shows reconnection status and attempt count
+  - TC-RECON-004: Reconnection stops after 10 failed attempts
+  - TC-RECON-005: Network simulator accurately isolates WebSocket and Firestore
+
+- **projector-fallback.spec.ts**: Dual-channel fallback and deduplication (6 scenarios)
+  - TC-FALLBACK-001: Firestore fallback delivers updates within 500ms
+  - TC-FALLBACK-002: No duplicate events when both channels active
+  - TC-FALLBACK-003: Deduplication logic uses correct criteria
+  - TC-FALLBACK-004: Seamless transition between channel modes
+  - TC-FALLBACK-005: Firestore listener remains resilient across reconnections
+  - TC-FALLBACK-006: Performance remains acceptable under dual-channel load
+
+**Prerequisites for Running Projector Auth Tests:**
+1. Firebase Emulators running (Auth: 9099, Firestore: 8080)
+2. Projector app must expose test globals (see `/tests/e2e/TEST_IMPLEMENTATION_REQUIREMENTS.md`)
+3. Socket server must have test disconnect endpoint enabled (non-production only)
+
+**Running Projector Auth Tests:**
+```bash
+# Run all projector authentication tests
+pnpm test:e2e projector-auth.spec.ts projector-reconnection.spec.ts projector-fallback.spec.ts
+
+# Run only authentication flow tests (P1 priority)
+pnpm test:e2e projector-auth.spec.ts --grep "@P1"
+
+# Run reconnection tests
+pnpm test:e2e projector-reconnection.spec.ts
+
+# Run fallback tests
+pnpm test:e2e projector-fallback.spec.ts
+```
+
+**Test Implementation Requirements:**
+- See `/tests/e2e/TEST_IMPLEMENTATION_REQUIREMENTS.md` for required global variables
+- Projector app must expose authentication state, WebSocket connection status, and error tracking
+- All test globals should only be enabled in non-production environments
 
 ---
 
