@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { initializeFirebase } from '@/lib/firebase';
+import { initializeFirebase, getFirebaseAuth } from '@/lib/firebase';
+import { signInAnonymously } from 'firebase/auth';
 import { useGameState } from '@/hooks/useGameState';
 import { usePhaseAudio } from '@/hooks/usePhaseAudio';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -17,17 +18,28 @@ import type { GamePhase } from '@/types';
 
 function App() {
   const [initError, setInitError] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
-  // Initialize Firebase on mount
+  // Initialize Firebase and sign in anonymously on mount
   useEffect(() => {
-    try {
-      initializeFirebase();
-      console.log('Firebase initialized successfully');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setInitError(message);
-      console.error('Firebase initialization failed:', error);
+    async function initializeApp() {
+      try {
+        initializeFirebase();
+        console.log('Firebase initialized successfully');
+
+        // Sign in anonymously for WebSocket authentication
+        const auth = getFirebaseAuth();
+        await signInAnonymously(auth);
+        console.log('Anonymous authentication successful');
+        setAuthReady(true);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setInitError(message);
+        console.error('App initialization failed:', error);
+      }
     }
+
+    initializeApp();
   }, []);
 
   // Use the game state hook (only after Firebase is initialized)
@@ -74,6 +86,11 @@ function App() {
         details={initError}
       />
     );
+  }
+
+  // Show loading indicator while waiting for authentication
+  if (!authReady) {
+    return <LoadingIndicator message="Authenticating..." />;
   }
 
   // Show error screen if gameState listener failed
